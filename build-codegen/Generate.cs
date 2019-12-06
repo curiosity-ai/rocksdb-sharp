@@ -75,6 +75,18 @@ namespace RocksDbPrepareCApiHeader
 
         static void Main(string[] args)
         {
+            try
+            {
+                Process();
+            }
+            catch(Exception E)
+            {
+                Console.WriteLine(E.ToString());
+            }
+        }
+        
+        static void Process()
+        {
             var version = File.ReadAllText(@"../rocksdbversion");
             Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
