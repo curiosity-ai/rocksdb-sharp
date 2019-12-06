@@ -1,0 +1,21 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+- task: NuGetToolInstaller@0
+
+- task: DotNetCoreInstaller@0
+  displayName: 'Install .net core 3.0'
+  inputs:
+    version: '3.1.100'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'run'
+    projects: '$(Build.SourcesDirectory)/build-codegen/CSharpGen.csproj'
+    workingDirectory: '$(Build.SourcesDirectory)/build-codegen/'
+    

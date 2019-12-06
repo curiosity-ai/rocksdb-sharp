@@ -75,17 +75,10 @@ namespace RocksDbPrepareCApiHeader
 
         static void Main(string[] args)
         {
-            if (args.Length == 0)
-            {
-                Console.Error.WriteLine("Usage: <exe> <version>");
-                Console.Error.WriteLine("  Where <exe> is this executable and <version> is something like v5.18.3");
-                return;
-            }
-
-            var version = args[0];
-
+            var version = File.ReadAllText(@"../rocksdbversion");
+            Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
-            var urlOfCHeader = $"https://raw.githubusercontent.com/facebook/rocksdb/{version}/include/rocksdb/c.h";
+            var urlOfCHeader = $"https://raw.githubusercontent.com/facebook/rocksdb/v{version}/include/rocksdb/c.h";
             var original = Download(urlOfCHeader);
 
             Console.Error.WriteLine($"Using: {urlOfCHeader}");
@@ -186,7 +179,7 @@ namespace RocksDbPrepareCApiHeader
             var output = nativeRawCs.ToString();
 
             //using (var outputStream = Console.OpenStandardOutput())
-            using (var outputStream = File.Create(@"C:\Users\wfalk\source\rocksdb-sharp\RocksDbSharp\Native.cs"))
+            using (var outputStream = File.Create(@"../csharp/src/Native.cs"))
             using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
             {
                 writer.WriteLine(output);
