@@ -149,11 +149,12 @@ else
         brew install zstd
         brew install lz4
     else
+        echo "Linux detected"
         CFLAGS=-static-libstdc++
         LIBEXT=.so
         RUNTIME=linux-x64
         # Linux Dependencies    
-        sudo apt-get install libsnappy-dev libbz2-dev libz-dev
+        sudo apt-get install libsnappy-dev libbz2-dev libz-dev liblz4-dev
     fi
     
     
