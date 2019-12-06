@@ -32,6 +32,7 @@ steps:
     command: 'build'
     projects: '$(Build.SourcesDirectory)/csharp/RocksDbSharp.csproj'
     workingDirectory: '$(Build.SourcesDirectory)/csharp/'
+    arguments: '-c Release /p:Version=$(ROCKSDBVERSION) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
 
 - task: DotNetCoreCLI@2
   inputs:
