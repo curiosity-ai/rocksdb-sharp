@@ -6,10 +6,25 @@ pool:
 
 steps:
 
-
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      ROCKSDBVNUM=`cat rocksdbversion`
+      echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}.$(build.buildId)"
+    workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: Bash@3
   inputs:
     filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
+- task: CmdLine@2
+  inputs:
+    script: 'ls $(Build.SourcesDirectory) -hR'
+  
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f '$(Build.SourcesDirectory)/rocksdb/rocksdb-v$(ROCKSDBVERSION)/linux-x64/native/librocksdb.so' --account-name curiositydev  -c mosaik-nightly  -n librocksdb-v$(ROCKSDBVERSION).so'
