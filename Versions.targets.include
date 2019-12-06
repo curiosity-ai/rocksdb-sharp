@@ -1,7 +1,0 @@
-<Project>
-    <PropertyGroup>
-        <RocksDbVersion>6.2.2</RocksDbVersion>
-        <RocksDbSharpBuild>0</RocksDbSharpBuild>
-        <RocksDbNativeBuild>0</RocksDbNativeBuild>
-    </PropertyGroup>
-</Project>

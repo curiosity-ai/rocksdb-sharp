@@ -1,0 +1,10 @@
+gflags
+rocksdb
+snappy
+native/
+native-*/
+runtimes/
+rocksdb-*/
+*.zip
+bin/
+vcpkg/
