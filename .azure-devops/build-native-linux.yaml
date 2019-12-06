@@ -6,3 +6,10 @@ pool:
 
 steps:
 
+
+
+- task: Bash@3
+  inputs:
+    filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
+    workingDirectory: '$(Build.SourcesDirectory)/build-native/'
+
