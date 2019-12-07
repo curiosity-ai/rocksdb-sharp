@@ -8,7 +8,7 @@
     <PackageId>rocksdb</PackageId>
     <Authors>Curiosity GmbH, Warren Falk</Authors>
     <Company>Curiosity GmbH, Warren Falk</Company>
-    <Description>NET standard bindings for RocksDb. See the Project Site for more information.</Description>
+    <Description>NET standard bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
     <PackageTags>rocksdb leveldb embedded database</PackageTags>
     <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2019 Curiosity GmbH</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -18,7 +18,6 @@
     <IncludeReferencedProjects>true</IncludeReferencedProjects>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>
