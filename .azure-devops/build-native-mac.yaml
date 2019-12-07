@@ -16,20 +16,6 @@ steps:
 
 - task: Bash@3
   inputs:
-    targetType: 'inline'
-    script: |
-      brew install automake
-      brew install libtool
-      git clone https://github.com/google/snappy
-      cd snappy
-      ./autogen.sh
-      ./configure --prefix=/usr/local CFLAGS="-arch i386 -arch x86_64" CXXFLAGS="-arch i386 -arch x86_64" LDFLAGS="-arch i386 -arch x86_64" --disable-dependency-tracking
-      make
-      sudo make install
-    workingDirectory: '$(Build.SourcesDirectory)'
-
-- task: Bash@3
-  inputs:
     filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 

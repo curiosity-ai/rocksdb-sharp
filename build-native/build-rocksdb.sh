@@ -155,6 +155,8 @@ else
         brew install zlib
         brew install bzip2
         brew install gflags
+        
+        ./build_tools/build_detect_platform -DSNAPPY
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
