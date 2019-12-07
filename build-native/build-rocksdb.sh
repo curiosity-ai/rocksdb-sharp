@@ -134,13 +134,15 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/win-x64/native && cp -v ./build/Release/rocksdb-shared.dll ../rocksdb-${ROCKSDBVERSION}/win-x64/native/rocksdb.dll
     }) || fail "rocksdb build failed"
 else
+    
     echo "Assuming a posix-like environment"
+    
     if [ "$(uname)" == "Darwin" ]; then
         echo "Mac (Darwin) detected"
         export CC=gcc-8
         export CXX=g++-8
-        CFLAGS="-stdlib=libc++ -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
-        LDFLAGS="-L/usr/local/lib "
+        CFLAGS="-stdlib=libc++ -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
+        LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
         # LDFLAGS="-L/usr/local/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
         LIBEXT=.dylib
         RUNTIME=osx-x64
@@ -209,19 +211,6 @@ else
         strip librocksdb${LIBEXT}
         mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
-
-        # This no longer seems to work on a mac, so I'm removing support for it
-        # If someone wants to try to fix this, then I'm happy to take a PR
-        # 32-bit linux dependencies:
-        # sudo apt-get install gcc-5-multilib g++-5-multilib
-        # sudo apt-get install libsnappy-dev:i386 libbz2-dev:i386 libz-dev:i386
-        #echo "----- Build 32 bit --------------------------------------------------"
-        #make clean
-        #CFLAGS="${CFLAGS} -m32" PORTABLE=1 make -j$CONCURRENCY shared_lib || fail "32-bit build failed"
-        #strip librocksdb${LIBEXT}
-        #mkdir -p ../native/i386 && cp -vL ./librocksdb${LIBEXT} ../native/i386/librocksdb${LIBEXT}
-        #mkdir -p ../native-${ROCKSDBVERSION}/i386 && cp -vL ./librocksdb${LIBEXT} ../native-${ROCKSDBVERSION}/i386/librocksdb${LIBEXT}
-
 
     }) || fail "rocksdb build failed"
 fi
