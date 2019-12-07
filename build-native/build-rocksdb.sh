@@ -76,7 +76,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
     # Make sure git is installed
     hash git 2> /dev/null || { fail "Build requires git"; }
-    test -z "$WindowsSdkDir" && fail "This must be run from a build environment such as the Developer Command Prompt"
+    # test -z "$WindowsSdkDir" && fail "This must be run from a build environment such as the Developer Command Prompt"
 
     BASEDIRWIN=$(cd "${BASEDIR}" && pwd -W)
 
@@ -155,8 +155,6 @@ else
         brew install zlib
         brew install bzip2
         brew install gflags
-        
-        ./build_tools/build_detect_platform -DSNAPPY
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
@@ -194,6 +192,9 @@ else
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
+        
+        ./build_tools/build_detect_platform -DSNAPPY
+                
         (. ./build_tools/build_detect_platform detected~; {
             grep detected~ -e '-DLZ4' &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
             grep detected~ -e '-DZLIB' &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
