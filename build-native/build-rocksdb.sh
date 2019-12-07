@@ -142,6 +142,8 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
+        CFLAGS=--disable-werror
+        
         brew install snappy
         brew install zstd
         brew install lz4
@@ -187,15 +189,9 @@ else
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
-        
-        echo ===============================================================
-        ./build_tools/build_detect_platform temp_out
-        echo ===============================================================
-        cat temp_out
-        echo ===============================================================
-        
-        
+               
         (. ./build_tools/build_detect_platform detected~; {
+            cat detected~
             grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
             grep detected~ -e '-DZLIB'   &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
             grep detected~ -e '-DSNAPPY' &> /dev/null || fail "failed to detect snappy, install libsnappy-dev"
