@@ -68,10 +68,9 @@ steps:
   inputs:
     script: 'ls $(Build.SourcesDirectory) -hR'
 
-
-# - task: NuGetCommand@2
-#   inputs:
-#     command: 'push'
-#     packagesToPush: '**/*.nupkg'
-#     nuGetFeedType: 'external'
-#     publishFeedCredentials: 'nuget-curiosity'
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '**/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'nuget-curiosity'
