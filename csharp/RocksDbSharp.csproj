@@ -5,7 +5,7 @@
     <ApplicationIcon />
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-    <PackageId>rocksdb</PackageId>
+    <PackageId>RocksDB</PackageId>
     <Authors>Curiosity GmbH, Warren Falk</Authors>
     <Company>Curiosity GmbH, Warren Falk</Company>
     <Description>NET standard bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
