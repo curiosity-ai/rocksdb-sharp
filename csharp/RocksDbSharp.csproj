@@ -5,12 +5,12 @@
     <ApplicationIcon />
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-    <PackageId>Mosaik.Library</PackageId>
+    <PackageId>rocksdb-sharp</PackageId>
     <Authors>Warren Falk, Curiosity GmbH</Authors>
     <Company>Warren Falk, Curiosity GmbH</Company>
-    <Description>NET standard bindings for RocksDb.  See the Project Site for more information.</Description>
+    <Description>NET standard bindings for RocksDb. See the Project Site for more information.</Description>
     <PackageTags>rocksdb leveldb embedded database</PackageTags>
-    <Copyright>(c) Copyright 2019 Curiosity GmbH - all right reserved</Copyright>
+    <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2019 Curiosity GmbH</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
