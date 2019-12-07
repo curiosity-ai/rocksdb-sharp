@@ -139,18 +139,18 @@ else
     
     if [ "$(uname)" == "Darwin" ]; then
         echo "Mac (Darwin) detected"
-        export CC=gcc-9
-        export CXX=g++-9
-        CFLAGS="-std=libc++ -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
+        export CC=gcc-8
+        export CXX=g++-8
+        CFLAGS="-std=libc++ -std=c++11 -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
         LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
         # -stdlib=libc++ 
         # LDFLAGS="-L/usr/local/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+        # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
-        brew install gcc
+        brew install gcc@8
         # brew install llvm
         brew install snappy
         brew install zstd
@@ -196,10 +196,17 @@ else
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
-
+        
+        echo ---------------------------------------------------------------
+        echo ---------------------------------------------------------------
+        echo ---------------------------------------------------------------
         ./build_tools/build_detect_platform temp_out
         cat temp_out
-
+        echo ---------------------------------------------------------------
+        echo ---------------------------------------------------------------
+        echo ---------------------------------------------------------------
+        
+        
         (. ./build_tools/build_detect_platform detected~; {
             grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
             grep detected~ -e '-DZLIB'   &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
