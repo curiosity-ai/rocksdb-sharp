@@ -18,7 +18,6 @@ steps:
   inputs:
     script: |
       "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
-      
       bash build-rocksdb.sh
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
@@ -30,4 +29,4 @@ steps:
   inputs:
     azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib'
+    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/win-x64/native/rocksdb.dll --account-name curiositydev  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSION).dll'
