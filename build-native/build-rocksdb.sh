@@ -159,8 +159,6 @@ else
         brew install bzip2
         brew install gflags
         
-        ./build_tools/build_detect_platform '-DZLIB'
-
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
@@ -198,7 +196,9 @@ else
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
-        
+
+        ./build_tools/build_detect_platform '-DZLIB'
+
         (. ./build_tools/build_detect_platform detected~; {
             grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
             grep detected~ -e '-DZLIB'   &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
