@@ -34,6 +34,27 @@ steps:
     workingDirectory: '$(Build.SourcesDirectory)/csharp/'
     arguments: '-c Release /p:Version=$(ROCKSDBVERSION) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
 
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-x64/native/rocksdb.dll --account-name curiositydev  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSION).dll'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).so'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib'
+
+- task: CmdLine@2
+  inputs:
+    script: 'ls $(Build.SourcesDirectory) -hR'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'
@@ -41,6 +62,11 @@ steps:
     configuration: 'Release'
     versioningScheme: 'off'
     buildProperties: 'Version="$(ROCKSDBVERSION)";AllowUnsafeBlocks="True";LangVersion="latest"'
+
+- task: CmdLine@2
+  inputs:
+    script: 'ls $(Build.SourcesDirectory) -hR'
+
 
 # - task: NuGetCommand@2
 #   inputs:
