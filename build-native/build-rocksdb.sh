@@ -139,8 +139,8 @@ else
     
     if [ "$(uname)" == "Darwin" ]; then
         echo "Mac (Darwin) detected"
-        export CC=gcc-8
-        export CXX=g++-8
+        export CC=gcc
+        export CXX=g++
         CFLAGS="-I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
         LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
         # -stdlib=libc++ 
