@@ -1,6 +1,9 @@
 trigger:
 - master
 
+variables:
+  vsdir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\'
+
 pool:
   vmImage: 'windows-latest'
 
@@ -14,14 +17,13 @@ steps:
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
     workingDirectory: '$(Build.SourcesDirectory)'
 
+
 - task: CmdLine@2
   inputs:
     script: |
       echo here1
-      'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat'
+      %comspec% /k "'$(vsdir)\VsDevCmd.bat' && bash build-rocksdb.sh"
       echo here2
-      bash build-rocksdb.sh
-      echo here3
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
 - task: CmdLine@2
