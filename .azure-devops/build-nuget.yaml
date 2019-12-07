@@ -27,13 +27,6 @@ steps:
     projects: '$(Build.SourcesDirectory)/build-codegen/CSharpGen.csproj'
     workingDirectory: '$(Build.SourcesDirectory)/build-codegen/'
     
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: '$(Build.SourcesDirectory)/csharp/RocksDbSharp.csproj'
-    workingDirectory: '$(Build.SourcesDirectory)/csharp/'
-    arguments: '-c Release /p:Version=$(ROCKSDBVERSION) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
-
 - task: AzureCLI@1
   inputs:
     azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
@@ -51,6 +44,13 @@ steps:
     azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: '$(Build.SourcesDirectory)/csharp/RocksDbSharp.csproj'
+    workingDirectory: '$(Build.SourcesDirectory)/csharp/'
+    arguments: '-c Release /p:Version=$(ROCKSDBVERSION) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
 
 - task: CmdLine@2
   inputs:
