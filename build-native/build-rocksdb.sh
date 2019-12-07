@@ -159,7 +159,7 @@ else
         brew install bzip2
         brew install gflags
         
-        ls /usr/local/lib -hR
+        ls /usr/local/include
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
