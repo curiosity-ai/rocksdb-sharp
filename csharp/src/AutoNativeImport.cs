@@ -368,23 +368,9 @@ namespace NativeImport
                 "",
             };
 
-            // If the RocksDbNative package is referenced, then dynamically load it here so that it can tell us where the native libraries are
-            string nativeCodeBase = null;
-            try
-            {
-                var nativeLibName = new AssemblyName("RocksDbNative");
-                var native = Assembly.Load(nativeLibName);
-                var nativePkgClass = native.GetTypes().First(t => t.FullName == "RocksDbSharp.NativePackage");
-                var getCodeBaseMethod = nativePkgClass.GetTypeInfo().GetMethod("GetCodeBase");
-                var getCodeBase = getCodeBaseMethod.CreateDelegate<Func<string>>();
-                nativeCodeBase = getCodeBase();
-            }
-            catch (Exception)
-            {
-            }
 
             var basePaths = new string[] {
-                nativeCodeBase,
+                Directory.GetCurrentDirectory(),
                 Path.GetDirectoryName(UriToPath(Transitional.CurrentFramework.GetBaseDirectory())),
                 Path.GetDirectoryName(UriToPath(Assembly.GetEntryAssembly()?.CodeBase)),
                 Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location),
