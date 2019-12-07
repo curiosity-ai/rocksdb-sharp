@@ -151,29 +151,14 @@ else
         # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
         # brew install gcc@7  >/dev/null
-        # brew install snappy >/dev/null
+        brew install snappy >/dev/null
         # brew install zstd   >/dev/null
         # brew install lz4    >/dev/null
         # brew install zlib   >/dev/null
         # brew install bzip2  >/dev/null
         # brew install gflags >/dev/null
         
-        # ls /usr/local/include
-
-        echo ---------------------------------------------------------------
-        which gcc-7
-        echo ---------------------------------------------------------------
-        which g++-7
-        echo ---------------------------------------------------------------
-        gcc --version
-        echo ---------------------------------------------------------------        
-        g++ --version
-        echo ---------------------------------------------------------------
-        gcc-7 --version
-        echo ---------------------------------------------------------------
-        g++-7 --version
-        echo ---------------------------------------------------------------
-
+        ls /usr/local/include
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
