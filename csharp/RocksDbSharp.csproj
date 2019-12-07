@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <ApplicationIcon />
@@ -32,4 +31,11 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
     <PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so"    Link="librocksdb.so"    Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so"/>
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib"   Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib"/>
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll"        Link="librocksdb.so"    Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll"/>
+  </ItemGroup>
+  
 </Project>
