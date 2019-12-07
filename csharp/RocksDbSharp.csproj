@@ -5,7 +5,7 @@
     <ApplicationIcon />
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-    <PackageId>rocksdb-sharp</PackageId>
+    <PackageId>rocksdb</PackageId>
     <Authors>Warren Falk, Curiosity GmbH</Authors>
     <Company>Warren Falk, Curiosity GmbH</Company>
     <Description>NET standard bindings for RocksDb. See the Project Site for more information.</Description>
