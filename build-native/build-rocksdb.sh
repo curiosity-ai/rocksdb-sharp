@@ -142,7 +142,7 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        CFLAGS=-Wno-defaulted-function-deleted -Wno-shadow
+        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow"
         
         brew install snappy
         brew install zstd
