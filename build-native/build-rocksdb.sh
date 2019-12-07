@@ -150,6 +150,7 @@ else
         
         # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
+        brew install gcc@7
         brew install gcc@8
         # brew install llvm
         brew install snappy
@@ -164,7 +165,17 @@ else
 
         which gcc-8
         which g++-8
-        ls /usr/local/include -hR
+        which gcc-7
+        which g++-7
+        # ls /usr/local/include
+        gcc --version
+        g++ --version
+        echo ---------------------------------------------------------------
+        gcc-8 --version
+        g++-8 --version
+        echo ---------------------------------------------------------------
+        gcc-7 --version
+        g++-7 --version
         
         echo ---------------------------------------------------------------
         echo ---------------------------------------------------------------
