@@ -17,7 +17,7 @@ steps:
 - task: CmdLine@2
   inputs:
     script: |
-      "C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\Tools\VsDevCmd.bat"
+      "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
       
       bash build-rocksdb.sh
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
