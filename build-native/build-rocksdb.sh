@@ -1,29 +1,4 @@
 #!/bin/bash
-# WINDOWS:
-#   If you are in Windows, this is designed to be run from git bash
-#     You therefore should install git bash, Visual Studio 2017, and cmake
-#     Your best bet in Windows is to open a Developer Command Prompt and then run bash from there.
-# MAC:
-#   You will need snappy (must build: homebrew version is not universal)
-#     brew install automake
-#     brew install libtool
-#     git clone git@github.com:google/snappy.git
-#     cd snappy
-#     ./autogen.sh
-#     ./configure --prefix=/usr/local CFLAGS="-arch i386 -arch x86_64" CXXFLAGS="-arch i386 -arch x86_64" LDFLAGS="-arch i386 -arch x86_64" --disable-dependency-tracking
-#     make
-#     sudo make install
-#
-# Instructions for upgrading rocksdb version
-# 1. Fetch the desired version locally with something like:
-#    git fetch https://github.com/facebook/rocksdb.git v4.13
-#    git checkout FETCH_HEAD
-#    git push -f warrenfalk HEAD:rocksdb_sharp
-# 2. Get the hash of the commit for the version and replace below
-# 3. Also see instructions for modifying Native.Raw.cs with updates to c.h since current revisions
-# 4. Push the desired version to the rocksdb_sharp branch at https://github.com/warrenfalk/rocksdb
-# 5. Search through code for old hash and old version number and replace
-# 6. Run this script to build (see README.md for more info)
 
 ROCKSDBVNUM=`cat ../rocksdbversion`
 ROCKSDBVERSION=v${ROCKSDBVNUM}
@@ -150,8 +125,6 @@ else
         brew install zlib
         brew install bzip2
         brew install gflags
-        
-        ls /usr/local/include
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
@@ -161,27 +134,6 @@ else
         sudo apt-get install libsnappy-dev libbz2-dev libz-dev liblz4-dev libzstd-dev
     fi
     
-    
-
-    # Mac Dependencies
-    ## (Note: gcc 8.2 worked below)
-    # xcode-select --install
-    # brew install gcc
-    # brew install snappy
-    # brew install zstd
-    # Don't have universal version of lz4 through brew, have to build manually
-    # git clone git@github.com:Cyan4973/lz4.git
-    # make -C lz4/lib
-    # cp -L lz4/lib/liblz4.dylib ./liblz4_64.dylib
-    # make -C lz4/lib clean
-    # CFLAGS="-arch i386" CXXFLAGS="-arch i386" LDFLAGS="-arch i386" make -C lz4/lib
-    # cp -L lz4/lib/liblz4.dylib ./liblz4_32.dylib
-    # lipo -create ./liblz4_32.dylib ./liblz4_64.dylib -output ./liblz4.dylib
-    # cp -v ./liblz4.dylib lz4/lib/$(readlink lz4/lib/liblz4.dylib)
-    # touch lz4/lib/liblz4
-    # make -C lz4/lib install
-
-
     mkdir -p rocksdb || fail "unable to create rocksdb directory"
     (cd rocksdb && {
         checkout "rocksdb" "$ROCKSDBREMOTE" "$ROCKSDBVERSION" "$ROCKSDBVERSION"

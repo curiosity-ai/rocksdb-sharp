@@ -21,7 +21,7 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: 'ls $(Build.SourcesDirectory) -hR'
+    script: 'ls $(Build.SourcesDirectory)'
   
 - task: AzureCLI@1
   inputs:
