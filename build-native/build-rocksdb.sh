@@ -141,14 +141,15 @@ else
         echo "Mac (Darwin) detected"
         export CC=gcc-8
         export CXX=g++-8
-        CFLAGS="-stdlib=libc++ -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
+        CFLAGS="-I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
         LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
+        # -stdlib=libc++ 
         # LDFLAGS="-L/usr/local/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
         sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
-         
+                 
         brew install gcc48
         # brew install llvm
         brew install snappy
@@ -157,6 +158,8 @@ else
         brew install zlib
         brew install bzip2
         brew install gflags
+        
+        ls /usr/local/lib -hR
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
