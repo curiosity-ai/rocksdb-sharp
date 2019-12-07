@@ -76,7 +76,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
     # Make sure git is installed
     hash git 2> /dev/null || { fail "Build requires git"; }
-    # test -z "$WindowsSdkDir" && fail "This must be run from a build environment such as the Developer Command Prompt"
+    test -z "$WindowsSdkDir" && fail "This must be run from a build environment such as the Developer Command Prompt"
 
     BASEDIRWIN=$(cd "${BASEDIR}" && pwd -W)
 
