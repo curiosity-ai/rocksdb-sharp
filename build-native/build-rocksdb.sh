@@ -139,10 +139,10 @@ else
     
     if [ "$(uname)" == "Darwin" ]; then
         echo "Mac (Darwin) detected"
-        export CC=gcc-7
-        export CXX=g++-7
-        CFLAGS="-std=libc++ -std=c++11 -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
-        LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
+        # export CC=gcc-7
+        # export CXX=g++-7
+        # CFLAGS="-std=libc++ -I/usr/local/include"
+        # LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
         # -stdlib=libc++ 
         # LDFLAGS="-L/usr/local/lib -L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
         LIBEXT=.dylib
@@ -150,14 +150,13 @@ else
         
         # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
-        brew install gcc@7
-        # brew install llvm
-        brew install snappy
-        brew install zstd
-        brew install lz4
-        brew install zlib
-        brew install bzip2
-        brew install gflags
+        # brew install gcc@7  >/dev/null
+        # brew install snappy >/dev/null
+        # brew install zstd   >/dev/null
+        # brew install lz4    >/dev/null
+        # brew install zlib   >/dev/null
+        # brew install bzip2  >/dev/null
+        # brew install gflags >/dev/null
         
         # ls /usr/local/include
 
