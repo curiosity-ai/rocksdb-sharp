@@ -17,8 +17,11 @@ steps:
 - task: CmdLine@2
   inputs:
     script: |
-      "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
+      echo here1
+      'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat'
+      echo here2
       bash build-rocksdb.sh
+      echo here3
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
 - task: CmdLine@2
