@@ -18,11 +18,13 @@ steps:
     workingDirectory: '$(Build.SourcesDirectory)'
 
 
+
+
 - task: CmdLine@2
   inputs:
     script: |
       echo here1
-      %comspec% /k "'$(vsdir)\VsDevCmd.bat' && bash build-rocksdb.sh"
+      call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\Common7\\Tools\\vsdevcmd" -arch=x64 && bash build-rocksdb.sh
       echo here2
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
