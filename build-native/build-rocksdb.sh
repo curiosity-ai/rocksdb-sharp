@@ -139,13 +139,13 @@ else
         echo "Mac (Darwin) detected"
         export CC=gcc-8
         export CXX=g++-8
-        CFLAGS="-I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
+        CFLAGS="-stdlib=libc++ -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include"
         LDFLAGS="-L/usr/local/lib"
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        xcode-select --install
-        brew install gcc
+        sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+         
         brew install gcc48
         brew install llvm
         brew install snappy
