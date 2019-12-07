@@ -20,7 +20,7 @@ steps:
     script: |
       brew install automake
       brew install libtool
-      git clone git@github.com:google/snappy.git
+      git clone https://github.com/google/snappy
       cd snappy
       ./autogen.sh
       ./configure --prefix=/usr/local CFLAGS="-arch i386 -arch x86_64" CXXFLAGS="-arch i386 -arch x86_64" LDFLAGS="-arch i386 -arch x86_64" --disable-dependency-tracking
