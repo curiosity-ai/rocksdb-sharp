@@ -197,7 +197,8 @@ else
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
 
-        ./build_tools/build_detect_platform '-DZLIB'
+        ./build_tools/build_detect_platform temp_out
+        cat temp_out
 
         (. ./build_tools/build_detect_platform detected~; {
             grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
