@@ -139,8 +139,8 @@ else
     
     if [ "$(uname)" == "Darwin" ]; then
         echo "Mac (Darwin) detected"
-        export CC=gcc-8
-        export CXX=g++-8
+        export CC=gcc-7
+        export CXX=g++-7
         CFLAGS="-std=libc++ -std=c++11 -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
         LDFLAGS="-L/usr/local/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
         # -stdlib=libc++ 
@@ -151,7 +151,6 @@ else
         # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
         brew install gcc@7
-        brew install gcc@8
         # brew install llvm
         brew install snappy
         brew install zstd
@@ -160,24 +159,20 @@ else
         brew install bzip2
         brew install gflags
         
-        echo ---------------------------------------------------------------
-        echo ---------------------------------------------------------------
-
-        which gcc-8
-        which g++-8
-        which gcc-7
-        which g++-7
         # ls /usr/local/include
+
+        echo ---------------------------------------------------------------
+        which gcc-7
+        echo ---------------------------------------------------------------
+        which g++-7
+        echo ---------------------------------------------------------------
         gcc --version
+        echo ---------------------------------------------------------------        
         g++ --version
         echo ---------------------------------------------------------------
-        gcc-8 --version
-        g++-8 --version
-        echo ---------------------------------------------------------------
         gcc-7 --version
-        g++-7 --version
-        
         echo ---------------------------------------------------------------
+        g++-7 --version
         echo ---------------------------------------------------------------
 
     else
@@ -218,14 +213,11 @@ else
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
         
-        echo ---------------------------------------------------------------
-        echo ---------------------------------------------------------------
-        echo ---------------------------------------------------------------
+        echo ===============================================================
         ./build_tools/build_detect_platform temp_out
+        echo ===============================================================
         cat temp_out
-        echo ---------------------------------------------------------------
-        echo ---------------------------------------------------------------
-        echo ---------------------------------------------------------------
+        echo ===============================================================
         
         
         (. ./build_tools/build_detect_platform detected~; {
