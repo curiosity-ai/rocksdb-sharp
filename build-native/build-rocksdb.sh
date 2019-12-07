@@ -150,7 +150,7 @@ else
         
         sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
                  
-        brew install gcc48
+        brew install gcc
         # brew install llvm
         brew install snappy
         brew install zstd
@@ -159,7 +159,8 @@ else
         brew install bzip2
         brew install gflags
         
-        ls /usr/local/include
+        ./build_tools/build_detect_platform '-DZLIB'
+
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
@@ -199,10 +200,10 @@ else
         export ROCKSDB_DISABLE_GFLAGS=1
         
         (. ./build_tools/build_detect_platform detected~; {
-            grep detected~ -e '-DLZ4' &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
-            grep detected~ -e '-DZLIB' &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
+            grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
+            grep detected~ -e '-DZLIB'   &> /dev/null || fail "failed to detect zlib, install libzlib-dev"
             grep detected~ -e '-DSNAPPY' &> /dev/null || fail "failed to detect snappy, install libsnappy-dev"
-            grep detected~ -e '-DZSTD' &> /dev/null || fail "failed to detect zstd, install libzstd-dev"
+            grep detected~ -e '-DZSTD'   &> /dev/null || fail "failed to detect zstd, install libzstd-dev"
             grep detected~ -e '-DGFLAGS' &> /dev/null && fail "gflags detected, see https://github.com/facebook/rocksdb/issues/2310" || true
         }) || fail "dependency detection failed"
 
