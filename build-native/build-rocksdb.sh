@@ -148,6 +148,10 @@ else
         brew install snappy
         brew install zstd
         brew install lz4
+        brew install zlib
+        brew install bzip2
+        brew install gflags
+        brew install gcc48 --use-llvm
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
