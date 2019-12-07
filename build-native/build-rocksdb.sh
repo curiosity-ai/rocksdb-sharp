@@ -144,15 +144,16 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
+        xcode-select --install
         brew install gcc
+        brew install gcc48
+        brew install llvm
         brew install snappy
         brew install zstd
         brew install lz4
         brew install zlib
         brew install bzip2
         brew install gflags
-        brew install gcc48
-        brew install llvm
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
