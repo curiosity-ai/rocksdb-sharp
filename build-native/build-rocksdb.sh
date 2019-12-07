@@ -159,6 +159,9 @@ else
         brew install bzip2
         brew install gflags
         
+        which gcc-8
+        which g++-8
+        
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
