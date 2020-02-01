@@ -73,7 +73,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
     (cd vcpkg && {
         checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
-        ./bootstrap-vcpkg.sh
+        # 2020.2.1 -> this doesnt work anymore from MINGW:   ./bootstrap-vcpkg.sh
+        cmd //c "bootstrap-vcpkg.bat"  || fail "unable to build vcpkg.exe"
         ./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
     })
 
