@@ -2,7 +2,7 @@
 
 ROCKSDBVNUM=`cat ../rocksdbversion`
 ROCKSDBVERSION=v${ROCKSDBVNUM}
-SNAPPYVERSION=1.1.7
+SNAPPYVERSION=1.1.8
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
 SNAPPYREMOTE=https://github.com/google/snappy
@@ -120,7 +120,7 @@ else
         
         CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow"
         
-        brew install snappy@${SNAPPYVERSION}
+        brew install snappy
         brew install zstd
         brew install lz4
         brew install zlib
