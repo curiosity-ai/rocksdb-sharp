@@ -2,7 +2,9 @@
 
 ROCKSDBVNUM=`cat ../rocksdbversion`
 ROCKSDBVERSION=v${ROCKSDBVNUM}
-SNAPPYVERSION=1.1.8
+SNAPPYVERSION=1.1.7
+
+# TODO: change snappy to latest 1.1.8, once we figure out where it's installing its headers now on OSX (see bellow)
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
 SNAPPYREMOTE=https://github.com/google/snappy
@@ -120,7 +122,13 @@ else
         
         CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow"
         
-        brew install snappy
+        echo "${CMAKE_INSTALL_LIBDIR}"
+        echo "${CMAKE_INSTALL_INCLUDEDIR}"
+        
+        # brew install snappy
+        # NOTE: This forces install Snappy 1.1.7, as the new one is not working on OSX
+        brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/8501bcefedd6745181ad1b073d9298237cc5261b/Formula/snappy.rb
+        
         brew install zstd
         brew install lz4
         brew install zlib
