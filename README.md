@@ -28,7 +28,6 @@ var options = new DbOptions()
 using (var db = RocksDb.Open(options, path))
 {
     // Using strings below, but can also use byte arrays for both keys and values
-	// much care has been taken to minimize buffer copying
     db.Put("key", "value");
     string value = db.Get("key");
     db.Remove("key");
