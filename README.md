@@ -43,6 +43,8 @@ using (var db = RocksDb.Open(options, path))
 install-package RocksDb
 ```
 
+The version of the NuGet package is set to follow the official RocksDB version, with the last 4 numbers representing the build number on Azure - i.e. [NuGet version 6.7.3.6120](https://www.nuget.org/packages/rocksdb/6.7.3.6120) corresponds to release [v6.7.3](https://github.com/facebook/rocksdb/releases/tag/v6.7.3)
+
 This will install the managed library and the correct version of the unmanaged library depending on your operating system. The native64-bit library is automatically built for each official RocksDB release, for Windows, Linux and MacOS, and is included in the package by default.
 
 
