@@ -120,7 +120,7 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow"
+        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++11"
         
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
