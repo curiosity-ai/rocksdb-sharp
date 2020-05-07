@@ -31,12 +31,20 @@ namespace RocksDbSharp
 
         public void Dispose()
         {
-            if (columnFamilies != null)
+            if (Handle != IntPtr.Zero)
             {
-                foreach (var cfh in columnFamilies.Values)
-                    cfh.Dispose();
+                var handle = Handle;
+                Handle = IntPtr.Zero;
+
+                if (columnFamilies != null)
+                {
+                    foreach (var cfh in columnFamilies.Values)
+                    {
+                        cfh.Dispose();
+                    }
+                }
+                Native.Instance.rocksdb_close(handle);
             }
-            Native.Instance.rocksdb_close(Handle);
         }
 
         public static RocksDb Open(OptionsHandle options, string path)
