@@ -85,22 +85,24 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         checkout "rocksdb" "$ROCKSDBREMOTE" "$ROCKSDBVERSION" "$ROCKSDBVERSION"
 
         mkdir -p build
-        VCPKG_HOME="$(realpath ../vcpkg/installed/x64-windows-static)"
-        VCPKG_INCLUDE="${VCPKG_HOME}/include"
-        VCPKG_LIB_DEBUG="${VCPKG_HOME}/debug"
-        VCPKG_LIB_RELEASE="${VCPKG_HOME}/lib"
-        export ZLIB_INCLUDE="${VCPKG_INCLUDE}"
-        export ZLIB_LIB_DEBUG="${VCPKG_LIB_DEBUG}/zlib.lib"
-        export ZLIB_LIB_RELEASE="${VCPKG_LIB_RELEASE}/zlib.lib"
-        export SNAPPY_INCLUDE="${VCPKG_INCLUDE}"
-        export SNAPPY_LIB_DEBUG="${VCPKG_LIB_DEBUG}/snappy.lib"
-        export SNAPPY_LIB_RELEASE="${VCPKG_LIB_RELEASE}/snappy.lib"
-        export LZ4_INCLUDE="${VCPKG_INCLUDE}"
-        export LZ4_LIB_DEBUG="${VCPKG_LIB_DEBUG}/lz4.lib"
-        export LZ4_LIB_RELEASE="${VCPKG_LIB_RELEASE}/lz4.lib"
-        export ZSTD_INCLUDE="${VCPKG_INCLUDE}"
-        export ZSTD_LIB_DEBUG="${VCPKG_LIB_DEBUG}/zstd_static.lib"
-        export ZSTD_LIB_RELEASE="${VCPKG_LIB_RELEASE}/zstd_static.lib"
+        VCPKG_HOME="$(realpath ../vcpkg/packages)"
+
+        export ZLIB_INCLUDE="${VCPKG_HOME}/zlib_x64-windows-static/include"
+        export ZLIB_LIB_DEBUG="${VCPKG_HOME}/zlib_x64-windows-static/debug/lib/zlib.lib"
+        export ZLIB_LIB_RELEASE="${VCPKG_HOME}/zlib_x64-windows-static/lib/zlib.lib"
+        
+        export LZ4_INCLUDE="${VCPKG_HOME}/lz4_x64-windows-static/include"
+        export LZ4_LIB_DEBUG="${VCPKG_HOME}/lz4_x64-windows-static/debug/lib/lz4.lib"
+        export LZ4_LIB_RELEASE="${VCPKG_HOME}/lz4_x64-windows-static/lib/lz4.lib"
+
+        export SNAPPY_INCLUDE="${VCPKG_HOME}/snappy_x64-windows-static/include"
+        export SNAPPY_LIB_DEBUG="${VCPKG_HOME}/snappy_x64-windows-static/debug/lib/snappy.lib"
+        export SNAPPY_LIB_RELEASE="${VCPKG_HOME}/snappy_x64-windows-static/lib/snappy.lib"
+
+        export ZSTD_INCLUDE="${VCPKG_HOME}/zstd_x64-windows-static/include"
+        export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_x64-windows-static/debug/lib/zstd_static.lib"
+        export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd_static.lib"
+
         (cd build && {
             cmake -G "Visual Studio 16 2019" -WITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
