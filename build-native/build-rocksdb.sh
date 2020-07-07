@@ -136,6 +136,7 @@ else
         brew install zlib
         brew install bzip2
         brew install gflags
+        export ROCKSDB_DISABLE_JEMALLOC=1
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
