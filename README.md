@@ -1,6 +1,5 @@
 
-[![Build Status](https://dev.azure.com/curiosity-ai/mosaik/_apis/build/status/rocksdb-sharp?branchName=master)](https://dev.azure.com/curiosity-ai/mosaik/_build/latest?definitionId=20&branchName=master)
-
+[![Build Status](https://dev.azure.com/curiosity-ai/mosaik/_apis/build/status/rocksdb-sharp?branchName=master)](https://dev.azure.com/curiosity-ai/mosaik/_build/latest?definitionId=20&branchName=master) [![Nuget](https://img.shields.io/nuget/v/rocksdb.svg?maxAge=0&colorB=brightgreen)](https://www.nuget.org/packages/rocksdb/) 
 
 <a href="https://curiosity.ai"><img src="https://curiosity.ai/assets/images/logos/curiosity.png" width="100" height="100" align="right" /></a>
 
