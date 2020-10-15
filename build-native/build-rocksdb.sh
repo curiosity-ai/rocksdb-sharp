@@ -127,9 +127,12 @@ else
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
         
-        # brew install snappy
-        # NOTE: This forces install Snappy 1.1.7, as the new one is not working on OSX
-        brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/8501bcefedd6745181ad1b073d9298237cc5261b/Formula/snappy.rb
+        
+        #  RFO 15.10.2020: Brew changed and doesnt support install from commit version anymore
+        #     NOTE: This forces install Snappy 1.1.7, as the new one is not working on OSX
+        #     brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/8501bcefedd6745181ad1b073d9298237cc5261b/Formula/snappy.rb
+        
+        brew install snappy
         
         brew install zstd
         brew install lz4
