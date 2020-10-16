@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -10,12 +10,12 @@ namespace RocksDbSharp
     public abstract partial class Native
     {
         public static Native Instance;
-        
+
         static Native()
         {
             if (RuntimeInformation.ProcessArchitecture == Architecture.X86 && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 throw new RocksDbSharpException("Rocksdb on windows is not supported for 32 bit applications");
-            Instance = NativeImport.Auto.Import<Native>("rocksdb", "6.2.6", true);
+            Instance = NativeImport.Auto.Import<Native>("rocksdb", "6.12.7", true);
         }
 
         public Native()

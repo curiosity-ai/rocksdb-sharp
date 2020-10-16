@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace RocksDbPrepareCApiHeader
 {
@@ -73,25 +74,29 @@ namespace RocksDbPrepareCApiHeader
             yield break;
         }
 
-        static void Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             try
             {
-                Process();
+                await ProcessAsync();
+                return 0;
             }
             catch(Exception E)
             {
                 Console.WriteLine(E.ToString());
+                return -1;
             }
         }
         
-        static void Process()
+        static async Task ProcessAsync()
         {
-            var version = File.ReadAllText(@"../rocksdbversion");
+            var version = await File.ReadAllTextAsync(@"../rocksdbversion");
+            version = version.Trim(new char[] { ' ', '\r', '\n' });
+
             Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
             var urlOfCHeader = $"https://raw.githubusercontent.com/facebook/rocksdb/v{version}/include/rocksdb/c.h";
-            var original = Download(urlOfCHeader);
+            var original = await DownloadAsync(urlOfCHeader);
 
             Console.Error.WriteLine($"Using: {urlOfCHeader}");
 
@@ -190,13 +195,13 @@ namespace RocksDbPrepareCApiHeader
 
             var output = nativeRawCs.ToString();
 
-            using (var outputStream = File.Create(@"../csharp/src/Native.cs"))
-            using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
+            await using (var outputStream = File.Create(@"../csharp/src/Native.cs"))
+            await using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
             {
-                writer.WriteLine(output);
+                await writer.WriteLineAsync(output);
             }
 
-            File.WriteAllLines(@"../csharp/src/Native.Load.cs", new[]
+            await File.WriteAllLinesAsync(@"../csharp/src/Native.Load.cs", new[]
             {
                 "using System;",
                 "using System.Collections.Generic;",
@@ -261,8 +266,8 @@ namespace RocksDbPrepareCApiHeader
 
         private static string GetManagedEnum(NativeEnum nativeEnum)
         {
-            var commonPrefix = GetCommonPrefix(nativeEnum.Values.Select(e => e.Name)).If(p => p.EndsWith("_"));
-            var commonSuffix = GetCommonSuffix(nativeEnum.Values.Select(e => e.Name)).If(p => p.StartsWith("_"));
+            var commonPrefix = GetCommonPrefix(nativeEnum.Values.Select(e => e.Name).ToArray()).If(p => p.EndsWith("_"));
+            var commonSuffix = GetCommonSuffix(nativeEnum.Values.Select(e => e.Name).ToArray()).If(p => p.StartsWith("_"));
             var prefixLength = commonPrefix?.Length ?? 0;
             var suffixLength = commonSuffix?.Length ?? 0;
             var guessedEnumName =
@@ -546,8 +551,14 @@ namespace RocksDbPrepareCApiHeader
             return pascal;
         }
 
-        private static string GetCommonPrefix(IEnumerable<string> strings)
+        private static string GetCommonPrefix(string[] strings)
         {
+            //Fix for one case where the first value is entirely contained in the second, which breaks the algorithm below
+            if(strings.Any(s=> s == "rocksdb_block_based_table_data_block_index_type_binary_search") && strings.All(s => s.StartsWith("rocksdb_block_based_table_data_block_index_type_binary_search")))
+            {
+                return "rocksdb_block_based_table_data_block_index_type_";
+            }
+
             var minLength = strings.Select(s => s.Length).Min();
             for (int i = minLength - 1; i > 0; i--)
             {
@@ -559,7 +570,7 @@ namespace RocksDbPrepareCApiHeader
             return "";
         }
 
-        private static string GetCommonSuffix(IEnumerable<string> strings)
+        private static string GetCommonSuffix(string[] strings)
         {
             var minLength = strings.Select(s => s.Length).Min();
             for (int i = minLength - 1; i > 0; i--)
@@ -931,12 +942,12 @@ namespace RocksDbPrepareCApiHeader
                 => IsDelegate ? "TODO: delegate" : $"{NativeType} {Name}";
         }
 
-        static string Download(string url)
+        static async Task<string> DownloadAsync(string url)
         {
             using (var client = new HttpClient())
             {
-                var request = client.GetAsync(url).Result;
-                var response = request.Content.ReadAsStringAsync().Result;
+                var request  = await client.GetAsync(url);
+                var response = await request.Content.ReadAsStringAsync();
                 return response;
             }
         }
