@@ -8,6 +8,7 @@ using int_ptr = System.IntPtr;
 using size_t = System.UIntPtr;
 using const_size_t = System.UIntPtr;
 using uint32_t = System.UInt32;
+using const_uint32_t = System.UInt32;
 using unsigned_int = System.UInt32;
 using int32_t = System.Int32;
 using int64_t = System.Int64;
@@ -71,6 +72,7 @@ namespace RocksDbSharp
     using rocksdb_column_family_handle_t_ptr_ptr = System.IntPtr;
     using rocksdb_column_family_handle_t_ptr = System.IntPtr;
     using const_rocksdb_column_family_handle_t_ptr_const_ptr = System.IntPtr;
+    using const_rocksdb_column_family_handle_t_ptr = System.IntPtr;
     using rocksdb_envoptions_t_ptr = System.IntPtr;
     using const_rocksdb_envoptions_t_ptr = System.IntPtr;
     using rocksdb_ingestexternalfileoptions_t_ptr = System.IntPtr;
@@ -548,8 +550,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             out char_ptr_ptr errptr);
 
@@ -557,8 +559,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles)
         {
             var result = rocksdb_open_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, out char_ptr_ptr errptr);
@@ -571,8 +573,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             out char_ptr_ptr errptr);
 
@@ -580,8 +582,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles)
         {
             var result = rocksdb_open_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, out char_ptr_ptr errptr);
@@ -644,8 +646,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             bool error_if_log_file_exist,
             out char_ptr_ptr errptr);
@@ -654,8 +656,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             bool error_if_log_file_exist)
         {
@@ -669,8 +671,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             bool error_if_log_file_exist,
             out char_ptr_ptr errptr);
@@ -679,8 +681,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             bool error_if_log_file_exist)
         {
@@ -732,6 +734,56 @@ namespace RocksDbSharp
             int num_column_families,
             const_char_ptr_const_ptr column_family_names,
             const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            rocksdb_column_family_handle_t_ptr_ptr colummn_family_handles)
+        {
+            var result = rocksdb_open_as_secondary_column_families(options, name, secondary_path, num_column_families, column_family_names, column_family_options, colummn_family_handles, out char_ptr_ptr errptr);
+            if (errptr != IntPtr.Zero)
+                throw new RocksDbException(errptr);
+            return result;
+        }
+
+        public abstract rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+            const_rocksdb_options_t_ptr options,
+            const_char_ptr name,
+            const_char_ptr secondary_path,
+            int num_column_families,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
+            rocksdb_column_family_handle_t_ptr_ptr colummn_family_handles,
+            out char_ptr_ptr errptr);
+
+        public rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+            const_rocksdb_options_t_ptr options,
+            const_char_ptr name,
+            const_char_ptr secondary_path,
+            int num_column_families,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
+            rocksdb_column_family_handle_t_ptr_ptr colummn_family_handles)
+        {
+            var result = rocksdb_open_as_secondary_column_families(options, name, secondary_path, num_column_families, column_family_names, column_family_options, colummn_family_handles, out char_ptr_ptr errptr);
+            if (errptr != IntPtr.Zero)
+                throw new RocksDbException(errptr);
+            return result;
+        }
+
+        public abstract rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+            const_rocksdb_options_t_ptr options,
+            string name,
+            string secondary_path,
+            int num_column_families,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
+            rocksdb_column_family_handle_t_ptr_ptr colummn_family_handles,
+            out char_ptr_ptr errptr);
+
+        public rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+            const_rocksdb_options_t_ptr options,
+            string name,
+            string secondary_path,
+            int num_column_families,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr_ptr colummn_family_handles)
         {
             var result = rocksdb_open_as_secondary_column_families(options, name, secondary_path, num_column_families, column_family_names, column_family_options, colummn_family_handles, out char_ptr_ptr errptr);
@@ -1514,7 +1566,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_multi_get_cf(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
-            rocksdb_column_family_handle_t_ptr[] column_families,
+            const_rocksdb_column_family_handle_t_ptr[] column_families,
             size_t num_keys,
             IntPtr[] keys_list,
             size_t[] keys_list_sizes,
@@ -6694,8 +6746,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             out char_ptr_ptr errptr);
 
@@ -6703,8 +6755,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles)
         {
             var result = rocksdb_optimistictransactiondb_open_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, out char_ptr_ptr errptr);
@@ -6717,8 +6769,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
             out char_ptr_ptr errptr);
 
@@ -6726,8 +6778,8 @@ namespace RocksDbSharp
             const_rocksdb_options_t_ptr options,
             string name,
             int num_column_families,
-            const_char_ptr_const_ptr column_family_names,
-            const_rocksdb_options_t_ptr_const_ptr column_family_options,
+            string[] column_family_names,
+            const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles)
         {
             var result = rocksdb_optimistictransactiondb_open_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, out char_ptr_ptr errptr);

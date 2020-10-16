@@ -319,12 +319,22 @@ namespace RocksDbPrepareCApiHeader
         {
             // Note: the managedArgName can be convenient since a native arg name is not always supplied
             yield return (Type: GetManagedType(nativeArg), Strategy: "default");
+            
             if (managedArgName.IsMatchedBy(".*name|name.*|.*dir|.*path") && nativeArg.NativeType == "const char*")
                 yield return (Type: "string", Strategy: "string name");
+            
             if (nativeArg.Name.IsMatchedBy(".*names|names.*") && nativeArg.NativeType == "const char**")
                 yield return (Type: "string[]", Strategy: "array");
+            
+            if (nativeArg.Name.IsMatchedBy(".*names|names.*") && nativeArg.NativeType == "const char* const*")
+                yield return (Type: "string[]", Strategy: "array");
+            
             if (nativeArg.Name.IsMatchedBy(".*column_famil.*|iterators") && nativeArg.NativeType.EndsWith("**"))
                 yield return (Type: $"{AsArrayType(GetManagedType(nativeArg.NativeType))}", Strategy: "array");
+            
+            if (nativeArg.Name.IsMatchedBy(".*column_famil.*|iterators") && nativeArg.NativeType.EndsWith("* const*"))
+                yield return (Type: $"{AsArrayType(GetManagedType(nativeArg.NativeType))}", Strategy: "array");
+
             if (nativeArg.Name.IsMatchedBy(@"key|k|val|v|.*_key|.*_val") && nativeArg.NativeType.In("const char*", "char*"))
             {
                 yield return (Type: "byte*", Strategy: "kv byte*");
@@ -342,10 +352,13 @@ namespace RocksDbPrepareCApiHeader
             }
             if (nativeArg.Name.ToLower().EndsWith("list") && nativeArg.NativeType.In("const char* const*", "char**"))
                 yield return (Type: "IntPtr[]", Strategy: "array");
+
             if (nativeArg.Name.ToLower().EndsWith("sizes") && nativeArg.NativeType.In("const size_t*", "size_t*"))
                 yield return (Type: "size_t[]", Strategy: "array");
+
             if (nativeArg.Name == "column_families" && nativeArg.NativeType == "const rocksdb_column_family_handle_t* const*")
                 yield return (Type: "rocksdb_column_family_handle_t_ptr[]", Strategy: "array");
+
             if (nativeArg.Name == "level_values" && nativeArg.NativeType == "int*")
                 yield return (Type: "int[]", Strategy: "array");
 
@@ -594,6 +607,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using size_t = System.UIntPtr;",
                 @"using const_size_t = System.UIntPtr;",
                 @"using uint32_t = System.UInt32;",
+                @"using const_uint32_t = System.UInt32;",
                 @"using unsigned_int = System.UInt32;",
                 @"using int32_t = System.Int32;",
                 @"using int64_t = System.Int64;",
@@ -610,6 +624,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using void_ptr = System.IntPtr;",
                 @"using size_t_ptr = System.IntPtr;",
                 @"using delegate_ptr = System.IntPtr;",
+
                 @"",
                 @"#pragma warning disable IDE1006 // Intentionally violating naming conventions because this is meant to match the C API",
             });
