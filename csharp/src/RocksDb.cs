@@ -255,6 +255,24 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_list_column_families(options.Handle, name);
         }
 
+        public static bool TryListColumnFamilies(DbOptions options, string name, out string[] columnFamilies)
+        {
+            var result = Native.Instance.rocksdb_list_column_families(options.Handle, name, out UIntPtr lencf, out IntPtr errptr);
+            if (errptr != IntPtr.Zero)
+            {
+                columnFamilies = Array.Empty<string>();
+                return false;
+            }
+
+            IntPtr[] ptrs = new IntPtr[(ulong)lencf];
+            Marshal.Copy(result, ptrs, 0, (int)lencf);
+            columnFamilies = new string[(ulong)lencf];
+            for (ulong i = 0; i < (ulong)lencf; i++)
+                columnFamilies[i] = Marshal.PtrToStringAnsi(ptrs[i]);
+            Native.Instance.rocksdb_list_column_families_destroy(result, lencf);
+            return true;
+        }
+
         public ColumnFamilyHandle CreateColumnFamily(ColumnFamilyOptions cfOptions, string name)
         {
             var cfh = Native.Instance.rocksdb_create_column_family(Handle, cfOptions.Handle, name);
@@ -280,6 +298,21 @@ namespace RocksDbSharp
             if (columnFamilies == null)
                 throw new RocksDbSharpException("Database not opened for column families");
             return columnFamilies[name];
+        }
+
+        public bool TryGetColumnFamily(string name, out ColumnFamilyHandle handle)
+        {
+            if (columnFamilies == null)
+                throw new RocksDbSharpException("Database not opened for column families");
+
+            if (columnFamilies.TryGetValue(name, out var internalHandle))
+            {
+                handle = internalHandle;
+                return true;
+            }
+
+            handle = null;
+            return false;
         }
 
         public string GetProperty(string propertyName)
