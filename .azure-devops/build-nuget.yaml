@@ -15,7 +15,7 @@ steps:
       echo "##vso[task.setvariable variable=ROCKSDBVERSIONBASE]${ROCKSDBVNUM}"
     workingDirectory: '$(Build.SourcesDirectory)'
 
-- task: NuGetToolInstaller@0
+- task: NuGetToolInstaller@1
 
 - task: UseDotNet@2
   displayName: 'Use .NET Core sdk'
