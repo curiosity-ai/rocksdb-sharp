@@ -604,6 +604,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using System.Runtime.InteropServices;",
                 @"using byte_ptr = System.IntPtr;",
                 @"using int_ptr = System.IntPtr;",
+                @"using const_int_ptr = System.IntPtr;",
                 @"using size_t = System.UIntPtr;",
                 @"using const_size_t = System.UIntPtr;",
                 @"using uint32_t = System.UInt32;",
