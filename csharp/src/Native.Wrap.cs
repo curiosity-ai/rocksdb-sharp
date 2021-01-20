@@ -90,6 +90,18 @@ namespace RocksDbSharp
             return result;
         }
 
+        public byte[] rocksdb_get(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_get(db, read_options, key, out IntPtr errptr, cf);
+            if (errptr != IntPtr.Zero)
+                throw new RocksDbException(errptr);
+            return result;
+        }
+
         public System.Collections.Generic.KeyValuePair<string, string>[] rocksdb_multi_get(
             IntPtr db,
             IntPtr read_options,

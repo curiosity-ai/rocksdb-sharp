@@ -1,14 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <ApplicationIcon />
+    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <PackageId>RocksDB</PackageId>
     <Authors>Curiosity GmbH, Warren Falk</Authors>
     <Company>Curiosity GmbH, Warren Falk</Company>
-    <Description>NET standard bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
+    <Description>.NET bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
     <PackageTags>rocksdb leveldb embedded database</PackageTags>
     <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2019 Curiosity GmbH</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -17,6 +16,7 @@
     <Version>0.0.42</Version>
     <IncludeReferencedProjects>true</IncludeReferencedProjects>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageIcon>logo-128.png</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -32,9 +32,16 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so"    Link="librocksdb.so"    Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so"/>
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib"   Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib"/>
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll"        Link="librocksdb.so"    Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll"/>
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll" Link="librocksdb.so" Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll" />
   </ItemGroup>
-  
+
+
+  <ItemGroup>
+    <None Include="logo-128.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 </Project>

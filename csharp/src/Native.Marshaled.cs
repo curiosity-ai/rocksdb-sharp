@@ -156,6 +156,32 @@ namespace RocksDbSharp
             return result;
         }
 
+        public unsafe byte[] rocksdb_get(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf == null
+                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+                return null;
+            if (resultPtr == IntPtr.Zero)
+                return null;
+            var result = new byte[(ulong)valueLength];
+            Marshal.Copy(resultPtr, result, 0, (int)valueLength);
+            rocksdb_free(resultPtr);
+            return result;
+        }
+
         /// <summary>
         /// Executes a multi_get with automatic marshalling
         /// </summary>
