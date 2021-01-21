@@ -18,7 +18,11 @@ namespace RocksDbSharp
         {
             byte* bv = (byte*)nullTermStr.ToPointer();
             byte* n = bv;
-            while (*n != 0) n++;
+            while (*n != 0)
+            {
+                n++;
+            }
+
             var vlength = n - bv;
             fixed (char* v = new char[vlength])
             {
@@ -35,12 +39,18 @@ namespace RocksDbSharp
         {
             var result = rocksdb_list_column_families(options, name, out UIntPtr lencf, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
+            {
                 throw new RocksDbException(errptr);
+            }
+
             IntPtr[] ptrs = new IntPtr[(ulong)lencf];
             Marshal.Copy(result, ptrs, 0, (int)lencf);
             string[] strings = new string[(ulong)lencf];
             for (ulong i = 0; i < (ulong)lencf; i++)
+            {
                 strings[i] = Marshal.PtrToStringAnsi(ptrs[i]);
+            }
+
             rocksdb_list_column_families_destroy(result, lencf);
             return strings;
         }
@@ -56,8 +66,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key, v = val)
                 {
                     int klength = key.Length;
@@ -72,10 +85,14 @@ namespace RocksDbSharp
                     UIntPtr sklength = (UIntPtr)bklength;
                     UIntPtr svlength = (UIntPtr)bvlength;
 
-                    if (cf == null)
+                    if (cf is null)
+                    {
                         rocksdb_put(db, writeOptions, bk, sklength, bv, svlength, out errptr);
+                    }
                     else
+                    {
                         rocksdb_put_cf(db, writeOptions, cf.Handle, bk, sklength, bv, svlength, out errptr);
+                    }
 #if DEBUG
                     Zero(bk, bklength);
 #endif
@@ -92,8 +109,11 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             unsafe
             {
                 fixed (char* k = key)
@@ -105,7 +125,7 @@ namespace RocksDbSharp
                     encoding.GetBytes(k, klength, bk, bklength);
                     UIntPtr sklength = (UIntPtr)bklength;
 
-                    var resultPtr = cf == null
+                    var resultPtr = cf is null
                         ? rocksdb_get(db, read_options, bk, sklength, out UIntPtr bvlength, out errptr)
                         : rocksdb_get_cf(db, read_options, cf.Handle, bk, sklength, out bvlength, out errptr);
 #if DEBUG
@@ -114,9 +134,14 @@ namespace RocksDbSharp
                     Marshal.FreeHGlobal(buffer);
 
                     if (errptr != IntPtr.Zero)
+                    {
                         return null;
+                    }
+
                     if (resultPtr == IntPtr.Zero)
+                    {
                         return null;
+                    }
 
                     return MarshalAndFreeRocksDbString(resultPtr, (long)bvlength, encoding);
                 }
@@ -143,13 +168,19 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null)
         {
             UIntPtr skLength = (UIntPtr)keyLength;
-            var resultPtr = cf == null
+            var resultPtr = cf is null
                 ? rocksdb_get(db, read_options, key, skLength, out UIntPtr valueLength, out errptr)
                 : rocksdb_get_cf(db, read_options, cf.Handle, key, skLength, out valueLength, out errptr);
             if (errptr != IntPtr.Zero)
+            {
                 return null;
+            }
+
             if (resultPtr == IntPtr.Zero)
+            {
                 return null;
+            }
+
             var result = new byte[(ulong)valueLength];
             Marshal.Copy(resultPtr, result, 0, (int)valueLength);
             rocksdb_free(resultPtr);
@@ -168,14 +199,20 @@ namespace RocksDbSharp
             UIntPtr valueLength;
             fixed (byte* ptr = &MemoryMarshal.GetReference(key))
             {
-                resultPtr = cf == null
+                resultPtr = cf is null
                                 ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
                                 : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
             }
             if (errptr != IntPtr.Zero)
+            {
                 return null;
+            }
+
             if (resultPtr == IntPtr.Zero)
+            {
                 return null;
+            }
+
             var result = new byte[(ulong)valueLength];
             Marshal.Copy(resultPtr, result, 0, (int)valueLength);
             rocksdb_free(resultPtr);
@@ -212,19 +249,29 @@ namespace RocksDbSharp
             UIntPtr[] valueLengths = new UIntPtr[count];
             UIntPtr[] keyLengthsConverted = new UIntPtr[count];
 
-            if (values == null)
+            if (values is null)
+            {
                 values = new KeyValuePair<byte[], byte[]>[count];
-            if (errptrs == null)
+            }
+
+            if (errptrs is null)
+            {
                 errptrs = new IntPtr[count];
-            if (keyLengths == null)
+            }
+
+            if (keyLengths is null)
             {
                 for (int i = 0; i < count; i++)
+                {
                     keyLengthsConverted[i] = new UIntPtr((uint)keys[i].Length);
+                }
             }
             else
             {
                 for (int i = 0; i < count; i++)
+                {
                     keyLengthsConverted[i] = new UIntPtr((uint)keyLengths[i]);
+                }
             }
 
             // first we have to pin and take the address of each key
@@ -234,7 +281,7 @@ namespace RocksDbSharp
                 pinned[i] = gch;
                 keyPtrs[i] = gch.AddrOfPinnedObject();
             }
-            if (cf == null)
+            if (cf is null)
             {
                 rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
             }
@@ -242,12 +289,17 @@ namespace RocksDbSharp
             {
                 IntPtr[] cfhs = new IntPtr[cf.Length];
                 for (int i = 0; i < count; i++)
+                {
                     cfhs[i] = cf[i].Handle;
+                }
+
                 rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
             }
             // unpin the keys
             foreach (var gch in pinned)
+            {
                 gch.Free();
+            }
 
             // now marshal all of the values
             for (int i = 0; i < count; i++)
@@ -290,8 +342,11 @@ namespace RocksDbSharp
             ColumnFamilyHandle[] cf = null,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             uint count = numKeys == 0 ? (uint)keys.Length : (uint)numKeys;
             UIntPtr sCount = (UIntPtr)count;
             IntPtr[] keyPtrs = new IntPtr[count];
@@ -299,10 +354,15 @@ namespace RocksDbSharp
             IntPtr[] valuePtrs = new IntPtr[count];
             UIntPtr[] valueLengths = new UIntPtr[count];
 
-            if (values == null)
+            if (values is null)
+            {
                 values = new KeyValuePair<string, string>[count];
-            if (errptrs == null)
+            }
+
+            if (errptrs is null)
+            {
                 errptrs = new IntPtr[count];
+            }
 
             // first we have to encode each key
             for (int i = 0; i < count; i++)
@@ -318,7 +378,7 @@ namespace RocksDbSharp
                     keyLengths[i] = new UIntPtr((uint)bklength);
                 }
             }
-            if (cf == null)
+            if (cf is null)
             {
                 rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
             }
@@ -326,12 +386,17 @@ namespace RocksDbSharp
             {
                 IntPtr[] cfhs = new IntPtr[cf.Length];
                 for (int i = 0; i < count; i++)
+                {
                     cfhs[i] = cf[i].Handle;
+                }
+
                 rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
             }
             // free the buffers allocated for each encoded key
             foreach (var keyPtr in keyPtrs)
+            {
                 Marshal.FreeHGlobal(keyPtr);
+            }
 
             // now marshal all of the values
             for (int i = 0; i < count; i++)
@@ -362,10 +427,14 @@ namespace RocksDbSharp
         {
             var bkey = (encoding ?? Encoding.UTF8).GetBytes(key);
             UIntPtr kLength = (UIntPtr)bkey.GetLongLength(0);
-            if (cf == null)
+            if (cf is null)
+            {
                 rocksdb_delete(db, writeOptions, bkey, kLength, out errptr);
+            }
             else
+            {
                 rocksdb_delete_cf(db, writeOptions, cf.Handle, bkey, kLength, out errptr);
+            }
         }
 
         public string rocksdb_options_statistics_get_string_marshaled(IntPtr opts)
@@ -378,8 +447,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key, v = val)
                 {
                     int klength = key.Length;
@@ -447,8 +519,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key, v = val)
                 {
                     int klength = key.Length;
@@ -493,8 +568,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key)
                 {
                     int klength = key.Length;
@@ -520,8 +598,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key)
                 {
                     int klength = key.Length;
@@ -561,7 +642,9 @@ namespace RocksDbSharp
         {
             var end = bk + bklength;
             for (; bk < end; bk++)
+            {
                 *bk = 0;
+            }
         }
 #endif
 
@@ -569,8 +652,11 @@ namespace RocksDbSharp
             /*rocksdb_t**/ IntPtr iter,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             unsafe
             {
                 var resultPtr = rocksdb_iter_key(iter, out UIntPtr bklength);
@@ -583,8 +669,11 @@ namespace RocksDbSharp
             /*rocksdb_t**/ IntPtr iter,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             unsafe
             {
                 var resultPtr = rocksdb_iter_value(iter, out UIntPtr bvlength);
@@ -926,8 +1015,11 @@ namespace RocksDbSharp
         {
             unsafe
             {
-                if (encoding == null)
+                if (encoding is null)
+                {
                     encoding = Encoding.UTF8;
+                }
+
                 fixed (char* k = key, v = val)
                 {
                     int klength = key.Length;
@@ -957,8 +1049,11 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             unsafe
             {
                 fixed (char* k = key)
@@ -969,7 +1064,7 @@ namespace RocksDbSharp
                     byte* bk = (byte*)buffer.ToPointer();
                     encoding.GetBytes(k, klength, bk, bklength);
 
-                    var resultPtr = cf == null
+                    var resultPtr = cf is null
                         ? rocksdb_writebatch_wi_get_from_batch(wb, options, bk, new UIntPtr((uint)bklength), out UIntPtr bvlength, out errptr)
                         : rocksdb_writebatch_wi_get_from_batch_cf(wb, options, cf.Handle, bk, new UIntPtr((uint)bklength), out bvlength, out errptr);
 #if DEBUG
@@ -978,9 +1073,14 @@ namespace RocksDbSharp
                     Marshal.FreeHGlobal(buffer);
 
                     if (errptr != IntPtr.Zero)
+                    {
                         return null;
+                    }
+
                     if (resultPtr == IntPtr.Zero)
+                    {
                         return null;
+                    }
 
                     return MarshalAndFreeRocksDbString(resultPtr, (long)bvlength, encoding);
                 }
@@ -995,13 +1095,19 @@ namespace RocksDbSharp
             out IntPtr errptr,
             ColumnFamilyHandle cf = null)
         {
-            var resultPtr = cf == null
+            var resultPtr = cf is null
                 ? rocksdb_writebatch_wi_get_from_batch(wb, options, key, new UIntPtr(keyLength), out UIntPtr valueLength, out errptr)
                 : rocksdb_writebatch_wi_get_from_batch_cf(wb, options, cf.Handle, key, new UIntPtr(keyLength), out valueLength, out errptr);
             if (errptr != IntPtr.Zero)
+            {
                 return null;
+            }
+
             if (resultPtr == IntPtr.Zero)
+            {
                 return null;
+            }
+
             var result = new byte[(long)valueLength];
             Marshal.Copy(resultPtr, result, 0, (int)valueLength);
             rocksdb_free(resultPtr);
@@ -1017,8 +1123,11 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null,
             Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
+            }
+
             unsafe
             {
                 fixed (char* k = key)
@@ -1029,7 +1138,7 @@ namespace RocksDbSharp
                     byte* bk = (byte*)buffer.ToPointer();
                     encoding.GetBytes(k, klength, bk, bklength);
 
-                    var resultPtr = cf == null
+                    var resultPtr = cf is null
                         ? rocksdb_writebatch_wi_get_from_batch_and_db(wb, db, read_options, bk, new UIntPtr((uint)bklength), out UIntPtr bvlength, out errptr)
                         : rocksdb_writebatch_wi_get_from_batch_and_db_cf(wb, db, read_options, cf.Handle, bk, new UIntPtr((uint)bklength), out bvlength, out errptr);
 #if DEBUG
@@ -1038,9 +1147,14 @@ namespace RocksDbSharp
                     Marshal.FreeHGlobal(buffer);
 
                     if (errptr != IntPtr.Zero)
+                    {
                         return null;
+                    }
+
                     if (resultPtr == IntPtr.Zero)
+                    {
                         return null;
+                    }
 
                     return MarshalAndFreeRocksDbString(resultPtr, (long)bvlength, encoding);
                 }
@@ -1056,13 +1170,19 @@ namespace RocksDbSharp
             out IntPtr errptr,
             ColumnFamilyHandle cf = null)
         {
-            var resultPtr = cf == null
+            var resultPtr = cf is null
                 ? rocksdb_writebatch_wi_get_from_batch_and_db(wb, db, read_options, key, new UIntPtr(keyLength), out UIntPtr valueLength, out errptr)
                 : rocksdb_writebatch_wi_get_from_batch_and_db_cf(wb, db, read_options, cf.Handle, key, new UIntPtr(keyLength), out valueLength, out errptr);
             if (errptr != IntPtr.Zero)
+            {
                 return null;
+            }
+
             if (resultPtr == IntPtr.Zero)
+            {
                 return null;
+            }
+
             var result = new byte[(ulong)valueLength];
             Marshal.Copy(resultPtr, result, 0, (int)valueLength);
             rocksdb_free(resultPtr);

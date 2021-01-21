@@ -73,7 +73,10 @@ namespace RocksDbSharp
             IntPtr db = Native.Instance.rocksdb_open_column_families(options.Handle, path, cfnames.Length, cfnames, cfoptions, cfhandles);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
+            {
                 cfHandleMap.Add(pair.Name, pair.Handle);
+            }
+
             return new RocksDb(db,
                 optionsReferences: options.References,
                 cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
@@ -88,7 +91,10 @@ namespace RocksDbSharp
             IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, path, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
+            {
                 cfHandleMap.Add(pair.Name, pair.Handle);
+            }
+
             return new RocksDb(db,
                 optionsReferences: options.References,
                 cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
@@ -132,6 +138,7 @@ namespace RocksDbSharp
         {
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf);
         }
+
         public byte[] Get(byte[] key, long keyLength, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, keyLength, cf);
@@ -172,7 +179,10 @@ namespace RocksDbSharp
             {
                 var ptr = Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, keyLength, out long valLength, cf);
                 if (ptr == IntPtr.Zero)
+                {
                     return -1;
+                }
+
                 var copyLength = Math.Min(length, valLength);
                 Marshal.Copy(ptr, buffer, (int)offset, (int)copyLength);
                 Native.Instance.rocksdb_free(ptr);
@@ -210,12 +220,31 @@ namespace RocksDbSharp
             Remove(key, key.Length, cf, writeOptions);
         }
 
+        public unsafe void Remove(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
+            {
+                if (cf is null)
+                {
+                    Native.Instance.rocksdb_delete(Handle, (writeOptions ?? DefaultWriteOptions).Handle, keyPtr, (UIntPtr)key.Length);
+                }
+                else
+                {
+                    Native.Instance.rocksdb_delete_cf(Handle, (writeOptions ?? DefaultWriteOptions).Handle, cf.Handle, keyPtr, (UIntPtr)key.Length);
+                }
+            }
+        }
+
         public void Remove(byte[] key, long keyLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
-            if (cf == null)
+            if (cf is null)
+            {
                 Native.Instance.rocksdb_delete(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, (UIntPtr)keyLength);
+            }
             else
+            {
                 Native.Instance.rocksdb_delete_cf(Handle, (writeOptions ?? DefaultWriteOptions).Handle, cf.Handle, key, (UIntPtr)keyLength);
+            }
         }
 
         public void Put(string key, string value, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null, Encoding encoding = null)
@@ -228,6 +257,11 @@ namespace RocksDbSharp
             Put(key, key.GetLongLength(0), value, value.GetLongLength(0), cf, writeOptions);
         }
 
+        public void Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            Native.Instance.rocksdb_put(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, value, cf);
+        }
+
         public void Put(byte[] key, long keyLength, byte[] value, long valueLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
             Native.Instance.rocksdb_put(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, keyLength, value, valueLength, cf);
@@ -235,7 +269,7 @@ namespace RocksDbSharp
 
         public Iterator NewIterator(ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
-            IntPtr iteratorHandle = cf == null
+            IntPtr iteratorHandle = cf is null
                 ? Native.Instance.rocksdb_create_iterator(Handle, (readOptions ?? DefaultReadOptions).Handle)
                 : Native.Instance.rocksdb_create_iterator_cf(Handle, (readOptions ?? DefaultReadOptions).Handle, cf.Handle);
             // Note: passing in read options here only to ensure that it is not collected before the iterator
@@ -272,7 +306,10 @@ namespace RocksDbSharp
             Marshal.Copy(result, ptrs, 0, (int)lencf);
             columnFamilies = new string[(ulong)lencf];
             for (ulong i = 0; i < (ulong)lencf; i++)
+            {
                 columnFamilies[i] = Marshal.PtrToStringAnsi(ptrs[i]);
+            }
+
             Native.Instance.rocksdb_list_column_families_destroy(result, lencf);
             return true;
         }
@@ -299,15 +336,20 @@ namespace RocksDbSharp
 
         public ColumnFamilyHandle GetColumnFamily(string name)
         {
-            if (columnFamilies == null)
+            if (columnFamilies is null)
+            {
                 throw new RocksDbSharpException("Database not opened for column families");
+            }
+
             return columnFamilies[name];
         }
 
         public bool TryGetColumnFamily(string name, out ColumnFamilyHandle handle)
         {
-            if (columnFamilies == null)
+            if (columnFamilies is null)
+            {
                 throw new RocksDbSharpException("Database not opened for column families");
+            }
 
             if (columnFamilies.TryGetValue(name, out var internalHandle))
             {
@@ -331,25 +373,36 @@ namespace RocksDbSharp
 
         public void IngestExternalFiles(string[] files, IngestExternalFileOptions ingestOptions, ColumnFamilyHandle cf = null)
         {
-            if (cf == null)
+            if (cf is null)
+            {
                 Native.Instance.rocksdb_ingest_external_file(Handle, files, (UIntPtr)files.GetLongLength(0), ingestOptions.Handle);
+            }
             else
+            {
                 Native.Instance.rocksdb_ingest_external_file_cf(Handle, cf.Handle, files, (UIntPtr)files.GetLongLength(0), ingestOptions.Handle);
+            }
         }
 
         public void CompactRange(byte[] start, byte[] limit, ColumnFamilyHandle cf = null)
         {
-            if (cf == null)
+            if (cf is null)
+            {
                 Native.Instance.rocksdb_compact_range(Handle, start, (UIntPtr)(start?.GetLongLength(0) ?? 0L), limit, (UIntPtr)(limit?.GetLongLength(0) ?? 0L));
+            }
             else
+            {
                 Native.Instance.rocksdb_compact_range_cf(Handle, cf.Handle, start, (UIntPtr)(start?.GetLongLength(0) ?? 0L), limit, (UIntPtr)(limit?.GetLongLength(0) ?? 0L));
+            }
         }
 
         public void CompactRange(string start, string limit, ColumnFamilyHandle cf = null, Encoding encoding = null)
         {
-            if (encoding == null)
+            if (encoding is null)
+            {
                 encoding = Encoding.UTF8;
-            CompactRange(start == null ? null : encoding.GetBytes(start), limit == null ? null : encoding.GetBytes(limit), cf);
+            }
+
+            CompactRange(start is null ? null : encoding.GetBytes(start), limit is null ? null : encoding.GetBytes(limit), cf);
         }
     }
 }
