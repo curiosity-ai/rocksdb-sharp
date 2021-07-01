@@ -198,7 +198,7 @@ namespace RocksDbPrepareCApiHeader
             await using (var outputStream = File.Create(@"../csharp/src/Native.cs"))
             await using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
             {
-                await writer.WriteLineAsync(output);
+                await writer.WriteLineAsync(output.Replace("void p0", ""));
             }
 
             await File.WriteAllLinesAsync(@"../csharp/src/Native.Load.cs", new[]
