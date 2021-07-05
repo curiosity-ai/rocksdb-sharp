@@ -106,7 +106,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export WITH_WINDOWS_UTF8_FILENAMES=1
 
         (cd build && {
-            cmake -G "Visual Studio 16 2019" -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_AVX2=0 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 16 2019" -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DHAVE_AVX2=0 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
