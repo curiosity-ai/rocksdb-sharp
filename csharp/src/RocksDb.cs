@@ -8,8 +8,9 @@ using Transitional;
 
 namespace RocksDbSharp
 {
-    public class RocksDb : IDisposable
+    public sealed class RocksDb : IDisposable
     {
+        private bool _disposed;
         internal static ReadOptions DefaultReadOptions { get; } = new ReadOptions();
         internal static OptionsHandle DefaultOptions { get; } = new DbOptions();
         internal static WriteOptions DefaultWriteOptions { get; } = new WriteOptions();
@@ -29,20 +30,41 @@ namespace RocksDbSharp
             this.columnFamilies = columnFamilies;
         }
 
+        ~RocksDb()
+        {
+            ReleaseUnmanagedResources();
+        }
+
         public void Dispose()
         {
-            if (Handle != IntPtr.Zero)
+            if (_disposed) return;
+
+            try
+            {
+                ReleaseUnmanagedResources();
+                GC.SuppressFinalize(this);
+            }
+            finally
+            {
+                _disposed = true;
+            }
+        }
+
+        private void ReleaseUnmanagedResources()
+        {
+            if (columnFamilies is object)
+            {
+                foreach (var cfh in columnFamilies.Values)
+                {
+                    cfh.Dispose();
+                }
+                columnFamilies = null;
+            }
+
+            if(Handle != IntPtr.Zero)
             {
                 var handle = Handle;
                 Handle = IntPtr.Zero;
-
-                if (columnFamilies != null)
-                {
-                    foreach (var cfh in columnFamilies.Values)
-                    {
-                        cfh.Dispose();
-                    }
-                }
                 Native.Instance.rocksdb_close(handle);
             }
         }
