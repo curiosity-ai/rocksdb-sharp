@@ -65,9 +65,9 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         }) || fail "cmake build generation failed"
 
         test -z "$RUNTESTS" || {
-            cmd //c "msbuild build/snappy.sln /p:Configuration=Debug /m:$CONCURRENCY" || fail "Build of snappy (debug config) failed"
+            cmd //c "msbuild build/snappy.sln /p:Configuration=Debug /m:$CONCURRENCY /arch:SSE2" || fail "Build of snappy (debug config) failed"
         }
-        cmd //c "msbuild build/snappy.sln /p:Configuration=Release /m:$CONCURRENCY" || fail "Build of snappy failed"
+        cmd //c "msbuild build/snappy.sln /p:Configuration=Release /m:$CONCURRENCY /arch:SSE2" || fail "Build of snappy failed"
     }) || fail "Snappy build failed"
 
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
@@ -104,11 +104,11 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd_static.lib"
         
         (cd build && {
-            cmake -G "Visual Studio 16 2019" -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DHAVE_AVX2=0 -DENABLE_AVX=0 -DENABLE_AVX2=0 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 16 2019" -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
-        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY" || fail "Rocksdb release build failed"
+        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /arch:SSE2" || fail "Rocksdb release build failed"
 
         ls -R ./build/Release/
 
