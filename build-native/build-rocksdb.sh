@@ -57,6 +57,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     
     export VCPKG_C_FLAGS=/arch:SSE2
     export VCPKG_CXX_FLAGS=/arch:SSE2
+    export CMAKE_C_FLAGS=/arch:SSE2
+    export CMAKE_CXX_FLAGS=/arch:SSE2
     
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
     (cd vcpkg && {
