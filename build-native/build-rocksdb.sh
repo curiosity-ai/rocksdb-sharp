@@ -55,6 +55,9 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
     BASEDIRWIN=$(cd "${BASEDIR}" && pwd -W)
     
+    export VCPKG_C_FLAGS=/arch:SSE2
+    export VCPKG_CXX_FLAGS=/arch:SSE2
+    
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
     (cd vcpkg && {
         checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
