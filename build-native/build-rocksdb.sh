@@ -54,22 +54,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     test -z "$WindowsSdkDir" && fail "This must be run from a build environment such as the Developer Command Prompt"
 
     BASEDIRWIN=$(cd "${BASEDIR}" && pwd -W)
-
-    mkdir -p snappy || fail "unable to create snappy directory"
-    (cd snappy && {
-        checkout "snappy" "$SNAPPYREMOTE" "$SNAPPYVERSION" "$SNAPPYVERSION"
-        mkdir -p build
-        (cd build && {
-            cmake -G "Visual Studio 16 2019" -DSNAPPY_BUILD_TESTS=0 -DENABLE_AVX=0 -DENABLE_AVX2=0 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 .. || fail "Running cmake on snappy failed"
-            update_vcxproj || warn "unable to patch snappy for static vc runtime"
-        }) || fail "cmake build generation failed"
-
-        test -z "$RUNTESTS" || {
-            cmd //c "msbuild build/snappy.sln /p:Configuration=Debug /m:$CONCURRENCY /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Build of snappy (debug config) failed"
-        }
-        cmd //c "msbuild build/snappy.sln /p:Configuration=Release /m:$CONCURRENCY /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Build of snappy failed"
-    }) || fail "Snappy build failed"
-
+    
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
     (cd vcpkg && {
         checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
