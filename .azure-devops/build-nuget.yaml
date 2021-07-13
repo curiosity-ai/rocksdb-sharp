@@ -48,6 +48,32 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).dylib'
 
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/liblz4.dylib --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSIONBASE).dylib'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libsnappy.dylib --account-name curiositydev  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSIONBASE).dylib'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libz.dylib --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSIONBASE).dylib'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Pay-As-You-Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libzstd.dylib --account-name curiositydev  -c rocksdb  -n libzstd-v$(ROCKSDBVERSIONBASE).dylib'
+
+
+
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
