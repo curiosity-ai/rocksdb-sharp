@@ -2,7 +2,7 @@ trigger:
 - master
 
 variables:
-  HOMEBREW_CELLAR: /opt/homebrew/Cellar
+  HOMEBREW_CELLAR: /usr/local/Cellar/
 
 pool:
   vmImage: 'macOS-latest'
