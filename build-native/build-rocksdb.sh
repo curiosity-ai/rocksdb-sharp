@@ -94,7 +94,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd_static.lib"
         
         (cd build && {
-            cmake -G "Visual Studio 16 2019" -DCMAKE_CXX_FLAGS=/arch:SSE2 -DCMAKE_C_FLAGS=/arch:SSE2 -DCXX_FLAGS=/arch:SSE2 -DC_FLAGS=/arch:SSE2 -DHAVE_AVX2=0 -DHAVE_AVX=0  -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 16 2019"  -DCMAKE_CXX_FLAGS=/arch:SSE2 -DCMAKE_C_FLAGS=/arch:SSE2 -DCXX_FLAGS=/arch:SSE2 -DC_FLAGS=/arch:SSE2 -DHAVE_AVX2=OFF -DHAVE_AVX=OFF  -DWITH_WINDOWS_UTF8_FILENAMES=ON -DWITH_TESTS=OFF -DWITH_MD_LIBRARY=OFF -DOPTDBG=ON -DGFLAGS=OFF -DSNAPPY=ON -DWITH_ZLIB=ON -DWITH_LZ4=ON -DWITH_ZSTD=ON -DPORTABLE=ON -DWITH_TOOLS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_FOLLY_DISTRIBUTED_MUTEX=OFF -DUSE_RTTI=ON .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
