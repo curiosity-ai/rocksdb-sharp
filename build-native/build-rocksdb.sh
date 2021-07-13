@@ -2,10 +2,8 @@
 
 ROCKSDBVNUM=`cat ../rocksdbversion`
 ROCKSDBVERSION=v${ROCKSDBVNUM}
-SNAPPYVERSION=1.1.8
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
-SNAPPYREMOTE=https://github.com/google/snappy
 
 CONCURRENCY=8
 
