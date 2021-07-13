@@ -124,7 +124,19 @@ else
         brew install lz4
         brew install zlib
         brew install bzip2
-        brew install gflags
+        # brew install gflags
+        
+        export ZLIB_INCLUDE="${HOMEBREW_CELLAR}/zlib/1.2.11/include"
+        export ZLIB_LIB_RELEASE="${HOMEBREW_CELLAR}/zlib/1.2.11/lib/libz.a"
+        
+        export LZ4_INCLUDE="${HOMEBREW_CELLAR}/lz4/1.9.3/include"
+        export LZ4_LIB_RELEASE="${HOMEBREW_CELLAR}/lz4/1.9.3/lib/liblz4.a"
+
+        export SNAPPY_INCLUDE="${HOMEBREW_CELLAR}/snappy/1.1.9/include"
+        export SNAPPY_LIB_RELEASE="${HOMEBREW_CELLAR}/snappy/1.1.9/lib/libsnappy.a"
+
+        export ZSTD_INCLUDE="${HOMEBREW_CELLAR}/zstd/1.5.0/include"
+        export ZSTD_LIB_RELEASE="${HOMEBREW_CELLAR}/zstd/1.5.0/lib/libzstd.a"
         
         export ROCKSDB_DISABLE_JEMALLOC=1
     else
@@ -155,7 +167,7 @@ else
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean
-        CFLAGS="${CFLAGS}" PORTABLE=1 make -j$CONCURRENCY static_lib || fail "64-bit build failed"
+        CFLAGS="${CFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
         strip librocksdb${LIBEXT}
         mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
