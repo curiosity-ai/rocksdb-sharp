@@ -84,6 +84,63 @@ namespace RocksDbSharp
             }
         }
 
+        public void rocksdb_merge(
+            IntPtr db,
+            IntPtr writeOptions,
+            byte[] key,
+            long keyLength,
+            byte[] value,
+            long valueLength,
+            ColumnFamilyHandle cf)
+        {
+            IntPtr errptr;
+            UIntPtr sklength = (UIntPtr)keyLength;
+            UIntPtr svlength = (UIntPtr)valueLength;
+            if (cf is null)
+            {
+                rocksdb_merge(db, writeOptions, key, sklength, value, svlength, out errptr);
+            }
+            else
+            {
+                rocksdb_merge_cf(db, writeOptions, cf.Handle, key, sklength, value, svlength, out errptr);
+            }
+
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+        }
+
+        public unsafe void rocksdb_merge(
+            IntPtr db,
+            IntPtr writeOptions,
+            ReadOnlySpan<byte> key,
+            ReadOnlySpan<byte> value,
+            ColumnFamilyHandle cf)
+        {
+            IntPtr errptr;
+            UIntPtr sklength = (UIntPtr)key.Length;
+            UIntPtr svlength = (UIntPtr)value.Length;
+
+            fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
+            fixed (byte* valuePtr = &MemoryMarshal.GetReference(value))
+            {
+                if (cf is null)
+                {
+                    rocksdb_merge(db, writeOptions, keyPtr, sklength, valuePtr, svlength, out errptr);
+                }
+                else
+                {
+                    rocksdb_merge_cf(db, writeOptions, cf.Handle, keyPtr, sklength, valuePtr, svlength, out errptr);
+                }
+
+                if (errptr != IntPtr.Zero)
+                {
+                    throw new RocksDbException(errptr);
+                }
+            }
+        }
+
 
         public string rocksdb_get(
             /*rocksdb_t**/ IntPtr db,
