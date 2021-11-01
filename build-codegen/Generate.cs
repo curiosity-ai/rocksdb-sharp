@@ -70,19 +70,19 @@ namespace RocksDbPrepareCApiHeader
                 yield return ("PerfMetric", "enum");
                 yield return ("int", "default");
             }
-            if (funcName == "full_merge" && arg.Name == "success")
+            if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "success")
             {
                 yield return ("out unsigned_char_ptr", "default");
             }
-            if (funcName == "full_merge" && arg.Name == "new_value_length")
+            if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
             }
-            if (funcName == "partial_merge" && arg.Name == "success")
+            if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "success")
             {
                 yield return ("out unsigned_char_ptr", "default");
             }
-            if (funcName == "partial_merge" && arg.Name == "new_value_length")
+            if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
             }

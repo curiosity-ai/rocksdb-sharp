@@ -15,6 +15,7 @@ namespace RocksDbSharp
 
     public static class MergeOperators
     {
+
         /// <summary>
         /// This function performs merge(left_op, right_op)
         /// when both the operands are themselves merge operation types.
@@ -26,7 +27,7 @@ namespace RocksDbSharp
         /// <param name="operands">the sequence of merge operations to apply, front() first</param>
         /// <param name="success">Client is responsible for filling the merge result here</param>
         /// <returns></returns>
-        public delegate byte[] PartialMergeFunc(byte[] key, byte[][] operands, out bool success);
+        public delegate byte[] PartialMergeFunc(ReadOnlySpan<byte> key, OperandsEnumerator operands, out bool success);
 
         /// <summary>
         /// Gives the client a way to express the read -> modify -> write semantics.
@@ -37,7 +38,7 @@ namespace RocksDbSharp
         /// <param name="operands">the sequence of merge operations to apply, front() first.</param>
         /// <param name="success">Client is responsible for filling the merge result here</param>
         /// <returns></returns>
-        public delegate byte[] FullMergeFunc(byte[] key, byte[] existingValue, byte[][] operands, out bool success);
+        public delegate byte[] FullMergeFunc(ReadOnlySpan<byte> key, bool hasExistingValue, ReadOnlySpan<byte> existingValue, OperandsEnumerator operands, out bool success);
 
         public static MergeOperator Create(
             string name,
@@ -46,6 +47,25 @@ namespace RocksDbSharp
         {
             return new MergeOperatorImpl(name, partialMerge, fullMerge);
         }
+
+        public ref struct OperandsEnumerator
+        {
+            private ReadOnlySpan<IntPtr> _operandsList;
+            private ReadOnlySpan<long> _operandsListLength;
+
+            public OperandsEnumerator(ReadOnlySpan<IntPtr> operandsList, ReadOnlySpan<long> operandsListLength)
+            {
+                _operandsList = operandsList;
+                _operandsListLength = operandsListLength;
+            }
+
+            public int Count => _operandsList.Length;
+            public unsafe ReadOnlySpan<byte> Get(int index)
+            {
+                return new Span<byte>((void*)_operandsList[index], (int)_operandsListLength[index]);
+            }
+        }
+
 
         private class MergeOperatorImpl : MergeOperator
         {
@@ -60,26 +80,14 @@ namespace RocksDbSharp
                 FullMerge = fullMerge;
             }
 
-            IntPtr MergeOperator.PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+            unsafe IntPtr MergeOperator.PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
             {
-                var _key = new byte[(uint)keyLength];
-                Marshal.Copy(key, _key, 0, _key.Length);
+                var keySpan                = new ReadOnlySpan<byte>((void*)key, (int)keyLength);
+                var operandsListSpan       = new ReadOnlySpan<IntPtr>((void*)operandsList, numOperands);
+                var operandsListLengthSpan = new ReadOnlySpan<long>((void*)operandsListLength, numOperands);
+                var operands               = new OperandsEnumerator(operandsListSpan, operandsListLengthSpan);
 
-                var _operandsList = new IntPtr[numOperands];
-                Marshal.Copy(operandsList, _operandsList, 0, _operandsList.Length);
-
-                var _operandsListLength = new long[numOperands];
-                Marshal.Copy(operandsListLength, _operandsListLength, 0, _operandsListLength.Length);
-
-                var operands = new byte[numOperands][];
-                for (int i = 0; i < numOperands; i++)
-                {
-                    var operand = new byte[_operandsListLength[i]];
-                    Marshal.Copy(_operandsList[i], operand, 0, operand.Length);
-                    operands[i] = operand;
-                }
-
-                var value = PartialMerge(_key, operands, out var _success);
+                var value = PartialMerge(keySpan, operands, out var _success);
 
                 var ret = Marshal.AllocHGlobal(value.Length);
                 Marshal.Copy(value, 0, ret, value.Length);
@@ -90,34 +98,16 @@ namespace RocksDbSharp
                 return ret;
             }
 
-            IntPtr MergeOperator.FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+            unsafe IntPtr MergeOperator.FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
             {
-                var _key = new byte[(uint)keyLength];
-                Marshal.Copy(key, _key, 0, _key.Length);
+                var keySpan                = new ReadOnlySpan<byte>((void*)key, (int)keyLength);
+                var operandsListSpan       = new ReadOnlySpan<IntPtr>((void*)operandsList, numOperands);
+                var operandsListLengthSpan = new ReadOnlySpan<long>((void*)operandsListLength, numOperands);
+                var operands               = new OperandsEnumerator(operandsListSpan, operandsListLengthSpan);
+                bool hasExistingValue      = existingValue != IntPtr.Zero;
+                var existingValueSpan      = hasExistingValue ? new ReadOnlySpan<byte>((void*)existingValue, (int)existingValueLength) : ReadOnlySpan<byte>.Empty;
 
-                byte[] _existingValue = null;
-                if (existingValue != IntPtr.Zero)
-                {
-                    _existingValue = new byte[(uint)existingValueLength];
-                    Marshal.Copy(existingValue, _existingValue, 0, _existingValue.Length);
-                }
-
-                var _operandsList = new IntPtr[numOperands];
-                Marshal.Copy(operandsList, _operandsList, 0, _operandsList.Length);
-
-                var _operandsListLength = new long[numOperands];
-                Marshal.Copy(operandsListLength, _operandsListLength, 0, _operandsListLength.Length);
-
-                var operands = new byte[numOperands][];
-
-                for (int i = 0; i < numOperands; i++)
-                {
-                    var operand = new byte[_operandsListLength[i]];
-                    Marshal.Copy(_operandsList[i], operand, 0, operand.Length);
-                    operands[i] = operand;
-                }
-
-                var value = FullMerge(_key, _existingValue, operands, out var _success);
+                var value = FullMerge(keySpan, hasExistingValue, existingValueSpan, operands, out var _success);
 
                 var ret = Marshal.AllocHGlobal(value.Length);
                 Marshal.Copy(value, 0, ret, value.Length);
