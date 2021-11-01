@@ -186,6 +186,23 @@ namespace RocksDbSharp
             return this;
         }
 
+        public unsafe WriteBatchWithIndex Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null)
+        {
+            fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
+            fixed (byte* valuePtr = &MemoryMarshal.GetReference(value))
+            {
+                if (cf is null)
+                {
+                    Native.Instance.rocksdb_writebatch_wi_merge(handle, keyPtr, (UIntPtr)key.Length, valuePtr, (UIntPtr)value.Length);
+                }
+                else
+                {
+                    Native.Instance.rocksdb_writebatch_wi_merge_cf(handle, cf.Handle, keyPtr, (UIntPtr)key.Length, valuePtr, (UIntPtr)value.Length);
+                }
+            }
+            return this;
+        }
+
 
         public WriteBatchWithIndex Putv(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes)
         {
@@ -432,6 +449,8 @@ namespace RocksDbSharp
 
         IWriteBatch IWriteBatch.Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
             => Put(key, value, cf);
+        IWriteBatch IWriteBatch.Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
+            => Merge(key, value, cf);
         IWriteBatch IWriteBatch.Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf)
             => Delete(key, cf);
     }

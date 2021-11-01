@@ -18,6 +18,7 @@ namespace RocksDbSharp
         IWriteBatch PutvCf(IntPtr columnFamily, int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
         IWriteBatch Merge(byte[] key, ulong klen, byte[] val, ulong vlen, ColumnFamilyHandle cf = null);
         unsafe void Merge(byte* key, ulong klen, byte* val, ulong vlen, ColumnFamilyHandle cf = null);
+        IWriteBatch Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null);
         IWriteBatch MergeCf(IntPtr columnFamily, byte[] key, ulong klen, byte[] val, ulong vlen);
         unsafe void MergeCf(IntPtr columnFamily, byte* key, ulong klen, byte* val, ulong vlen);
         IWriteBatch Mergev(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
@@ -136,6 +137,23 @@ namespace RocksDbSharp
                 else
                 {
                     Native.Instance.rocksdb_writebatch_put_cf(handle, cf.Handle, keyPtr, (UIntPtr)key.Length, valuePtr, (UIntPtr)value.Length);
+                }
+            }
+            return this;
+        }
+
+        public unsafe WriteBatch Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null)
+        {
+            fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
+            fixed (byte* valuePtr = &MemoryMarshal.GetReference(value))
+            {
+                if (cf is null)
+                {
+                    Native.Instance.rocksdb_writebatch_merge(handle, keyPtr, (UIntPtr)key.Length, valuePtr, (UIntPtr)value.Length);
+                }
+                else
+                {
+                    Native.Instance.rocksdb_writebatch_merge_cf(handle, cf.Handle, keyPtr, (UIntPtr)key.Length, valuePtr, (UIntPtr)value.Length);
                 }
             }
             return this;
@@ -387,8 +405,10 @@ namespace RocksDbSharp
             => PutLogData(blob, len);
         IWriteBatch IWriteBatch.Iterate(IntPtr state, PutDelegate put, DeletedDelegate deleted)
             => Iterate(state, put, deleted);
-        IWriteBatch IWriteBatch.Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf) 
+        IWriteBatch IWriteBatch.Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
             => Put(key, value, cf);
+        IWriteBatch IWriteBatch.Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
+            => Merge(key, value, cf);
         IWriteBatch IWriteBatch.Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf)
             => Delete(key, cf);
     }
