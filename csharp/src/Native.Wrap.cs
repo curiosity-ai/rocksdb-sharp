@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using size_t = System.UIntPtr;
@@ -214,10 +215,26 @@ namespace RocksDbSharp
                     IntPtr db,
                     IntPtr read_options,
                     ReadOnlySpan<byte> key,
-                    ISpanDeserializer<T> serializer,
+                    ISpanDeserializer<T> deserializer,
                     ColumnFamilyHandle cf = null)
         {
-            var result = rocksdb_get(db, read_options, key, serializer, out IntPtr errptr, cf);
+            var result = rocksdb_get(db, read_options, key, deserializer, out IntPtr errptr, cf);
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+
+            return result;
+        }
+
+        public T rocksdb_get<T>(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            Func<Stream, T> deserializer,
+            ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_get(db, read_options, key, deserializer, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
                 throw new RocksDbException(errptr);

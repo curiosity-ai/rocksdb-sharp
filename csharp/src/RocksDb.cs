@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -161,9 +162,14 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf);
         }
 
-        public T Get<T>(ReadOnlySpan<byte> key, ISpanDeserializer<T> serializer, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
+        public T Get<T>(ReadOnlySpan<byte> key, ISpanDeserializer<T> deserializer, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
-            return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, serializer, cf);
+            return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, deserializer, cf);
+        }
+
+        public T Get<T>(ReadOnlySpan<byte> key, Func<Stream, T> deserializer, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
+        {
+            return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, deserializer, cf);
         }
 
         public byte[] Get(byte[] key, long keyLength, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)

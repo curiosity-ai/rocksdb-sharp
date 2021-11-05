@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -139,14 +140,24 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_iter_value(handle);
         }
 
-        public T Key<T>(ISpanDeserializer<T> serializer)
+        public T Key<T>(ISpanDeserializer<T> deserializer)
         {
-            return Native.Instance.rocksdb_iter_key(handle, serializer);
+            return Native.Instance.rocksdb_iter_key(handle, deserializer);
         }
 
-        public T Value<T>(ISpanDeserializer<T> serializer)
+        public T Value<T>(ISpanDeserializer<T> deserializer)
         {
-            return Native.Instance.rocksdb_iter_value(handle, serializer);
+            return Native.Instance.rocksdb_iter_value(handle, deserializer);
+        }
+
+        public T Key<T>(Func<Stream,T> deserializer)
+        {
+            return Native.Instance.rocksdb_iter_key(handle, deserializer);
+        }
+
+        public T Value<T>(Func<Stream, T> deserializer)
+        {
+            return Native.Instance.rocksdb_iter_value(handle, deserializer);
         }
 
         public string StringKey()

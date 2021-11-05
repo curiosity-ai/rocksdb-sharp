@@ -5,6 +5,7 @@
 */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using Transitional;
@@ -223,7 +224,7 @@ namespace RocksDbSharp
             IntPtr db,
             IntPtr read_options,
             ReadOnlySpan<byte> key,
-            ISpanDeserializer<T> serializer,
+            ISpanDeserializer<T> deserializer,
             out IntPtr errptr,
             ColumnFamilyHandle cf = null)
         {
@@ -249,7 +250,45 @@ namespace RocksDbSharp
             var span = new ReadOnlySpan<byte>((void*)resultPtr, (int)valueLength);
             try
             {
-                return serializer.Deserialize(span);
+                return deserializer.Deserialize(span);
+            }
+            finally
+            {
+                rocksdb_free(resultPtr);
+            }
+        }
+
+        public unsafe T rocksdb_get<T>(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            Func<Stream, T> deserializer,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            try
+            {
+                using var stream = new UnmanagedMemoryStream((byte*)resultPtr, (long)valueLength);
+                return deserializer(stream);
             }
             finally
             {
@@ -1437,19 +1476,31 @@ namespace RocksDbSharp
             return result;
         }
 
-        public unsafe T rocksdb_iter_key<T>(IntPtr iterator, ISpanDeserializer<T> serializer)
+        public unsafe T rocksdb_iter_key<T>(IntPtr iterator, ISpanDeserializer<T> deserializer)
         {
             IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);
-
             var span = new ReadOnlySpan<byte>((void*)buffer, (int)length);
-            return serializer.Deserialize(span);
+            return deserializer.Deserialize(span);
         }
 
-        public unsafe T rocksdb_iter_value<T>(IntPtr iterator, ISpanDeserializer<T> serializer)
+        public unsafe T rocksdb_iter_value<T>(IntPtr iterator, ISpanDeserializer<T> deserializer)
         {
             IntPtr buffer = rocksdb_iter_value(iterator, out UIntPtr length);
             var span = new ReadOnlySpan<byte>((void*)buffer, (int)length);
-            return serializer.Deserialize(span);
+            return deserializer.Deserialize(span);
+        }
+        public unsafe T rocksdb_iter_key<T>(IntPtr iterator, Func<Stream, T> deserializer)
+        {
+            IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);
+            using var stream = new UnmanagedMemoryStream((byte*)buffer, (long)length);
+            return deserializer(stream);
+        }
+
+        public unsafe T rocksdb_iter_value<T>(IntPtr iterator, Func<Stream, T> deserializer)
+        {
+            IntPtr buffer = rocksdb_iter_value(iterator, out UIntPtr length);
+            using var stream = new UnmanagedMemoryStream((byte*)buffer, (long)length);
+            return deserializer(stream);
         }
     }
 }

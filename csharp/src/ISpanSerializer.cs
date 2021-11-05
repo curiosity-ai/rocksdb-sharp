@@ -4,6 +4,7 @@
     See Native.Raw.cs for more information.
 */
 using System;
+using System.IO;
 
 #pragma warning disable IDE1006 // Intentionally violating naming conventions because this is meant to match the C API
 namespace RocksDbSharp
