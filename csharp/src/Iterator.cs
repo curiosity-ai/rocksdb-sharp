@@ -139,6 +139,16 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_iter_value(handle);
         }
 
+        public T Key<T>(ISpanDeserializer<T> serializer)
+        {
+            return Native.Instance.rocksdb_iter_key(handle, serializer);
+        }
+
+        public T Value<T>(ISpanDeserializer<T> serializer)
+        {
+            return Native.Instance.rocksdb_iter_value(handle, serializer);
+        }
+
         public string StringKey()
         {
             return Native.Instance.rocksdb_iter_key_string(handle);

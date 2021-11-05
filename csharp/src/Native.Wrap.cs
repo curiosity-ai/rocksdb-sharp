@@ -210,6 +210,22 @@ namespace RocksDbSharp
             return result;
         }
 
+        public T rocksdb_get<T>(
+                    IntPtr db,
+                    IntPtr read_options,
+                    ReadOnlySpan<byte> key,
+                    ISpanDeserializer<T> serializer,
+                    ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_get(db, read_options, key, serializer, out IntPtr errptr, cf);
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+
+            return result;
+        }
+
         public System.Collections.Generic.KeyValuePair<string, string>[] rocksdb_multi_get(
             IntPtr db,
             IntPtr read_options,

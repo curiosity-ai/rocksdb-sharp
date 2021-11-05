@@ -219,6 +219,44 @@ namespace RocksDbSharp
             return result;
         }
 
+        public unsafe T rocksdb_get<T>(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            ISpanDeserializer<T> serializer,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            var span = new ReadOnlySpan<byte>((void*)resultPtr, (int)valueLength);
+            try
+            {
+                return serializer.Deserialize(span);
+            }
+            finally
+            {
+                rocksdb_free(resultPtr);
+            }
+        }
+
         /// <summary>
         /// Executes a multi_get with automatic marshalling
         /// </summary>
@@ -1399,6 +1437,19 @@ namespace RocksDbSharp
             return result;
         }
 
+        public unsafe T rocksdb_iter_key<T>(IntPtr iterator, ISpanDeserializer<T> serializer)
+        {
+            IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);
 
+            var span = new ReadOnlySpan<byte>((void*)buffer, (int)length);
+            return serializer.Deserialize(span);
+        }
+
+        public unsafe T rocksdb_iter_value<T>(IntPtr iterator, ISpanDeserializer<T> serializer)
+        {
+            IntPtr buffer = rocksdb_iter_value(iterator, out UIntPtr length);
+            var span = new ReadOnlySpan<byte>((void*)buffer, (int)length);
+            return serializer.Deserialize(span);
+        }
     }
 }
