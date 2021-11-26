@@ -10,6 +10,7 @@ namespace RocksDbSharp
 {
     public class ReadOptions
     {
+        private IntPtr iterateLowerBound;
         private IntPtr iterateUpperBound;
 
         public ReadOptions()
@@ -25,6 +26,8 @@ namespace RocksDbSharp
             {
 #if !NODESTROY
                 Native.Instance.rocksdb_readoptions_destroy(Handle);
+                if (iterateLowerBound != IntPtr.Zero)
+                    Marshal.FreeHGlobal(iterateLowerBound);
                 if (iterateUpperBound != IntPtr.Zero)
                     Marshal.FreeHGlobal(iterateUpperBound);
 #endif
@@ -64,6 +67,35 @@ namespace RocksDbSharp
         {
             Native.Instance.rocksdb_readoptions_set_prefix_same_as_start(Handle, prefixSameAsStart);
             return this;
+        }
+
+        public unsafe ReadOptions SetIterateLowerBound(byte* key, ulong keylen)
+        {
+            UIntPtr klen = (UIntPtr)keylen;
+            Native.Instance.rocksdb_readoptions_set_iterate_lower_bound(Handle, key, klen);
+            return this;
+        }
+
+        public ReadOptions SetIterateLowerBound(byte[] key, ulong keyLen)
+        {
+            if (iterateLowerBound != IntPtr.Zero)
+                Marshal.FreeHGlobal(iterateLowerBound);
+            iterateLowerBound = Marshal.AllocHGlobal(key.Length);
+            Marshal.Copy(key, 0, iterateLowerBound, key.Length);
+            UIntPtr klen = (UIntPtr)keyLen;
+            Native.Instance.rocksdb_readoptions_set_iterate_lower_bound(Handle, iterateLowerBound, klen);
+            return this;
+        }
+
+        public ReadOptions SetIterateLowerBound(byte[] key)
+        {
+            return SetIterateLowerBound(key, (ulong)key.GetLongLength(0));
+        }
+
+        public unsafe ReadOptions SetIterateLowerBound(string stringKey, Encoding encoding = null)
+        {
+            var key = (encoding ?? Encoding.UTF8).GetBytes(stringKey);
+            return SetIterateLowerBound(key);
         }
 
         public unsafe ReadOptions SetIterateUpperBound(byte* key, ulong keylen)

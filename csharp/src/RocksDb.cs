@@ -200,6 +200,7 @@ namespace RocksDbSharp
         /// length of the value in the database, or -1 if the key is not present.
         /// </summary>
         /// <param name="key"></param>
+        /// <param name="keyLength"></param>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
         /// <param name="length"></param>
@@ -225,12 +226,12 @@ namespace RocksDbSharp
 
         public KeyValuePair<byte[],byte[]>[] MultiGet(byte[][] keys, ColumnFamilyHandle[] cf = null, ReadOptions readOptions = null)
         {
-            return Native.Instance.rocksdb_multi_get(Handle, (readOptions ?? DefaultReadOptions).Handle, keys);
+            return Native.Instance.rocksdb_multi_get(Handle, (readOptions ?? DefaultReadOptions).Handle, keys, null, cf);
         }
 
         public KeyValuePair<string, string>[] MultiGet(string[] keys, ColumnFamilyHandle[] cf = null, ReadOptions readOptions = null)
         {
-            return Native.Instance.rocksdb_multi_get(Handle, (readOptions ?? DefaultReadOptions).Handle, keys);
+            return Native.Instance.rocksdb_multi_get(Handle, (readOptions ?? DefaultReadOptions).Handle, keys, cf);
         }
 
         public void Write(WriteBatch writeBatch, WriteOptions writeOptions = null)
