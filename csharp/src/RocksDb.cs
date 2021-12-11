@@ -157,6 +157,7 @@ namespace RocksDbSharp
             return Get(key, key.GetLongLength(0), cf, readOptions);
         }
 
+#if NETSTANDARD2_1_OR_GREATER
         public byte[] Get(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf);
@@ -171,6 +172,7 @@ namespace RocksDbSharp
         {
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, deserializer, cf);
         }
+#endif
 
         public byte[] Get(byte[] key, long keyLength, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
@@ -253,6 +255,7 @@ namespace RocksDbSharp
             Remove(key, key.Length, cf, writeOptions);
         }
 
+#if NETSTANDARD2_1_OR_GREATER
         public unsafe void Remove(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
             fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
@@ -267,6 +270,7 @@ namespace RocksDbSharp
                 }
             }
         }
+#endif
 
         public void Remove(byte[] key, long keyLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
@@ -290,10 +294,12 @@ namespace RocksDbSharp
             Put(key, key.GetLongLength(0), value, value.GetLongLength(0), cf, writeOptions);
         }
 
+#if NETSTANDARD2_1_OR_GREATER
         public void Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
             Native.Instance.rocksdb_put(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, value, cf);
         }
+#endif
 
         public void Put(byte[] key, long keyLength, byte[] value, long valueLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
@@ -310,10 +316,12 @@ namespace RocksDbSharp
             Merge(key, key.GetLongLength(0), value, value.GetLongLength(0), cf, writeOptions);
         }
 
+#if NETSTANDARD2_1_OR_GREATER
         public void Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
             Native.Instance.rocksdb_merge(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, value, cf);
         }
+#endif
 
         public void Merge(byte[] key, long keyLength, byte[] value, long valueLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
         {
