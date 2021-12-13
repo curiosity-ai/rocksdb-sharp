@@ -13,7 +13,7 @@ namespace RocksDbSharp
         void DeleteValue(IntPtr value, UIntPtr valueLength);
     }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
     public static class MergeOperators
     {
         /// <summary>

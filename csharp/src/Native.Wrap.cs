@@ -55,7 +55,7 @@ namespace RocksDbSharp
             }
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe void rocksdb_put(
             IntPtr db,
             IntPtr writeOptions,
@@ -114,7 +114,7 @@ namespace RocksDbSharp
             }
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe void rocksdb_merge(
             IntPtr db,
             IntPtr writeOptions,
@@ -199,7 +199,7 @@ namespace RocksDbSharp
             return result;
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,

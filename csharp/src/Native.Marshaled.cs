@@ -188,7 +188,7 @@ namespace RocksDbSharp
             return result;
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,
@@ -1478,7 +1478,7 @@ namespace RocksDbSharp
             return result;
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe T rocksdb_iter_key<T>(IntPtr iterator, ISpanDeserializer<T> deserializer)
         {
             IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);

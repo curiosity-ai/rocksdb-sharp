@@ -13,7 +13,7 @@ namespace RocksDbSharp
         IWriteBatch Put(byte[] key, byte[] val, ColumnFamilyHandle cf = null);
         IWriteBatch Put(byte[] key, ulong klen, byte[] val, ulong vlen, ColumnFamilyHandle cf = null);
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         IWriteBatch Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null);
 #endif
         unsafe void Put(byte* key, ulong klen, byte* val, ulong vlen, ColumnFamilyHandle cf = null);
@@ -22,7 +22,7 @@ namespace RocksDbSharp
         IWriteBatch Merge(byte[] key, ulong klen, byte[] val, ulong vlen, ColumnFamilyHandle cf = null);
         unsafe void Merge(byte* key, ulong klen, byte* val, ulong vlen, ColumnFamilyHandle cf = null);
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         IWriteBatch Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null);
 #endif
         IWriteBatch MergeCf(IntPtr columnFamily, byte[] key, ulong klen, byte[] val, ulong vlen);
@@ -32,7 +32,7 @@ namespace RocksDbSharp
         IWriteBatch Delete(byte[] key, ColumnFamilyHandle cf = null);
         IWriteBatch Delete(byte[] key, ulong klen, ColumnFamilyHandle cf = null);
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         IWriteBatch Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null);
 #endif
         unsafe void Delete(byte* key, ulong klen, ColumnFamilyHandle cf = null);
@@ -134,7 +134,7 @@ namespace RocksDbSharp
             }
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe WriteBatch Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null)
         {
             fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
@@ -262,7 +262,7 @@ namespace RocksDbSharp
             }
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         public unsafe WriteBatch Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null)
         {
             fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
@@ -419,7 +419,7 @@ namespace RocksDbSharp
         IWriteBatch IWriteBatch.Iterate(IntPtr state, PutDelegate put, DeletedDelegate deleted)
             => Iterate(state, put, deleted);
 
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
         IWriteBatch IWriteBatch.Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
             => Put(key, value, cf);
         IWriteBatch IWriteBatch.Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)

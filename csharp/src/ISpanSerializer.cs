@@ -9,7 +9,7 @@ using System.IO;
 #pragma warning disable IDE1006 // Intentionally violating naming conventions because this is meant to match the C API
 namespace RocksDbSharp
 {
-#if NETSTANDARD2_1_OR_GREATER
+#if !NETSTANDARD2_0
     public interface ISpanDeserializer<T>
     {
         T Deserialize(ReadOnlySpan<byte> buffer);
