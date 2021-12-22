@@ -368,15 +368,16 @@ namespace NativeImport
                 "",
             };
 
+            var basePaths = new List<string>();
+            
+            //Some paths might throw NotSupportedException when used from single file deployment. We could test for that, but we can also just ignore it
 
-            var basePaths = new string[] {
-                Directory.GetCurrentDirectory(),
-                Path.GetDirectoryName(UriToPath(Transitional.CurrentFramework.GetBaseDirectory())),
-                Path.GetDirectoryName(UriToPath(Assembly.GetEntryAssembly()?.CodeBase)),
-                Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location),
-                Path.GetDirectoryName(UriToPath(typeof(PosixImporter).GetTypeInfo().Assembly.CodeBase)),
-                Path.GetDirectoryName(typeof(PosixImporter).GetTypeInfo().Assembly.Location),
-            };
+            try { basePaths.Add(Directory.GetCurrentDirectory()); } catch { /* Ignore */ }
+            try { basePaths.Add(Path.GetDirectoryName(UriToPath(AppContext.BaseDirectory))); } catch { /* Ignore */ }
+            try { basePaths.Add(Path.GetDirectoryName(UriToPath(Transitional.CurrentFramework.GetBaseDirectory()))); } catch { /* Ignore */ }
+            try { basePaths.Add(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)); } catch { /* Ignore */ }
+            try { basePaths.Add(Path.GetDirectoryName(typeof(PosixImporter).GetTypeInfo().Assembly.Location)); } catch { /* Ignore */ }
+
             var search = basePaths
                 .Where(p => p != null)
                 .Distinct()

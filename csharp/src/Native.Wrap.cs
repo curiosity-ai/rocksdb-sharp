@@ -55,6 +55,7 @@ namespace RocksDbSharp
             }
         }
 
+#if !NETSTANDARD2_0
         public unsafe void rocksdb_put(
             IntPtr db,
             IntPtr writeOptions,
@@ -84,6 +85,7 @@ namespace RocksDbSharp
                 }
             }
         }
+#endif
 
         public void rocksdb_merge(
             IntPtr db,
@@ -112,6 +114,7 @@ namespace RocksDbSharp
             }
         }
 
+#if !NETSTANDARD2_0
         public unsafe void rocksdb_merge(
             IntPtr db,
             IntPtr writeOptions,
@@ -141,7 +144,7 @@ namespace RocksDbSharp
                 }
             }
         }
-
+#endif
 
         public string rocksdb_get(
             /*rocksdb_t**/ IntPtr db,
@@ -196,6 +199,7 @@ namespace RocksDbSharp
             return result;
         }
 
+#if !NETSTANDARD2_0
         public byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,
@@ -242,6 +246,7 @@ namespace RocksDbSharp
 
             return result;
         }
+#endif
 
         public System.Collections.Generic.KeyValuePair<string, string>[] rocksdb_multi_get(
             IntPtr db,

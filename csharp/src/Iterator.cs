@@ -94,6 +94,17 @@ namespace RocksDbSharp
             return this;
         }
 
+#if !NETSTANDARD2_0
+        public unsafe Iterator Seek(ReadOnlySpan<byte> key)
+        {
+            fixed (byte* keyPtr = key)
+            {
+                Native.Instance.rocksdb_iter_seek(handle, keyPtr, (UIntPtr)key.Length);
+                return this;
+            }
+        }
+#endif 
+
         public unsafe Iterator SeekForPrev(byte* key, ulong klen)
         {
             Native.Instance.rocksdb_iter_seek_for_prev(handle, key, (UIntPtr)klen);
@@ -118,6 +129,17 @@ namespace RocksDbSharp
             return this;
         }
 
+#if !NETSTANDARD2_0
+        public unsafe Iterator SeekForPrev(ReadOnlySpan<byte> key)
+        {
+            fixed (byte* keyPtr = key)
+            {
+                Native.Instance.rocksdb_iter_seek_for_prev(handle, keyPtr, (UIntPtr)key.Length);
+                return this;
+            }
+        }
+#endif
+
         public Iterator Next()
         {
             Native.Instance.rocksdb_iter_next(handle);
@@ -140,6 +162,7 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_iter_value(handle);
         }
 
+#if !NETSTANDARD2_0
         public T Key<T>(ISpanDeserializer<T> deserializer)
         {
             return Native.Instance.rocksdb_iter_key(handle, deserializer);
@@ -149,6 +172,7 @@ namespace RocksDbSharp
         {
             return Native.Instance.rocksdb_iter_value(handle, deserializer);
         }
+#endif
 
         public T Key<T>(Func<Stream,T> deserializer)
         {

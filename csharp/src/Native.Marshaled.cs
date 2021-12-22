@@ -188,6 +188,7 @@ namespace RocksDbSharp
             return result;
         }
 
+#if !NETSTANDARD2_0
         public unsafe byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,
@@ -295,6 +296,7 @@ namespace RocksDbSharp
                 rocksdb_free(resultPtr);
             }
         }
+#endif
 
         /// <summary>
         /// Executes a multi_get with automatic marshalling
@@ -1476,6 +1478,7 @@ namespace RocksDbSharp
             return result;
         }
 
+#if !NETSTANDARD2_0
         public unsafe T rocksdb_iter_key<T>(IntPtr iterator, ISpanDeserializer<T> deserializer)
         {
             IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);
@@ -1489,6 +1492,8 @@ namespace RocksDbSharp
             var span = new ReadOnlySpan<byte>((void*)buffer, (int)length);
             return deserializer.Deserialize(span);
         }
+#endif
+
         public unsafe T rocksdb_iter_key<T>(IntPtr iterator, Func<Stream, T> deserializer)
         {
             IntPtr buffer = rocksdb_iter_key(iterator, out UIntPtr length);

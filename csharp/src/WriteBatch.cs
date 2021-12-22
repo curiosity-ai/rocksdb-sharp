@@ -12,20 +12,29 @@ namespace RocksDbSharp
         IWriteBatch Put(string key, string val, Encoding encoding = null);
         IWriteBatch Put(byte[] key, byte[] val, ColumnFamilyHandle cf = null);
         IWriteBatch Put(byte[] key, ulong klen, byte[] val, ulong vlen, ColumnFamilyHandle cf = null);
+
+#if !NETSTANDARD2_0
         IWriteBatch Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null);
+#endif
         unsafe void Put(byte* key, ulong klen, byte* val, ulong vlen, ColumnFamilyHandle cf = null);
         IWriteBatch Putv(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
         IWriteBatch PutvCf(IntPtr columnFamily, int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
         IWriteBatch Merge(byte[] key, ulong klen, byte[] val, ulong vlen, ColumnFamilyHandle cf = null);
         unsafe void Merge(byte* key, ulong klen, byte* val, ulong vlen, ColumnFamilyHandle cf = null);
+
+#if !NETSTANDARD2_0
         IWriteBatch Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null);
+#endif
         IWriteBatch MergeCf(IntPtr columnFamily, byte[] key, ulong klen, byte[] val, ulong vlen);
         unsafe void MergeCf(IntPtr columnFamily, byte* key, ulong klen, byte* val, ulong vlen);
         IWriteBatch Mergev(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
         IWriteBatch MergevCf(IntPtr columnFamily, int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes);
         IWriteBatch Delete(byte[] key, ColumnFamilyHandle cf = null);
         IWriteBatch Delete(byte[] key, ulong klen, ColumnFamilyHandle cf = null);
+
+#if !NETSTANDARD2_0
         IWriteBatch Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null);
+#endif
         unsafe void Delete(byte* key, ulong klen, ColumnFamilyHandle cf = null);
         unsafe void Deletev(int numKeys, IntPtr keysList, IntPtr keysListSizes, ColumnFamilyHandle cf = null);
         IWriteBatch DeleteRange(byte[] startKey, ulong sklen, byte[] endKey, ulong eklen, ColumnFamilyHandle cf = null);
@@ -125,6 +134,7 @@ namespace RocksDbSharp
             }
         }
 
+#if !NETSTANDARD2_0
         public unsafe WriteBatch Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf = null)
         {
             fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
@@ -158,6 +168,7 @@ namespace RocksDbSharp
             }
             return this;
         }
+#endif
 
         public WriteBatch Putv(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes)
         {
@@ -251,6 +262,7 @@ namespace RocksDbSharp
             }
         }
 
+#if !NETSTANDARD2_0
         public unsafe WriteBatch Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null)
         {
             fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
@@ -266,6 +278,7 @@ namespace RocksDbSharp
             }
             return this;
         }
+#endif
 
         public unsafe void Deletev(int numKeys, IntPtr keysList, IntPtr keysListSizes, ColumnFamilyHandle cf = null)
         {
@@ -405,11 +418,14 @@ namespace RocksDbSharp
             => PutLogData(blob, len);
         IWriteBatch IWriteBatch.Iterate(IntPtr state, PutDelegate put, DeletedDelegate deleted)
             => Iterate(state, put, deleted);
+
+#if !NETSTANDARD2_0
         IWriteBatch IWriteBatch.Put(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
             => Put(key, value, cf);
         IWriteBatch IWriteBatch.Merge(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value, ColumnFamilyHandle cf)
             => Merge(key, value, cf);
         IWriteBatch IWriteBatch.Delete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf)
             => Delete(key, cf);
+#endif
     }
 }

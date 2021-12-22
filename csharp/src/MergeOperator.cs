@@ -13,9 +13,9 @@ namespace RocksDbSharp
         void DeleteValue(IntPtr value, UIntPtr valueLength);
     }
 
+#if !NETSTANDARD2_0
     public static class MergeOperators
     {
-
         /// <summary>
         /// This function performs merge(left_op, right_op)
         /// when both the operands are themselves merge operation types.
@@ -39,6 +39,7 @@ namespace RocksDbSharp
         /// <param name="success">Client is responsible for filling the merge result here</param>
         /// <returns></returns>
         public delegate byte[] FullMergeFunc(ReadOnlySpan<byte> key, bool hasExistingValue, ReadOnlySpan<byte> existingValue, OperandsEnumerator operands, out bool success);
+
 
         public static MergeOperator Create(
             string name,
@@ -121,4 +122,5 @@ namespace RocksDbSharp
             void MergeOperator.DeleteValue(IntPtr value, UIntPtr valueLength) => Marshal.FreeHGlobal(value);
         }
     }
+#endif
 }
