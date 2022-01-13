@@ -153,7 +153,8 @@ else
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
-               
+        export WITH_DYNAMIC_EXTENSION=0
+        
         (. ./build_tools/build_detect_platform detected~; {
             cat detected~
             grep detected~ -e '-DLZ4'    &> /dev/null || fail "failed to detect lz4, install liblz4-dev"
@@ -165,7 +166,7 @@ else
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean
-        CFLAGS="${CFLAGS} -DROCKSDB_NO_DYNAMIC_EXTENSION" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
+        CFLAGS="${CFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
         strip librocksdb${LIBEXT}
         mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
