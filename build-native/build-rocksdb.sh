@@ -165,7 +165,7 @@ else
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean
-        CFLAGS="${CFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
+        CFLAGS="${CFLAGS} -DROCKSDB_NO_DYNAMIC_EXTENSION" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
         strip librocksdb${LIBEXT}
         mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
