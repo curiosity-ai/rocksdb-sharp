@@ -368,7 +368,7 @@ namespace NativeImport
                 "",
             };
 
-            var basePaths = new List<string>();
+            var basePaths = new HashSet<string>();
             
             //Some paths might throw NotSupportedException when used from single file deployment. We could test for that, but we can also just ignore it
 
@@ -378,12 +378,16 @@ namespace NativeImport
             try { basePaths.Add(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)); } catch { /* Ignore */ }
             try { basePaths.Add(Path.GetDirectoryName(typeof(PosixImporter).GetTypeInfo().Assembly.Location)); } catch { /* Ignore */ }
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                try { basePaths.Add("/opt/homebrew/lib"); } catch { /* Ignore */ }
+            }
+
             var search = basePaths
-                .Where(p => p != null)
-                .Distinct()
+                .Where(p => p is object)
                 .SelectMany(basePath =>
                     paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n))))
-                    .Concat(names.Select(n => importer.Translate(n)))
+                         .Concat(names.Select(n => importer.Translate(n)))
                 )
                 .Select(path => new SearchPath { Path = path })
                 .ToArray();
