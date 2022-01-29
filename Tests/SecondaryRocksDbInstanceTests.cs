@@ -1,8 +1,8 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RocksDbSharp;
 
-namespace RocksDbSharp.Tests
+namespace Tests
 {
     [TestClass]
     public class SecondaryRocksDbInstanceTests
