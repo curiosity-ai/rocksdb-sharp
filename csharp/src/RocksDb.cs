@@ -82,6 +82,12 @@ namespace RocksDbSharp
             return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
         }
 
+        public static RocksDb OpenAsSecondary(OptionsHandle options, string path, string secondaryPath)
+        {
+            IntPtr db = Native.Instance.rocksdb_open_as_secondary(options.Handle, path, secondaryPath);
+            return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+        }
+
         public static RocksDb OpenWithTtl(OptionsHandle options, string path, int ttlSeconds)
         {
             IntPtr db = Native.Instance.rocksdb_open_with_ttl(options.Handle, path, ttlSeconds);
@@ -124,6 +130,21 @@ namespace RocksDbSharp
                 columnFamilies: cfHandleMap);
         }
 
+        public static RocksDb OpenAsSecondary(DbOptions options, string path, string secondaryPath, ColumnFamilies columnFamilies)
+        {
+            string[] cfnames = columnFamilies.Names.ToArray();
+            IntPtr[] cfhandles = new IntPtr[cfnames.Length];
+            var db = Native.Instance.rocksdb_open_as_secondary(options.Handle, path, secondaryPath);
+            var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
+            foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)),
+                (name, cfh) => new {Name = name, Handle = cfh}))
+                cfHandleMap.Add(pair.Name, pair.Handle);
+            return new RocksDb(db,
+                optionsReferences: options.References,
+                cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
+                columnFamilies: cfHandleMap);
+        }
+        
         /// <summary>
         /// Usage:
         /// <code><![CDATA[
@@ -466,7 +487,12 @@ namespace RocksDbSharp
 
             CompactRange(start is null ? null : encoding.GetBytes(start), limit is null ? null : encoding.GetBytes(limit), cf);
         }
-
+        
+        public void TryCatchUpWithPrimary()
+        {
+            Native.Instance.rocksdb_try_catch_up_with_primary(Handle);
+        }
+        
         public void Flush(FlushOptions flushOptions)
         {
             Native.Instance.rocksdb_flush(Handle, flushOptions.Handle);

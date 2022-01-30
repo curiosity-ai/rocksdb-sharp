@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RocksDbSharp", "csharp\Rock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpGen", "build-codegen\CSharpGen.csproj", "{C7E6569D-1154-4136-92B2-0CA7BEF27D12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{7E99A96D-8ABA-495B-BFCB-8D2A337A27C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C7E6569D-1154-4136-92B2-0CA7BEF27D12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7E6569D-1154-4136-92B2-0CA7BEF27D12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7E6569D-1154-4136-92B2-0CA7BEF27D12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E99A96D-8ABA-495B-BFCB-8D2A337A27C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E99A96D-8ABA-495B-BFCB-8D2A337A27C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E99A96D-8ABA-495B-BFCB-8D2A337A27C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E99A96D-8ABA-495B-BFCB-8D2A337A27C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
