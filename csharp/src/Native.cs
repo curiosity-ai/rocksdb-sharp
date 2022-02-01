@@ -1013,7 +1013,32 @@ namespace RocksDbSharp
                 throw new RocksDbException(errptr);
             return result;
         }
-
+        
+        public abstract rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+                    const_rocksdb_options_t_ptr options,
+                    string name,
+                    string secondary_path,
+                    int num_column_families,
+                    string[] column_family_names,
+                    const_rocksdb_options_t_ptr[] column_family_options,
+                    rocksdb_column_family_handle_t_ptr[] colummn_family_handles,
+                    out char_ptr_ptr errptr);
+        
+                public rocksdb_t_ptr rocksdb_open_as_secondary_column_families(
+                    const_rocksdb_options_t_ptr options,
+                    string name,
+                    string secondary_path,
+                    int num_column_families,
+                    string[] column_family_names,
+                    const_rocksdb_options_t_ptr[] column_family_options,
+                    rocksdb_column_family_handle_t_ptr[] colummn_family_handles)
+                {
+                    var result = rocksdb_open_as_secondary_column_families(options, name, secondary_path, num_column_families, column_family_names, column_family_options, colummn_family_handles, out char_ptr_ptr errptr);
+                    if (errptr != IntPtr.Zero)
+                        throw new RocksDbException(errptr);
+                    return result;
+                }
+        
         public abstract char_ptr_ptr rocksdb_list_column_families(
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
