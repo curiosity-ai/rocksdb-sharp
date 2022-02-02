@@ -12,6 +12,20 @@ namespace RocksDbPrepareCApiHeader
 {
     class Generate
     {
+        static async Task<int> Main(string[] args)
+        {
+            try
+            {
+                await ProcessAsync();
+                return 0;
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine(E.ToString());
+                return -1;
+            }
+        }
+
         /* Some enum names can't be guessed because there are no clues,
          * Damn you, C enums!
          * So if that happens, we can just manually enter them here
@@ -88,20 +102,6 @@ namespace RocksDbPrepareCApiHeader
             }
 
             yield break;
-        }
-
-        static async Task<int> Main(string[] args)
-        {
-            try
-            {
-                await ProcessAsync();
-                return 0;
-            }
-            catch(Exception E)
-            {
-                Console.WriteLine(E.ToString());
-                return -1;
-            }
         }
         
         static async Task ProcessAsync()
@@ -345,10 +345,10 @@ namespace RocksDbPrepareCApiHeader
             if (nativeArg.Name.IsMatchedBy(".*names|names.*") && nativeArg.NativeType == "const char* const*")
                 yield return (Type: "string[]", Strategy: "array");
             
-            if (nativeArg.Name.IsMatchedBy(".*column_famil.*|iterators") && nativeArg.NativeType.EndsWith("**"))
+            if (nativeArg.Name.IsMatchedBy(".*column_famil.*|.*colummn_famil.*|iterators") && nativeArg.NativeType.EndsWith("**"))
                 yield return (Type: $"{AsArrayType(GetManagedType(nativeArg.NativeType))}", Strategy: "array");
             
-            if (nativeArg.Name.IsMatchedBy(".*column_famil.*|iterators") && nativeArg.NativeType.EndsWith("* const*"))
+            if (nativeArg.Name.IsMatchedBy(".*column_famil.*|.*colummn_famil.*|iterators") && nativeArg.NativeType.EndsWith("* const*"))
                 yield return (Type: $"{AsArrayType(GetManagedType(nativeArg.NativeType))}", Strategy: "array");
 
             if (nativeArg.Name.IsMatchedBy(@"key|k|val|v|.*_key|.*_val") && nativeArg.NativeType.In("const char*", "char*"))

@@ -130,12 +130,12 @@ namespace RocksDbSharp
                 columnFamilies: cfHandleMap);
         }
 
-        public static RocksDb OpenAsSecondary(DbOptions options, string path, string secondaryPath, ColumnFamilies columnFamilies)
+        public static RocksDb OpenAsSecondary(DbOptions options, string name, string secondaryPath, ColumnFamilies columnFamilies)
         {
             string[] cfnames = columnFamilies.Names.ToArray();
             IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
             IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-            var db = Native.Instance.rocksdb_open_as_secondary_column_families(options.Handle, path, secondaryPath, cfnames.Length, cfnames, cfoptions, cfhandles);
+            var db = Native.Instance.rocksdb_open_as_secondary_column_families(options.Handle, name, secondaryPath, cfnames.Length, cfnames, cfoptions, cfhandles);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
             {
