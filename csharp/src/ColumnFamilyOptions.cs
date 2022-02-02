@@ -777,28 +777,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        // DEPRECATED -- this options is no longer used
-        // Puts are delayed to options.delayed_write_rate when any level has a
-        // compaction score that exceeds soft_rate_limit. This is ignored when == 0.0.
-        //
-        // Default: 0 (disabled)
-        //
-        // Dynamically changeable through SetOptions() API
-        [Obsolete("this option is no longer used")]
-        public ColumnFamilyOptions SetSoftRateLimit(double value)
-        {
-            Native.Instance.rocksdb_options_set_soft_rate_limit(Handle, value);
-            return this;
-        }
-
-        // DEPRECATED -- this options is no longer used
-        [Obsolete("this option is no longer used")]
-        public ColumnFamilyOptions SetHardRateLimit(double value)
-        {
-            Native.Instance.rocksdb_options_set_hard_rate_limit(Handle, value);
-            return this;
-        }
-
         /// <summary>
         /// All writes will be slowed down to at least delayed_write_rate if estimated
         /// bytes needed to be compaction exceed this threshold.
@@ -823,14 +801,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        // DEPRECATED -- this options is no longer used
-        [Obsolete("this option is no longer used")]
-        public ColumnFamilyOptions SetRateLimitDelayMaxMilliseconds(uint value)
-        {
-            Native.Instance.rocksdb_options_set_rate_limit_delay_max_milliseconds(Handle, value);
-            return this;
-        }
-
         /// <summary>
         /// size of one block in arena memory allocation.
         /// If <= 0, a proper value is automatically calculated (usually 1/8 of
@@ -851,23 +821,6 @@ namespace RocksDbSharp
         public ColumnFamilyOptions SetArenaBlockSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_arena_block_size(Handle, (UIntPtr)value);
-            return this;
-        }
-
-        // DEPREACTED
-        // Does not have any effect.
-        [Obsolete("Does not have any effect")]
-        public ColumnFamilyOptions SetPurgeRedundantKvsWhileFlush(bool value)
-        {
-            Native.Instance.rocksdb_options_set_purge_redundant_kvs_while_flush(Handle, value);
-            return this;
-        }
-
-        // DEPRECATED -- this options is no longer used
-        [Obsolete("this option is no longer used")]
-        public ColumnFamilyOptions SetSkipLogErrorOnRecovery(bool value)
-        {
-            Native.Instance.rocksdb_options_set_skip_log_error_on_recovery(Handle, value);
             return this;
         }
 

@@ -204,19 +204,6 @@ namespace RocksDbSharp
         }
 
         /// <summary>
-        /// Suggested number of concurrent background compaction jobs, submitted to
-        /// the default LOW priority thread pool.
-        ///
-        /// Default: 1
-        /// </summary>
-        /// <returns></returns>
-        public DbOptions SetBaseBackgroundCompactions(int value)
-        {
-            Native.Instance.rocksdb_options_set_base_background_compactions(Handle, value);
-            return this;
-        }
-
-        /// <summary>
         /// Maximum number of concurrent background memtable flush jobs, submitted to
         /// the HIGH priority thread pool.
         ///
@@ -307,14 +294,6 @@ namespace RocksDbSharp
         public DbOptions SetTableCacheNumShardbits(int value)
         {
             Native.Instance.rocksdb_options_set_table_cache_numshardbits(Handle, value);
-            return this;
-        }
-
-        // DEPRECATED
-        [Obsolete]
-        public DbOptions SetTableCacheRemoveScanCountLimit(int value)
-        {
-            Native.Instance.rocksdb_options_set_table_cache_remove_scan_count_limit(Handle, value);
             return this;
         }
 
