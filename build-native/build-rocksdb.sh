@@ -88,8 +88,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export SNAPPY_LIB_RELEASE="${VCPKG_HOME}/snappy_x64-windows-static/lib/snappy.lib"
 
         export ZSTD_INCLUDE="${VCPKG_HOME}/zstd_x64-windows-static/include"
-        export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_x64-windows-static/debug/lib/zstd_staticd.lib"
-        export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd_static.lib"
+        export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_x64-windows-static/debug/lib/zstd_d.lib"
+        export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd.lib"
         
         (cd build && {
             cmake -G "Visual Studio 16 2019"  -DCMAKE_CXX_FLAGS=/arch:SSE2 -DCMAKE_C_FLAGS=/arch:SSE2 -DCXX_FLAGS=/arch:SSE2 -DC_FLAGS=/arch:SSE2 -DHAVE_AVX2=0 -DHAVE_AVX=0  -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1 .. || fail "Running cmake failed"
