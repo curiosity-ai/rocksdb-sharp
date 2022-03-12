@@ -92,11 +92,11 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd.lib"
         
         (cd build && {
-            cmake -G "Visual Studio 16 2019"  -DCMAKE_CXX_FLAGS=/arch:SSE2 -DCMAKE_C_FLAGS=/arch:SSE2 -DCXX_FLAGS=/arch:SSE2 -DC_FLAGS=/arch:SSE2 -DHAVE_AVX2=0 -DHAVE_AVX=0  -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1 .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 16 2019"  -DCMAKE_CXX_FLAGS=/arch:SSE2 -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1 .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
-        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Rocksdb release build failed"
+        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /std:c++17 /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Rocksdb release build failed"
 
         ls -R ./build/Release/
 
@@ -112,7 +112,7 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++11 -Wmissing-exception-spec"
+        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++17 -Wmissing-exception-spec"
         
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
