@@ -57,6 +57,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     export VCPKG_CXX_FLAGS=/arch:SSE2
     export CMAKE_C_FLAGS=/arch:SSE2
     export CMAKE_CXX_FLAGS=/arch:SSE2
+    export CMAKE_CXX_STANDARD=17
     
     mkdir -p vcpkg || fail "unable to make vcpkg directory"
     (cd vcpkg && {
@@ -96,7 +97,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
-        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /std:c++17 /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Rocksdb release build failed"
+        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Rocksdb release build failed"
 
         ls -R ./build/Release/
 
