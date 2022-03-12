@@ -559,14 +559,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        // This does not do anything anymore. Deprecated.
-        [Obsolete("Thid does not do anything anymore")]
-        public ColumnFamilyOptions SetMaxMemCompactionLevel(int value)
-        {
-            Native.Instance.rocksdb_options_set_max_mem_compaction_level(Handle, value);
-            return this;
-        }
-
         /// <summary>
         /// Target file size for compaction.
         /// target_file_size_base is per-file size for level-1.
