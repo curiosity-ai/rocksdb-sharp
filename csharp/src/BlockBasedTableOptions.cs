@@ -104,12 +104,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        public BlockBasedTableOptions SetHashIndexAllowCollision(bool allowCollision)
-        {
-            Native.Instance.rocksdb_block_based_options_set_hash_index_allow_collision(Handle, allowCollision);
-            return this;
-        }
-
         public BlockBasedTableOptions SetCacheIndexAndFilterBlocks(bool cacheIndexAndFilterBlocks)
         {
             Native.Instance.rocksdb_block_based_options_set_cache_index_and_filter_blocks(Handle, cacheIndexAndFilterBlocks);
