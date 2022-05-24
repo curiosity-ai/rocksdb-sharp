@@ -117,7 +117,7 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++17 -Wmissing-exception-spec"
+        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++17 -Wmissing-exception-spec "
         
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
@@ -142,6 +142,10 @@ else
         export ZSTD_LIB_RELEASE="${HOMEBREW_CELLAR}/zstd/1.5.0/lib/libzstd.a"
         
         export ROCKSDB_DISABLE_JEMALLOC=1
+        
+        #fix min version 
+        sed -i 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13' ./build_tools/build_detect_platform
+        echo ./build_tools/build_detect_platform
     else
         echo "Linux detected"
         CFLAGS=-static-libstdc++
