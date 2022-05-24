@@ -56,7 +56,7 @@ steps:
   inputs:
     azureSubscription: 'Pay-As-You-Go(1)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zlib/1.2.11/lib/libz.dylib" --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zlib/1.2.12/lib/libz.dylib" --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib'
     
     
 - task: AzureCLI@1
