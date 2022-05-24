@@ -159,7 +159,7 @@ else
 
 
         #fix min macos version on build file
-        sed -i 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' build_tools/build_detect_platform
+        sed -i '' 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' build_tools/build_detect_platform
         echo build_tools/build_detect_platform
         
         export CFLAGS
