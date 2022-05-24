@@ -117,10 +117,6 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        #fix min version  on build file
-        sed -i 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' ./build_tools/build_detect_platform
-        echo ./build_tools/build_detect_platform        
-        
         CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++17 -Wmissing-exception-spec "
         
         echo "${CMAKE_INSTALL_LIBDIR}"
@@ -161,6 +157,11 @@ else
     (cd rocksdb && {
         checkout "rocksdb" "$ROCKSDBREMOTE" "$ROCKSDBVERSION" "$ROCKSDBVERSION"
 
+
+        #fix min macos version on build file
+        sed -i 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' ./build_tools/build_detect_platform
+        echo ./build_tools/build_detect_platform        
+        
         export CFLAGS
         export LDFLAGS
         export ROCKSDB_DISABLE_GFLAGS=1
