@@ -168,7 +168,7 @@ namespace RocksDbSharp
             try
             {
                 keys[0] = key;
-                PutVector(columnFamily, keys.AsSpan(0, 1), values);
+                PutVector(keys.AsSpan(0, 1), values, columnFamily);
                 return this;
             }
             finally
@@ -193,12 +193,7 @@ namespace RocksDbSharp
             }
         }
 
-        public WriteBatch PutVector(ReadOnlySpan<ReadOnlyMemory<byte>> keys, ReadOnlySpan<ReadOnlyMemory<byte>> values)
-        {
-            return PutVector(null, keys, values);
-        }
-
-        public unsafe WriteBatch PutVector(ColumnFamilyHandle columnFamily, ReadOnlySpan<ReadOnlyMemory<byte>> keys, ReadOnlySpan<ReadOnlyMemory<byte>> values)
+        public unsafe WriteBatch PutVector(ReadOnlySpan<ReadOnlyMemory<byte>> keys, ReadOnlySpan<ReadOnlyMemory<byte>> values, ColumnFamilyHandle columnFamily = null)
         {
             var intPtrPool = ArrayPool<IntPtr>.Shared;
             var uintPtrPool = ArrayPool<UIntPtr>.Shared;
@@ -219,15 +214,16 @@ namespace RocksDbSharp
                     : keysListSizesArray.AsSpan(0, keysLength);
                 using var keyHandles = CopyVector(keys, keysList, keysListSizes);
 
-                (valuesListArray, valuesListSizesArray) = values.Length < 256 
+                var valuesLength = values.Length;
+                (valuesListArray, valuesListSizesArray) = valuesLength < 256 
                     ? (null, null)
-                    : (intPtrPool.Rent(values.Length), uintPtrPool.Rent(values.Length));
-                Span<IntPtr> valuesList = values.Length < 256
-                    ? stackalloc IntPtr[values.Length]
-                    : valuesListArray.AsSpan(0, values.Length);
-                Span<UIntPtr> valuesListSizes = values.Length < 256
-                    ? stackalloc UIntPtr[values.Length] 
-                    : valuesListSizesArray.AsSpan(0, values.Length);
+                    : (intPtrPool.Rent(valuesLength), uintPtrPool.Rent(valuesLength));
+                Span<IntPtr> valuesList = valuesLength < 256
+                    ? stackalloc IntPtr[valuesLength]
+                    : valuesListArray.AsSpan(0, valuesLength);
+                Span<UIntPtr> valuesListSizes = valuesLength < 256
+                    ? stackalloc UIntPtr[valuesLength] 
+                    : valuesListSizesArray.AsSpan(0, valuesLength);
                 using var valuesDisposable = CopyVector(values, valuesList, valuesListSizes);
 
                 fixed (void* keysListPtr = keysList,
@@ -238,14 +234,14 @@ namespace RocksDbSharp
                     if (columnFamily is null)
                     {
                         Putv(
-                            keys.Length, (IntPtr)keysListPtr, (IntPtr)keysListSizesPtr,
-                            values.Length, (IntPtr)valuesListPtr, (IntPtr)valuesListSizesPtr);
+                            keysLength, (IntPtr)keysListPtr, (IntPtr)keysListSizesPtr,
+                            valuesLength, (IntPtr)valuesListPtr, (IntPtr)valuesListSizesPtr);
                     }
                     else
                     {
                         PutvCf(columnFamily.Handle,
-                            keys.Length, (IntPtr)keysListPtr, (IntPtr)keysListSizesPtr,
-                            values.Length, (IntPtr)valuesListPtr, (IntPtr)valuesListSizesPtr);
+                            keysLength, (IntPtr)keysListPtr, (IntPtr)keysListSizesPtr,
+                            valuesLength, (IntPtr)valuesListPtr, (IntPtr)valuesListSizesPtr);
                     }
                 }
                 return this; 
