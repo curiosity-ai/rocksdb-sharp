@@ -319,7 +319,10 @@ namespace RocksDbSharp
         /// </summary>
         public DbOptions SetDbLogDir(string value)
         {
-            Native.Instance.rocksdb_options_set_db_log_dir(Handle, value);
+            using (var safePath = new RocksSafePath(value))
+            {
+                Native.Instance.rocksdb_options_set_db_log_dir(Handle, safePath.Handle);
+            }
             return this;
         }
 
@@ -333,7 +336,10 @@ namespace RocksDbSharp
         /// </summary>
         public DbOptions SetWalDir(string value)
         {
-            Native.Instance.rocksdb_options_set_wal_dir(Handle, value);
+            using (var safePath = new RocksSafePath(value))
+            {
+                Native.Instance.rocksdb_options_set_wal_dir(Handle, safePath.Handle);
+            }
             return this;
         }
 
