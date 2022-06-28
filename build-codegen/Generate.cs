@@ -301,7 +301,7 @@ namespace RocksDbPrepareCApiHeader
             return $"}}\npublic enum {enumName} {{\n{string.Join("\n", entriesOut)}\n}}\npublic abstract partial class Native {{";
             */
             throw new NotImplementedException();
-        }
+        } 
 
         private static string AsArrayType(string managedType)
             => Regex.Replace(managedType, "_ptr$|_const_ptr$", "[]");
@@ -328,7 +328,13 @@ namespace RocksDbPrepareCApiHeader
                 .RegexReplace(@"_$", "")
                 .RegexReplace(@"^_", "")
                 .Trim('_');
-            return managedType == "unsigned_char" ? "bool" : managedType;
+
+            switch (managedType)
+            {
+                case "const_bool":
+                case "unsigned_char": return "bool";
+                default:return managedType;
+            }
         }
 
         private static IEnumerable<(string Type, string Strategy)> GetManagedTypeVariations(NativeArg nativeArg, string managedArgName)
