@@ -9,6 +9,7 @@ using Transitional;
 
 namespace RocksDbSharp
 {
+
     public sealed class RocksDb : IDisposable
     {
         private bool _disposed;
@@ -72,40 +73,40 @@ namespace RocksDbSharp
 
         public static RocksDb Open(OptionsHandle options, string path)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr db = Native.Instance.rocksdb_open(options.Handle, pathSafe);
+            using var pathSafe = new UTF8String(path);
+            IntPtr db = Native.Instance.rocksdb_open(options.Handle, pathSafe.Handle);
             return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
         }
 
         public static RocksDb OpenReadOnly(OptionsHandle options, string path, bool errorIfLogFileExists)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe, errorIfLogFileExists);
+            using var pathSafe = new UTF8String(path);
+            IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, errorIfLogFileExists);
             return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
         }
 
         public static RocksDb OpenAsSecondary(OptionsHandle options, string path, string secondaryPath)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr secondaryPathSafe = Marshal.StringToHGlobalAnsi(secondaryPath); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr db = Native.Instance.rocksdb_open_as_secondary(options.Handle, pathSafe, secondaryPathSafe);
+            using var pathSafe = new UTF8String(path);
+            using var secondaryPathSafe = new UTF8String(secondaryPath);
+            IntPtr db = Native.Instance.rocksdb_open_as_secondary(options.Handle, pathSafe.Handle, secondaryPathSafe.Handle);
             return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
         }
 
         public static RocksDb OpenWithTtl(OptionsHandle options, string path, int ttlSeconds)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr db = Native.Instance.rocksdb_open_with_ttl(options.Handle, pathSafe, ttlSeconds);
+            using var pathSafe = new UTF8String(path);
+            IntPtr db = Native.Instance.rocksdb_open_with_ttl(options.Handle, pathSafe.Handle, ttlSeconds);
             return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
         }
 
         public static RocksDb Open(DbOptions options, string path, ColumnFamilies columnFamilies)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
+            using var pathSafe = new UTF8String(path);
             string[] cfnames = columnFamilies.Names.ToArray();
             IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
             IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-            IntPtr db = Native.Instance.rocksdb_open_column_families(options.Handle, pathSafe, cfnames.Length, cfnames, cfoptions, cfhandles);
+            IntPtr db = Native.Instance.rocksdb_open_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
             {
@@ -120,11 +121,11 @@ namespace RocksDbSharp
 
         public static RocksDb OpenReadOnly(DbOptions options, string path, ColumnFamilies columnFamilies, bool errIfLogFileExists)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
+            using var pathSafe = new UTF8String(path);
             string[] cfnames = columnFamilies.Names.ToArray();
             IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
             IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-            IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
+            IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
             {
@@ -139,12 +140,12 @@ namespace RocksDbSharp
 
         public static RocksDb OpenAsSecondary(DbOptions options, string path, string secondaryPath, ColumnFamilies columnFamilies)
         {
-            IntPtr pathSafe = Marshal.StringToHGlobalAnsi(path); //TODO: Release the memory allocated here when the RocksDB instace is closed
-            IntPtr secondaryPathSafe = Marshal.StringToHGlobalAnsi(secondaryPath); //TODO: Release the memory allocated here when the RocksDB instace is closed
+            using var pathSafe = new UTF8String(path);
+            using var secondaryPathSafe = new UTF8String(secondaryPath);
             string[] cfnames = columnFamilies.Names.ToArray();
             IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
             IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-            var db = Native.Instance.rocksdb_open_as_secondary_column_families(options.Handle, pathSafe, secondaryPathSafe, cfnames.Length, cfnames, cfoptions, cfhandles);
+            var db = Native.Instance.rocksdb_open_as_secondary_column_families(options.Handle, pathSafe.Handle, secondaryPathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles);
             var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
             foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
             {
