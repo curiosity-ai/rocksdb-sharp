@@ -428,12 +428,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        public ColumnFamilyOptions SetInfoLogLevel(int value)
-        {
-            Native.Instance.rocksdb_options_set_info_log_level(Handle, value);
-            return this;
-        }
-
         /// <summary>
         /// Amount of data to build up in memory (backed by an unsorted log
         /// on disk) before converting to a sorted on-disk file.

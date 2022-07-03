@@ -14,6 +14,16 @@ namespace RocksDbSharp
         WillNeed,
     }
 
+    public enum InfoLogLevel
+    {
+        Debug,
+        Info,
+        Warn,
+        Error,
+        Fatal,
+        Header
+    }
+
     // Summaries taken from:
     // rocksdb/include/rocksdb/options.h
     public class DbOptions : ColumnFamilyOptions
@@ -98,6 +108,16 @@ namespace RocksDbSharp
         public DbOptions SetInfoLog(IntPtr logger)
         {
             Native.Instance.rocksdb_options_set_info_log(Handle, logger);
+            return this;
+        }
+
+        /// <summary>
+        /// Specify the info log level.
+        /// Default: Info (for release builds)
+        /// </summary>
+        public DbOptions SetInfoLogLevel(InfoLogLevel value)
+        {
+            Native.Instance.rocksdb_options_set_info_log_level(Handle, (int)value);
             return this;
         }
 
