@@ -1,20 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using Transitional;
 
 namespace RocksDbSharp
 {
-    public class ColumnFamilyOptions : OptionsHandle
+    public enum InfoLogLevel
+    {
+        Debug,
+        Info,
+        Warn,
+        Error,
+        Fatal,
+        Header
+    }
+    public class ColumnFamilyOptions : Options { }
+
+    public abstract partial class Options : OptionsHandle
     {
         ComparatorReferences ComparatorRef { get; set; }
         MergeOperatorReferences MergeOperatorRef { get; set; }
 
-        public ColumnFamilyOptions SetBlockBasedTableFactory(BlockBasedTableOptions table_options)
+        public Options SetBlockBasedTableFactory(BlockBasedTableOptions table_options)
         {
             References.BlockBasedTableFactory = table_options;
             // Args: table_options
@@ -23,7 +31,7 @@ namespace RocksDbSharp
         }
 
 #if ROCKSDB_CUCKOO_TABLE_OPTIONS
-        public ColumnFamilyOptions set_cuckoo_table_factory(rocksdb_cuckoo_table_options_t* table_options)
+        public Options set_cuckoo_table_factory(rocksdb_cuckoo_table_options_t* table_options)
         {
             // Args: table_options
             Native.Instance.rocksdb_options_set_cuckoo_table_factory(Handle, table_options);
@@ -37,7 +45,7 @@ namespace RocksDbSharp
         ///
         /// Not supported in ROCKSDB_LITE
         /// </summary>
-        public ColumnFamilyOptions OptimizeForPointLookup(ulong blockCacheSizeMb)
+        public Options OptimizeForPointLookup(ulong blockCacheSizeMb)
         {
             Native.Instance.rocksdb_options_optimize_for_point_lookup(Handle, blockCacheSizeMb);
             return this;
@@ -61,7 +69,7 @@ namespace RocksDbSharp
         ///
         /// OptimizeUniversalStyleCompaction is not supported in ROCKSDB_LITE
         /// </summary>
-        public ColumnFamilyOptions OptimizeLevelStyleCompaction(ulong memtableMemoryBudget)
+        public Options OptimizeLevelStyleCompaction(ulong memtableMemoryBudget)
         {
             Native.Instance.rocksdb_options_optimize_level_style_compaction(Handle, memtableMemoryBudget);
             return this;
@@ -85,7 +93,7 @@ namespace RocksDbSharp
         ///
         /// OptimizeUniversalStyleCompaction is not supported in ROCKSDB_LITE
         /// </summary>
-        public ColumnFamilyOptions OptimizeUniversalStyleCompaction(ulong memtableMemoryBudget)
+        public Options OptimizeUniversalStyleCompaction(ulong memtableMemoryBudget)
         {
             Native.Instance.rocksdb_options_optimize_universal_style_compaction(Handle, memtableMemoryBudget);
             return this;
@@ -108,7 +116,7 @@ namespace RocksDbSharp
         ///
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetCompactionFilter(IntPtr compactionFilter)
+        public Options SetCompactionFilter(IntPtr compactionFilter)
         {
             Native.Instance.rocksdb_options_set_compaction_filter(Handle, compactionFilter);
             return this;
@@ -124,7 +132,7 @@ namespace RocksDbSharp
         ///
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetCompactionFilterFactory(IntPtr compactionFilterFactory)
+        public Options SetCompactionFilterFactory(IntPtr compactionFilterFactory)
         {
             Native.Instance.rocksdb_options_set_compaction_filter_factory(Handle, compactionFilterFactory);
             return this;
@@ -140,7 +148,7 @@ namespace RocksDbSharp
         ///
         /// Default: 0
         //// </summary>
-        public ColumnFamilyOptions SetCompactionReadaheadSize(ulong size)
+        public Options SetCompactionReadaheadSize(ulong size)
         {
             Native.Instance.rocksdb_options_compaction_readahead_size(Handle, (UIntPtr)size);
             return this;
@@ -154,7 +162,7 @@ namespace RocksDbSharp
         /// here has the same name and orders keys *exactly* the same as the
         /// comparator provided to previous open calls on the same DB.
         /// </summary>
-        public ColumnFamilyOptions SetComparator(IntPtr comparator)
+        public Options SetComparator(IntPtr comparator)
         {
             Native.Instance.rocksdb_options_set_comparator(Handle, comparator);
             return this;
@@ -168,7 +176,7 @@ namespace RocksDbSharp
         /// here has the same name and orders keys *exactly* the same as the
         /// comparator provided to previous open calls on the same DB.
         /// </summary>
-        public ColumnFamilyOptions SetComparator(Comparator comparator)
+        public Options SetComparator(Comparator comparator)
         {
             // Allocate some memory for the name bytes
             var name = comparator.Name ?? comparator.GetType().FullName;
@@ -251,7 +259,7 @@ namespace RocksDbSharp
         /// openning the DB in this case.
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetMergeOperator(MergeOperator mergeOperator)
+        public Options SetMergeOperator(MergeOperator mergeOperator)
         {
             // Allocate some memory for the name bytes
             var name = mergeOperator.Name ?? mergeOperator.GetType().FullName;
@@ -356,13 +364,13 @@ namespace RocksDbSharp
         /// openning the DB in this case.
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetMergeOperator(IntPtr mergeOperator)
+        public Options SetMergeOperator(IntPtr mergeOperator)
         {
             Native.Instance.rocksdb_options_set_merge_operator(Handle, mergeOperator);
             return this;
         }
 
-        public ColumnFamilyOptions SetUint64addMergeOperator()
+        public Options SetUint64addMergeOperator()
         {
             Native.Instance.rocksdb_options_set_uint64add_merge_operator(Handle);
             return this;
@@ -391,7 +399,7 @@ namespace RocksDbSharp
         /// and L4 using compression_per_level[3]. Compaction for each level can
         /// change when data grows.
         /// </summary>
-        public ColumnFamilyOptions SetCompressionPerLevel(Compression[] levelValues, ulong numLevels)
+        public Options SetCompressionPerLevel(Compression[] levelValues, ulong numLevels)
         {
             var values = levelValues.Select(x => (int)x).ToArray();
             Native.Instance.rocksdb_options_set_compression_per_level(Handle, values, (UIntPtr)numLevels);
@@ -422,15 +430,19 @@ namespace RocksDbSharp
         /// change when data grows.
         /// </summary>
         [Obsolete("Use Compression enum")]
-        public ColumnFamilyOptions SetCompressionPerLevel(Compression[] levelValues, UIntPtr numLevels)
+        public Options SetCompressionPerLevel(Compression[] levelValues, UIntPtr numLevels)
         {
             Native.Instance.rocksdb_options_set_compression_per_level(Handle, levelValues, numLevels);
             return this;
         }
 
-        public ColumnFamilyOptions SetInfoLogLevel(int value)
+        /// <summary>
+        /// Specify the info log level.
+        /// Default: Info (for release builds)
+        /// </summary>
+        public Options SetInfoLogLevel(InfoLogLevel value)
         {
-            Native.Instance.rocksdb_options_set_info_log_level(Handle, value);
+            Native.Instance.rocksdb_options_set_info_log_level(Handle, (int)value);
             return this;
         }
 
@@ -452,7 +464,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetWriteBufferSize(ulong value)
+        public Options SetWriteBufferSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_write_buffer_size(Handle, (UIntPtr)value);
             return this;
@@ -461,7 +473,7 @@ namespace RocksDbSharp
         /// <summary>
         /// different options for compression algorithms
         /// </summary>
-        public ColumnFamilyOptions SetCompressionOptions(int p1, int p2, int p3, int p4)
+        public Options SetCompressionOptions(int p1, int p2, int p3, int p4)
         {
             Native.Instance.rocksdb_options_set_compression_options(Handle, p1, p2, p3, p4);
             return this;
@@ -483,7 +495,7 @@ namespace RocksDbSharp
         ///
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetPrefixExtractor(IntPtr sliceTransform)
+        public Options SetPrefixExtractor(IntPtr sliceTransform)
         {
             Native.Instance.rocksdb_options_set_prefix_extractor(Handle, sliceTransform);
             return this;
@@ -505,7 +517,7 @@ namespace RocksDbSharp
         ///
         /// Default: nullptr
         /// </summary>
-        public ColumnFamilyOptions SetPrefixExtractor(SliceTransform sliceTransform)
+        public Options SetPrefixExtractor(SliceTransform sliceTransform)
         {
             References.PrefixExtractor = sliceTransform;
             Native.Instance.rocksdb_options_set_prefix_extractor(Handle, sliceTransform.Handle);
@@ -515,7 +527,7 @@ namespace RocksDbSharp
         /// <summary>
         /// Number of levels for this database
         /// </summary>
-        public ColumnFamilyOptions SetNumLevels(int value)
+        public Options SetNumLevels(int value)
         {
             Native.Instance.rocksdb_options_set_num_levels(Handle, value);
             return this;
@@ -529,7 +541,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetLevel0FileNumCompactionTrigger(int value)
+        public Options SetLevel0FileNumCompactionTrigger(int value)
         {
             Native.Instance.rocksdb_options_set_level0_file_num_compaction_trigger(Handle, value);
             return this;
@@ -542,7 +554,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetLevel0SlowdownWritesTrigger(int value)
+        public Options SetLevel0SlowdownWritesTrigger(int value)
         {
             Native.Instance.rocksdb_options_set_level0_slowdown_writes_trigger(Handle, value);
             return this;
@@ -553,7 +565,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetLevel0StopWritesTrigger(int value)
+        public Options SetLevel0StopWritesTrigger(int value)
         {
             Native.Instance.rocksdb_options_set_level0_stop_writes_trigger(Handle, value);
             return this;
@@ -573,7 +585,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetTargetFileSizeBase(ulong value)
+        public Options SetTargetFileSizeBase(ulong value)
         {
             Native.Instance.rocksdb_options_set_target_file_size_base(Handle, value);
             return this;
@@ -585,7 +597,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetTargetFileSizeMultiplier(int value)
+        public Options SetTargetFileSizeMultiplier(int value)
         {
             Native.Instance.rocksdb_options_set_target_file_size_multiplier(Handle, value);
             return this;
@@ -605,7 +617,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxBytesForLevelBase(ulong value)
+        public Options SetMaxBytesForLevelBase(ulong value)
         {
             Native.Instance.rocksdb_options_set_max_bytes_for_level_base(Handle, value);
             return this;
@@ -671,7 +683,7 @@ namespace RocksDbSharp
         /// Default: false
         /// </summary>
         /// <returns></returns>
-        public ColumnFamilyOptions SetLevelCompactionDynamicLevelBytes(bool value)
+        public Options SetLevelCompactionDynamicLevelBytes(bool value)
         {
             Native.Instance.rocksdb_options_set_level_compaction_dynamic_level_bytes(Handle, value);
             return this;
@@ -682,7 +694,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxBytesForLevelMultiplier(double value)
+        public Options SetMaxBytesForLevelMultiplier(double value)
         {
             Native.Instance.rocksdb_options_set_max_bytes_for_level_multiplier(Handle, value);
             return this;
@@ -697,7 +709,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxBytesForLevelMultiplierAdditional(int[] levelValues, ulong numLevels)
+        public Options SetMaxBytesForLevelMultiplierAdditional(int[] levelValues, ulong numLevels)
         {
             Native.Instance.rocksdb_options_set_max_bytes_for_level_multiplier_additional(Handle, levelValues, (UIntPtr)numLevels);
             return this;
@@ -716,7 +728,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxWriteBufferNumber(int value)
+        public Options SetMaxWriteBufferNumber(int value)
         {
             Native.Instance.rocksdb_options_set_max_write_buffer_number(Handle, value);
             return this;
@@ -731,7 +743,7 @@ namespace RocksDbSharp
         /// data to storage if there are duplicate records in each of these
         /// individual write buffers.  Default: 1
         /// </summary>
-        public ColumnFamilyOptions SetMinWriteBufferNumberToMerge(int value)
+        public Options SetMinWriteBufferNumberToMerge(int value)
         {
             Native.Instance.rocksdb_options_set_min_write_buffer_number_to_merge(Handle, value);
             return this;
@@ -763,7 +775,7 @@ namespace RocksDbSharp
         /// be set to the value of 'max_write_buffer_number' if it is not explicitly
         /// set by the user.  Otherwise, the default is 0.
         /// </summary>
-        public ColumnFamilyOptions SetMaxWriteBufferNumberToMaintain(int value)
+        public Options SetMaxWriteBufferNumberToMaintain(int value)
         {
             Native.Instance.rocksdb_options_set_max_write_buffer_number_to_maintain(Handle, value);
             return this;
@@ -775,7 +787,7 @@ namespace RocksDbSharp
         ///
         /// Default: 64GB
         /// </summary>
-        public ColumnFamilyOptions SetSoftPendingCompactionBytesLimit(ulong value)
+        public Options SetSoftPendingCompactionBytesLimit(ulong value)
         {
             Native.Instance.rocksdb_options_set_soft_pending_compaction_bytes_limit(Handle, (UIntPtr)value);
             return this;
@@ -787,7 +799,7 @@ namespace RocksDbSharp
         ///
         /// Default: 256GB
         /// </summary>
-        public ColumnFamilyOptions SetHardPendingCompactionBytesLimit(ulong value)
+        public Options SetHardPendingCompactionBytesLimit(ulong value)
         {
             Native.Instance.rocksdb_options_set_hard_pending_compaction_bytes_limit(Handle, (UIntPtr)value);
             return this;
@@ -810,7 +822,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetArenaBlockSize(ulong value)
+        public Options SetArenaBlockSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_arena_block_size(Handle, (UIntPtr)value);
             return this;
@@ -826,7 +838,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxSequentialSkipInIterations(ulong value)
+        public Options SetMaxSequentialSkipInIterations(ulong value)
         {
             Native.Instance.rocksdb_options_set_max_sequential_skip_in_iterations(Handle, value);
             return this;
@@ -838,7 +850,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetDisableAutoCompactions(int value)
+        public Options SetDisableAutoCompactions(int value)
         {
             Native.Instance.rocksdb_options_set_disable_auto_compactions(Handle, value);
             return this;
@@ -860,43 +872,43 @@ namespace RocksDbSharp
         ///
         /// Default: false
         /// </summary>
-        public ColumnFamilyOptions SetOptimizeFiltersForHits(int value)
+        public Options SetOptimizeFiltersForHits(int value)
         {
             Native.Instance.rocksdb_options_set_optimize_filters_for_hits(Handle, value);
             return this;
         }
 
-        public ColumnFamilyOptions SetMemtableVectorRep()
+        public Options SetMemtableVectorRep()
         {
             Native.Instance.rocksdb_options_set_memtable_vector_rep(Handle);
             return this;
         }
 
-        public ColumnFamilyOptions SetMemtablePrefixBloomSizeRatio(double ratio)
+        public Options SetMemtablePrefixBloomSizeRatio(double ratio)
         {
             Native.Instance.rocksdb_options_set_memtable_prefix_bloom_size_ratio(Handle, ratio);
             return this;
         }
 
-        public ColumnFamilyOptions SetMaxCompactionBytes(ulong bytes)
+        public Options SetMaxCompactionBytes(ulong bytes)
         {
             Native.Instance.rocksdb_options_set_max_compaction_bytes(Handle, bytes);
             return this;
         }
 
-        public ColumnFamilyOptions SetHashSkipListRep(ulong p1, int p2, int p3)
+        public Options SetHashSkipListRep(ulong p1, int p2, int p3)
         {
             Native.Instance.rocksdb_options_set_hash_skip_list_rep(Handle, (UIntPtr)p1, p2, p3);
             return this;
         }
 
-        public ColumnFamilyOptions SetHashLinkListRep(ulong value)
+        public Options SetHashLinkListRep(ulong value)
         {
             Native.Instance.rocksdb_options_set_hash_link_list_rep(Handle, (UIntPtr)value);
             return this;
         }
 
-        public ColumnFamilyOptions SetPlainTableFactory(UInt32 p1, int p2, double p3, ulong p4)
+        public Options SetPlainTableFactory(UInt32 p1, int p2, double p3, ulong p4)
         {
             Native.Instance.rocksdb_options_set_plain_table_factory(Handle, p1, p2, p3, (UIntPtr)p4);
             return this;
@@ -925,7 +937,7 @@ namespace RocksDbSharp
         /// and L4 using compression_per_level[3]. Compaction for each level can
         /// change when data grows.
         /// </summary>
-        public ColumnFamilyOptions SetMinLevelToCompress(int level)
+        public Options SetMinLevelToCompress(int level)
         {
             Native.Instance.rocksdb_options_set_min_level_to_compress(Handle, level);
             return this;
@@ -944,7 +956,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMaxSuccessiveMerges(ulong value)
+        public Options SetMaxSuccessiveMerges(ulong value)
         {
             Native.Instance.rocksdb_options_set_max_successive_merges(Handle, (UIntPtr)value);
             return this;
@@ -958,7 +970,7 @@ namespace RocksDbSharp
         /// it on.
         /// Default: 0
         /// </summary>
-        public ColumnFamilyOptions SetBloomLocality(uint value)
+        public Options SetBloomLocality(uint value)
         {
             Native.Instance.rocksdb_options_set_bloom_locality(Handle, value);
             return this;
@@ -977,7 +989,7 @@ namespace RocksDbSharp
         /// If inplace_callback function is set, check doc for inplace_callback.
         /// Default: false.
         /// </summary>
-        public ColumnFamilyOptions SetInplaceUpdateSupport(bool value)
+        public Options SetInplaceUpdateSupport(bool value)
         {
             Native.Instance.rocksdb_options_set_inplace_update_support(Handle, value);
             return this;
@@ -989,7 +1001,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetInplaceUpdateNumLocks(ulong value)
+        public Options SetInplaceUpdateNumLocks(ulong value)
         {
             Native.Instance.rocksdb_options_set_inplace_update_num_locks(Handle, (UIntPtr)value);
             return this;
@@ -1001,7 +1013,7 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public ColumnFamilyOptions SetReportBgIoStats(bool value)
+        public Options SetReportBgIoStats(bool value)
         {
             Native.Instance.rocksdb_options_set_report_bg_io_stats(Handle, value ? 0 : 1);
             return this;
@@ -1023,7 +1035,7 @@ namespace RocksDbSharp
         /// incompressible, the kSnappyCompression implementation will
         /// efficiently detect that and will switch to uncompressed mode.
         /// </summary>
-        public ColumnFamilyOptions SetCompression(Compression value)
+        public Options SetCompression(Compression value)
         {
             Native.Instance.rocksdb_options_set_compression(Handle, value);
             return this;
@@ -1032,7 +1044,7 @@ namespace RocksDbSharp
         /// <summary>
         /// The compaction style. Default: kCompactionStyleLevel
         /// </summary>
-        public ColumnFamilyOptions SetCompactionStyle(Compaction value)
+        public Options SetCompactionStyle(Compaction value)
         {
             Native.Instance.rocksdb_options_set_compaction_style(Handle, value);
             return this;
@@ -1041,7 +1053,7 @@ namespace RocksDbSharp
         /// <summary>
         /// The options needed to support Universal Style compactions
         /// </summary>
-        public ColumnFamilyOptions SetUniversalCompactionOptions(IntPtr universalCompactionOptions)
+        public Options SetUniversalCompactionOptions(IntPtr universalCompactionOptions)
         {
             Native.Instance.rocksdb_options_set_universal_compaction_options(Handle, universalCompactionOptions);
             return this;
@@ -1050,7 +1062,7 @@ namespace RocksDbSharp
         /// <summary>
         /// The options for FIFO compaction style
         /// </summary>
-        public ColumnFamilyOptions SetFifoCompactionOptions(IntPtr fifoCompactionOptions)
+        public Options SetFifoCompactionOptions(IntPtr fifoCompactionOptions)
         {
             Native.Instance.rocksdb_options_set_fifo_compaction_options(Handle, fifoCompactionOptions);
             return this;
@@ -1065,7 +1077,7 @@ namespace RocksDbSharp
         ///
         /// Dynamically changeable through SetOptions() API
         /// </summary>
-        public ColumnFamilyOptions SetMemtableHugePageSize(ulong size)
+        public Options SetMemtableHugePageSize(ulong size)
         {
             Native.Instance.rocksdb_options_set_memtable_huge_page_size(Handle, (UIntPtr)size);
             return this;
