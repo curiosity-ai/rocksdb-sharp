@@ -109,30 +109,40 @@ namespace NativeImport
         {
             public string LibraryExtension { get; }
 
-#pragma warning disable IDE1006 // Intentionally violating naming conventions because this is meant to match the library being loaded
-            [DllImport("libdl")]
-            private static extern IntPtr dlopen(String fileName, int flags);
+            [DllImport("libdl", EntryPoint = "dlopen")]
+            private static extern IntPtr dlopen(string fileName, int flags);
 
-            [DllImport("libdl")]
-            private static extern IntPtr dlsym(IntPtr handle, String symbol);
+            [DllImport("libdl", EntryPoint = "dlsym")]
+            private static extern IntPtr dlsym(IntPtr handle, string symbol);
 
-            [DllImport("libdl")]
+            [DllImport("libdl", EntryPoint = "dlclose")]
             private static extern int dlclose(IntPtr handle);
 
-            [DllImport("libdl")]
+            [DllImport("libdl", EntryPoint = "dlerror")]
             private static extern IntPtr dlerror();
 
-            [DllImport("libc")]
+            [DllImport("libc", EntryPoint = "uname")]
             private static extern int uname(IntPtr buf);
-#pragma warning restore IDE1006
+
+
+            [DllImport("libdl.so.2", EntryPoint = "dlopen")]
+            private static extern IntPtr so2_dlopen(string fileName, int flags);
+
+            [DllImport("libdl.so.2", EntryPoint = "dlsym")]
+            private static extern IntPtr so2_dlsym(IntPtr handle, string symbol);
+
+            [DllImport("libdl.so.2", EntryPoint = "dlclose")]
+            private static extern int so2_dlclose(IntPtr handle);
+
+            [DllImport("libdl.so.2", EntryPoint = "dlerror")]
+            private static extern IntPtr so2_dlerror();
+
+            private static bool _use_so2 = false;
 
             public PosixImporter()
             {
                 var platform = GetPlatform();
-                if (platform.StartsWith("Darwin"))
-                    LibraryExtension = "dylib";
-                else
-                    LibraryExtension = "so";
+                LibraryExtension = platform.StartsWith("Darwin") ? "dylib" : "so";
             }
 
             static string GetPlatform()
@@ -143,31 +153,73 @@ namespace NativeImport
                     buf = Marshal.AllocHGlobal(8192);
                     return (0 == uname(buf)) ? Marshal.PtrToStringAnsi(buf) : "Unknown";
                 }
-                catch
+                catch(Exception E) when (E is not DllNotFoundException)
                 {
                     return "Unknown";
                 }
                 finally
                 {
                     if (buf != IntPtr.Zero)
+                    {
                         Marshal.FreeHGlobal(buf);
+                    }
                 }
             }
 
             public IntPtr LoadLibrary(string path)
             {
-                dlerror();
-                var lib = dlopen(path, 2);
-                var errPtr = dlerror();
+                if (_use_so2) return so2_LoadLibrary(path);
+
+                try
+                {
+                    dlerror();
+                    var lib = dlopen(path, 2);
+                    var errPtr = dlerror();
+                    if (errPtr != IntPtr.Zero)
+                    {
+                        throw new NativeLoadException("dlopen: " + Marshal.PtrToStringAnsi(errPtr), null);
+                    }
+                    return lib;
+                }
+                catch (DllNotFoundException)
+                {
+                    return so2_LoadLibrary(path);
+                }
+            }
+
+            private static IntPtr so2_LoadLibrary(string path)
+            {
+                _use_so2 = true;
+                so2_dlerror();
+                var lib = so2_dlopen(path, 2);
+                var errPtr = so2_dlerror();
                 if (errPtr != IntPtr.Zero)
-                    throw new NativeLoadException("dlopen: " + Marshal.PtrToStringAnsi(errPtr), null);
+                {
+                    throw new NativeLoadException("so2_dlopen: " + Marshal.PtrToStringAnsi(errPtr), null);
+                }
                 return lib;
             }
 
             public IntPtr GetProcAddress(IntPtr lib, string entryPoint)
             {
-                dlerror();
-                IntPtr address = dlsym(lib, entryPoint);
+                if (_use_so2) return so2_GetProcAddress(lib, entryPoint);
+                try
+                {
+                    dlerror();
+                    IntPtr address = dlsym(lib, entryPoint);
+                    return address;
+                }
+                catch (DllNotFoundException)
+                {
+                    return so2_GetProcAddress(lib, entryPoint);
+                }
+            }
+
+            private static IntPtr so2_GetProcAddress(IntPtr lib, string entryPoint)
+            {
+                _use_so2 = true;
+                so2_dlerror();
+                IntPtr address = so2_dlsym(lib, entryPoint);
                 return address;
             }
 
@@ -176,7 +228,27 @@ namespace NativeImport
 
             public void FreeLibrary(IntPtr lib)
             {
-                dlclose(lib);
+                if (_use_so2)
+                {
+                    so2_FreeLibrary(lib);
+                    return;
+                }
+
+                try
+                {
+                    dlclose(lib);
+                }
+                catch (DllNotFoundException)
+                {
+                    so2_FreeLibrary(lib);
+                    return;
+                }
+            }
+
+            private static void so2_FreeLibrary(IntPtr lib)
+            {
+                _use_so2 = true;
+                so2_dlclose(lib);
             }
 
             public string Translate(string name)
@@ -184,6 +256,7 @@ namespace NativeImport
                 return "lib" + name + "." + LibraryExtension;
             }
         }
+
 
         public static string GetArchName(Architecture arch)
         {
@@ -380,7 +453,7 @@ namespace NativeImport
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                try { basePaths.Add("/opt/homebrew/lib"); } catch { /* Ignore */ }
+                basePaths.Add("/opt/homebrew/lib");
             }
 
             var search = basePaths
@@ -443,7 +516,7 @@ namespace NativeImport
         {
             var sig = GetMethodSig(methodTemplate);
             var typeBuilder = moduleBuilder.DefineType(sig, TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.AutoClass | TypeAttributes.AnsiClass | TypeAttributes.Sealed, typeof(System.MulticastDelegate));
-            var constructor = typeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.Standard, new Type[] { typeof(Object), typeof(IntPtr) });
+            var constructor = typeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.Standard, new Type[] { typeof(object), typeof(IntPtr) });
             constructor.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
 
             var parameters = methodTemplate.GetParameters().Select(pi => pi.ParameterType).ToArray();

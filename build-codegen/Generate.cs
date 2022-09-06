@@ -643,6 +643,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using char_ptr_ptr = System.IntPtr;",
                 @"using const_char_ptr_const_ptr = System.IntPtr;",
                 @"using const_char_ptr_ptr = System.IntPtr;",
+                @"using char_ptr_ptr_ptr = System.IntPtr;",
                 @"using const_size_t_ptr = System.IntPtr;",
                 @"using void_ptr = System.IntPtr;",
                 @"using size_t_ptr = System.IntPtr;",

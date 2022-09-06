@@ -23,7 +23,7 @@ namespace RocksDbSharp
 
         public OptionsHandle()
         {
-            this.Handle = Native.Instance.rocksdb_options_create();
+            Handle = Native.Instance.rocksdb_options_create();
         }
 
         ~OptionsHandle()

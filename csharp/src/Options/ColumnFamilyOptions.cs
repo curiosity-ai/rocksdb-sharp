@@ -6,15 +6,6 @@ using Transitional;
 
 namespace RocksDbSharp
 {
-    public enum InfoLogLevel
-    {
-        Debug,
-        Info,
-        Warn,
-        Error,
-        Fatal,
-        Header
-    }
     public class ColumnFamilyOptions : Options { }
 
     public abstract partial class Options : OptionsHandle
@@ -908,7 +899,7 @@ namespace RocksDbSharp
             return this;
         }
 
-        public Options SetPlainTableFactory(UInt32 p1, int p2, double p3, ulong p4)
+        public Options SetPlainTableFactory(uint p1, int p2, double p3, ulong p4)
         {
             Native.Instance.rocksdb_options_set_plain_table_factory(Handle, p1, p2, p3, (UIntPtr)p4);
             return this;

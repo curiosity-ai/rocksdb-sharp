@@ -4,7 +4,7 @@ using System.Text;
 
 namespace RocksDbSharp
 {
-    public class FlushOptions: OptionsHandle
+    public class FlushOptions : OptionsHandle
     {
         public FlushOptions()
         {
