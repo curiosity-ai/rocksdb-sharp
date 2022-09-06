@@ -172,6 +172,18 @@ namespace RocksDbSharp
         {
             return Native.Instance.rocksdb_iter_value(handle, deserializer);
         }
+
+        public unsafe ReadOnlySpan<byte> GetKeySpan()
+        {
+            IntPtr keyPtr = Native.Instance.rocksdb_iter_key(handle, out UIntPtr keyLength);
+            return new ReadOnlySpan<byte>((byte*)keyPtr, (int)keyLength);
+        }
+
+        public unsafe ReadOnlySpan<byte> GetValueSpan()
+        {
+            IntPtr valuePtr = Native.Instance.rocksdb_iter_value(handle, out UIntPtr valueLength);
+            return new ReadOnlySpan<byte>((byte*)valuePtr, (int)valueLength);
+        }
 #endif
 
         public T Key<T>(Func<Stream,T> deserializer)
