@@ -1,5 +1,9 @@
 ﻿using System;
+
+#if !NETSTANDARD2_0
 using System.Buffers;
+#endif
+
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
