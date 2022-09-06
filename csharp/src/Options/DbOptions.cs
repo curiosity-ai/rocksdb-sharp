@@ -2,19 +2,13 @@
 
 namespace RocksDbSharp
 {
-    public enum AccessHint
+    public class DbOptions : Options<DbOptions>
     {
-        None,
-        Normal,
-        Sequential,
-        WillNeed
     }
-
-    public class DbOptions : Options { }
 
     // Summaries taken from:
     // rocksdb/include/rocksdb/options.h
-    public abstract partial class Options : OptionsHandle
+    public abstract partial class Options<T> : OptionsHandle where T : Options<T>
     {
         internal bool CreateIfMissing { get; set; }
 
@@ -25,41 +19,41 @@ namespace RocksDbSharp
         /// cores. You almost definitely want to call this function if your system is
         /// bottlenecked by RocksDB.
         /// </summary>
-        public Options IncreaseParallelism(int totalThreads)
+        public T IncreaseParallelism(int totalThreads)
         {
             Native.Instance.rocksdb_options_increase_parallelism(Handle, totalThreads);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// If true, the database will be created if it is missing.
         /// Default: false
         /// </summary>
-        public Options SetCreateIfMissing(bool value = true)
+        public T SetCreateIfMissing(bool value = true)
         {
             CreateIfMissing = value; // remember this so that we can change treatment of column families during creation
             Native.Instance.rocksdb_options_set_create_if_missing(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// If true, missing column families will be automatically created.
         /// Default: false
         /// </summary>
-        public Options SetCreateMissingColumnFamilies(bool value = true)
+        public T SetCreateMissingColumnFamilies(bool value = true)
         {
             Native.Instance.rocksdb_options_set_create_missing_column_families(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// If true, an error is raised if the database already exists.
         /// Default: false
         /// </summary>
-        public Options SetErrorIfExists(bool value = true)
+        public T SetErrorIfExists(bool value = true)
         {
             Native.Instance.rocksdb_options_set_error_if_exists(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -70,10 +64,10 @@ namespace RocksDbSharp
         /// In most cases you want this to be set to true.
         /// Default: true
         /// </summary>
-        public Options SetParanoidChecks(bool value = true)
+        public T SetParanoidChecks(bool value = true)
         {
             Native.Instance.rocksdb_options_set_paranoid_checks(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -81,10 +75,10 @@ namespace RocksDbSharp
         /// e.g. to read/write files, schedule background work, etc.
         /// Default: Env::Default()
         /// </summary>
-        public Options SetEnv(IntPtr env)
+        public T SetEnv(IntPtr env)
         {
             Native.Instance.rocksdb_options_set_env(Handle, env);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -93,10 +87,10 @@ namespace RocksDbSharp
         /// in the same directory as the DB contents if info_log is nullptr.
         /// Default: nullptr
         /// </summary>
-        public Options SetInfoLog(IntPtr logger)
+        public T SetInfoLog(IntPtr logger)
         {
             Native.Instance.rocksdb_options_set_info_log(Handle, logger);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -107,10 +101,10 @@ namespace RocksDbSharp
         /// compaction. For universal-style compaction, you can usually set it to -1.
         /// Default: 5000 or ulimit value of max open files (whichever is smaller)
         /// </summary>
-        public Options SetMaxOpenFiles(int value)
+        public T SetMaxOpenFiles(int value)
         {
             Native.Instance.rocksdb_options_set_max_open_files(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -120,10 +114,10 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public Options SetMaxFileOpeningThreads(int value)
+        public T SetMaxFileOpeningThreads(int value)
         {
             Native.Instance.rocksdb_options_set_max_file_opening_threads(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -134,10 +128,10 @@ namespace RocksDbSharp
         /// [sum of all write_buffer_size * max_write_buffer_number] * 4
         /// Default: 0
         /// </summary>
-        public Options SetMaxTotalWalSize(ulong n)
+        public T SetMaxTotalWalSize(ulong n)
         {
             Native.Instance.rocksdb_options_set_max_total_wal_size(Handle, n);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -146,30 +140,30 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="mode"></param>
         /// <returns></returns>
-        public Options SetWalRecoveryMode(Recovery mode)
+        public T SetWalRecoveryMode(Recovery mode)
         {
             Native.Instance.rocksdb_options_set_wal_recovery_mode(Handle, mode);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// Enables statistics so that you can call GetStatisticsString() later
         /// </summary>
         /// <returns></returns>
-        public Options EnableStatistics()
+        public T EnableStatistics()
         {
             Native.Instance.rocksdb_options_enable_statistics(Handle);
-            return this;
+            return (T)this;
         }
         /// <summary>
         /// Skips Status Update on DBOpen, useful for increasing DB Open time on slower disks
         /// default: false
         /// </summary>
         /// <returns></returns>
-        public Options SkipStatsUpdateOnOpen(bool val = false)
+        public T SkipStatsUpdateOnOpen(bool val = false)
         {
             Native.Instance.rocksdb_options_set_skip_stats_update_on_db_open(Handle, val);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -195,10 +189,10 @@ namespace RocksDbSharp
         /// Env::SetBackgroundThreads
         /// Default: 1
         /// </summary>
-        public Options SetMaxBackgroundCompactions(int value)
+        public T SetMaxBackgroundCompactions(int value)
         {
             Native.Instance.rocksdb_options_set_max_background_compactions(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -218,10 +212,10 @@ namespace RocksDbSharp
         /// Env::SetBackgroundThreads
         /// Default: 1
         /// </summary>
-        public Options SetMaxBackgroundFlushes(int value)
+        public T SetMaxBackgroundFlushes(int value)
         {
             Native.Instance.rocksdb_options_set_max_background_flushes(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -231,10 +225,10 @@ namespace RocksDbSharp
         /// If max_log_file_size == 0, all logs will be written to one
         /// log file.
         /// </summary>
-        public Options SetMaxLogFileSize(ulong value)
+        public T SetMaxLogFileSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_max_log_file_size(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -243,20 +237,20 @@ namespace RocksDbSharp
         /// if it has been active longer than `log_file_time_to_roll`.
         /// Default: 0 (disabled)
         /// </summary>
-        public Options SetLogFileTimeToRoll(ulong value)
+        public T SetLogFileTimeToRoll(ulong value)
         {
             Native.Instance.rocksdb_options_set_log_file_time_to_roll(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// Maximal info log files to be kept.
         /// Default: 1000
         /// </summary>
-        public Options SetKeepLogFileNum(ulong value)
+        public T SetKeepLogFileNum(ulong value)
         {
             Native.Instance.rocksdb_options_set_keep_log_file_num(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -269,10 +263,10 @@ namespace RocksDbSharp
         /// each write.
         /// Default: 0
         /// </summary>
-        public Options SetRecycleLogFileNum(ulong value)
+        public T SetRecycleLogFileNum(ulong value)
         {
             Native.Instance.rocksdb_options_set_recycle_log_file_num(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -280,19 +274,19 @@ namespace RocksDbSharp
         /// The older manifest file be deleted.
         /// The default value is MAX_INT so that roll-over does not take place.
         /// </summary>
-        public Options SetMaxManifestFileSize(ulong value)
+        public T SetMaxManifestFileSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_max_manifest_file_size(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// Number of shards used for table cache.
         /// </summary>
-        public Options SetTableCacheNumShardbits(int value)
+        public T SetTableCacheNumShardbits(int value)
         {
             Native.Instance.rocksdb_options_set_table_cache_numshardbits(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -302,10 +296,10 @@ namespace RocksDbSharp
         /// filesystem like ext3 that can lose files after a reboot.
         /// Default: false
         /// </summary>
-        public Options SetUseFsync(int value)
+        public T SetUseFsync(int value)
         {
             Native.Instance.rocksdb_options_set_use_fsync(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -315,13 +309,13 @@ namespace RocksDbSharp
         /// and the db data dir's absolute path will be used as the log file
         /// name's prefix.
         /// </summary>
-        public Options SetDbLogDir(string value)
+        public T SetDbLogDir(string value)
         {
             using (var safePath = new RocksSafePath(value))
             {
                 Native.Instance.rocksdb_options_set_db_log_dir(Handle, safePath.Handle);
             }
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -332,13 +326,13 @@ namespace RocksDbSharp
         /// When destroying the db,
         ///   all log files in wal_dir and the dir itself is deleted
         /// </summary>
-        public Options SetWalDir(string value)
+        public T SetWalDir(string value)
         {
             using (var safePath = new RocksSafePath(value))
             {
                 Native.Instance.rocksdb_options_set_wal_dir(Handle, safePath.Handle);
             }
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -355,10 +349,10 @@ namespace RocksDbSharp
         /// 4. If both are not 0, WAL files will be checked every 10 min and both
         ///    checks will be performed with ttl being first.
         /// </summary>
-        public Options SetWALTtlSeconds(ulong value)
+        public T SetWALTtlSeconds(ulong value)
         {
             Native.Instance.rocksdb_options_set_WAL_ttl_seconds(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -375,10 +369,10 @@ namespace RocksDbSharp
         /// 4. If both are not 0, WAL files will be checked every 10 min and both
         ///    checks will be performed with ttl being first.
         /// </summary>
-        public Options SetWALSizeLimitMB(ulong value)
+        public T SetWALSizeLimitMB(ulong value)
         {
             Native.Instance.rocksdb_options_set_WAL_size_limit_MB(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -387,19 +381,19 @@ namespace RocksDbSharp
         /// as well as prevent overallocation for mounts that preallocate
         /// large amounts of data (such as xfs's allocsize option).
         /// </summary>
-        public Options SetManifestPreallocationSize(ulong value)
+        public T SetManifestPreallocationSize(ulong value)
         {
             Native.Instance.rocksdb_options_set_manifest_preallocation_size(Handle, (UIntPtr)value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// Allow the OS to mmap file for reading sst tables. Default: false
         /// </summary>
-        public Options SetAllowMmapReads(bool value)
+        public T SetAllowMmapReads(bool value)
         {
             Native.Instance.rocksdb_options_set_allow_mmap_reads(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -407,10 +401,10 @@ namespace RocksDbSharp
         /// DB::SyncWAL() only works if this is set to false.
         /// Default: false
         /// </summary>
-        public Options SetAllowMmapWrites(bool value)
+        public T SetAllowMmapWrites(bool value)
         {
             Native.Instance.rocksdb_options_set_allow_mmap_writes(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -424,10 +418,10 @@ namespace RocksDbSharp
         /// Use O_DIRECT for reading file
         /// Default: false
         /// </summary>
-        public Options SetUseDirectReads(bool value)
+        public T SetUseDirectReads(bool value)
         {
             Native.Instance.rocksdb_options_set_use_direct_reads(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -437,29 +431,29 @@ namespace RocksDbSharp
         /// Not supported in ROCKSDB_LITE mode!
         /// Default: false
         /// </summary>
-        public Options SetUseDirectIoForFlushAndCompaction(bool value)
+        public T SetUseDirectIoForFlushAndCompaction(bool value)
         {
             Native.Instance.rocksdb_options_set_use_direct_io_for_flush_and_compaction(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// Disable child process inherit open files. Default: true
         /// </summary>
-        public Options SetIsFdCloseOnExec(bool value)
+        public T SetIsFdCloseOnExec(bool value)
         {
             Native.Instance.rocksdb_options_set_is_fd_close_on_exec(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
         /// if not zero, dump rocksdb.stats to LOG every stats_dump_period_sec
         /// Default: 600 (10 min)
         /// </summary>
-        public Options SetStatsDumpPeriodSec(uint value)
+        public T SetStatsDumpPeriodSec(uint value)
         {
             Native.Instance.rocksdb_options_set_stats_dump_period_sec(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -467,10 +461,10 @@ namespace RocksDbSharp
         /// access pattern is random, when a sst file is opened.
         /// Default: true
         /// </summary>
-        public Options SetAdviseRandomOnOpen(bool value)
+        public T SetAdviseRandomOnOpen(bool value)
         {
             Native.Instance.rocksdb_options_set_advise_random_on_open(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -485,10 +479,10 @@ namespace RocksDbSharp
         ///
         /// Default: 0 (disabled)
         /// </summary>
-        public Options SetDbWriteBufferSize(ulong size)
+        public T SetDbWriteBufferSize(ulong size)
         {
             Native.Instance.rocksdb_options_set_db_write_buffer_size(Handle, (UIntPtr)size);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -496,10 +490,10 @@ namespace RocksDbSharp
         /// It will be applied to all input files of a compaction.
         /// Default: NORMAL
         /// </summary>
-        public Options SetAccessHintOnCompactionStart(int value)
+        public T SetAccessHintOnCompactionStart(int value)
         {
             Native.Instance.rocksdb_options_set_access_hint_on_compaction_start(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -509,10 +503,10 @@ namespace RocksDbSharp
         /// wasting spin time.
         /// Default: false
         /// </summary>
-        public Options SetUseAdaptiveMutex(bool value)
+        public T SetUseAdaptiveMutex(bool value)
         {
             Native.Instance.rocksdb_options_set_use_adaptive_mutex(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -529,10 +523,10 @@ namespace RocksDbSharp
         ///
         /// This option applies to table files
         /// </summary>
-        public Options SetBytesPerSync(ulong value)
+        public T SetBytesPerSync(ulong value)
         {
             Native.Instance.rocksdb_options_set_bytes_per_sync(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -546,10 +540,10 @@ namespace RocksDbSharp
         /// Default: true
         /// </summary>
         /// <returns></returns>
-        public Options SetAllowConcurrentMemtableWrite(bool value)
+        public T SetAllowConcurrentMemtableWrite(bool value)
         {
             Native.Instance.rocksdb_options_set_allow_concurrent_memtable_write(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -561,10 +555,10 @@ namespace RocksDbSharp
         /// Default: true
         /// </summary>
         /// <returns></returns>
-        public Options SetEnableWriteThreadAdaptiveYield(bool value)
+        public T SetEnableWriteThreadAdaptiveYield(bool value)
         {
             Native.Instance.rocksdb_options_set_enable_write_thread_adaptive_yield(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -573,10 +567,10 @@ namespace RocksDbSharp
         /// process will still get automatically delete on every compaction,
         /// regardless of this setting
         /// </summary>
-        public Options SetDeleteObsoleteFilesPeriodMicros(ulong value)
+        public T SetDeleteObsoleteFilesPeriodMicros(ulong value)
         {
             Native.Instance.rocksdb_options_set_delete_obsolete_files_period_micros(Handle, value);
-            return this;
+            return (T)this;
         }
 
         /// <summary>
@@ -588,10 +582,10 @@ namespace RocksDbSharp
         /// It's recommended to manually call CompactRange(NULL, NULL) before reading
         /// from the database, because otherwise the read can be very slow.
         /// </summary>
-        public Options PrepareForBulkLoad()
+        public T PrepareForBulkLoad()
         {
             Native.Instance.rocksdb_options_prepare_for_bulk_load(Handle);
-            return this;
+            return (T)this;
         }
 
     }
