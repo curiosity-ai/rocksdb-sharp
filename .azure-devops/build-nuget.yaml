@@ -94,10 +94,10 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'
+    nobuild: true
     packagesToPack: '$(Build.SourcesDirectory)/csharp/RocksDbSharp.csproj'
     configuration: 'Release'
     versioningScheme: 'off'
-    buildProperties: 'Version="$(ROCKSDBVERSION)";AllowUnsafeBlocks="True";LangVersion="latest"'
 
 - task: CmdLine@2
   inputs:
