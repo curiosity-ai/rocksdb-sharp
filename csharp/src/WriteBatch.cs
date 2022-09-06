@@ -170,7 +170,6 @@ namespace RocksDbSharp
             }
             return this;
         }
-#endif
 
         public WriteBatch PutVector(ColumnFamilyHandle columnFamily, ReadOnlyMemory<byte> key, params ReadOnlyMemory<byte>[] values)
         {
@@ -279,6 +278,8 @@ namespace RocksDbSharp
             return disposable;
         }
 
+
+
         class MemoryHandleManager : IDisposable
         {
             readonly IList<MemoryHandle> handles;
@@ -298,6 +299,7 @@ namespace RocksDbSharp
                 }
             }
         }
+#endif
 
         public WriteBatch Putv(int numKeys, IntPtr keysList, IntPtr keysListSizes, int numValues, IntPtr valuesList, IntPtr valuesListSizes)
         {
