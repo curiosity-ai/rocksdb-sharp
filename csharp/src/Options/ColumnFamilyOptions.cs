@@ -10,10 +10,22 @@ namespace RocksDbSharp
     public class ColumnFamilyOptions : Options<ColumnFamilyOptions>
     {
     }
+    
+    internal class OptionsBase
+    {
+        public delegate Comparator GetComparator();
+        public class ComparatorReferences
+        {
+            public GetComparator GetComparator { get; set; }
+            public DestructorDelegate DestructorDelegate { get; set; }
+            public CompareDelegate CompareDelegate { get; set; }
+            public NameDelegate NameDelegate { get; set; }
+        }
+    }
 
     public abstract partial class Options<T> : OptionsHandle where T : Options<T>
     {
-        ComparatorReferences ComparatorRef { get; set; }
+        OptionsBase.ComparatorReferences ComparatorRef { get; set; }
         MergeOperatorReferences MergeOperatorRef { get; set; }
 
         public T SetBlockBasedTableFactory(BlockBasedTableOptions table_options)
@@ -179,7 +191,7 @@ namespace RocksDbSharp
             Marshal.Copy(nameBytes, 0, namePtr, nameBytes.Length);
 
             // Hold onto a reference to everything that needs to stay alive
-            ComparatorRef = new ComparatorReferences
+            ComparatorRef = new OptionsBase.ComparatorReferences
             {
                 GetComparator = () => comparator,
                 CompareDelegate = Comparator_Compare,
@@ -191,7 +203,7 @@ namespace RocksDbSharp
             var state = new ComparatorState
             {
                 NamePtr = namePtr,
-                GetComparatorPtr = CurrentFramework.GetFunctionPointerForDelegate<GetComparator>(ComparatorRef.GetComparator)
+                GetComparatorPtr = CurrentFramework.GetFunctionPointerForDelegate<OptionsBase.GetComparator>(ComparatorRef.GetComparator)
             };
             var statePtr = Marshal.AllocHGlobal(Marshal.SizeOf(state));
             Marshal.StructureToPtr(state, statePtr, false);
@@ -207,19 +219,11 @@ namespace RocksDbSharp
             return SetComparator(handle);
         }
 
-        delegate Comparator GetComparator();
-        private class ComparatorReferences
-        {
-            public GetComparator GetComparator { get; set; }
-            public DestructorDelegate DestructorDelegate { get; set; }
-            public CompareDelegate CompareDelegate { get; set; }
-            public NameDelegate NameDelegate { get; set; }
-        }
 
         private unsafe int Comparator_Compare(IntPtr state, IntPtr a, UIntPtr alen, IntPtr b, UIntPtr blen)
         {
             var getComparatorPtr = (*((ComparatorState*)state)).GetComparatorPtr;
-            var getComparator = CurrentFramework.GetDelegateForFunctionPointer<GetComparator>(getComparatorPtr);
+            var getComparator = CurrentFramework.GetDelegateForFunctionPointer<OptionsBase.GetComparator>(getComparatorPtr);
             var comparator = getComparator();
             return comparator.Compare(a, alen, b, blen);
         }
