@@ -21,6 +21,20 @@ namespace RocksDbSharp
             public CompareDelegate CompareDelegate { get; set; }
             public NameDelegate NameDelegate { get; set; }
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct ComparatorState
+        {
+            public IntPtr GetComparatorPtr { get; set; }
+            public IntPtr NamePtr { get; set; }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MergeOperatorState
+        {
+            public IntPtr GetMergeOperatorPtr { get; set; }
+            public IntPtr NamePtr { get; set; }
+        }
     }
 
     public abstract partial class Options<T> : OptionsHandle where T : Options<T>
@@ -200,7 +214,7 @@ namespace RocksDbSharp
             };
 
             // Allocate the state
-            var state = new ComparatorState
+            var state = new OptionsBase.ComparatorState
             {
                 NamePtr = namePtr,
                 GetComparatorPtr = CurrentFramework.GetFunctionPointerForDelegate<OptionsBase.GetComparator>(ComparatorRef.GetComparator)
@@ -222,7 +236,7 @@ namespace RocksDbSharp
 
         private unsafe int Comparator_Compare(IntPtr state, IntPtr a, UIntPtr alen, IntPtr b, UIntPtr blen)
         {
-            var getComparatorPtr = (*((ComparatorState*)state)).GetComparatorPtr;
+            var getComparatorPtr = (*((OptionsBase.ComparatorState*)state)).GetComparatorPtr;
             var getComparator = CurrentFramework.GetDelegateForFunctionPointer<OptionsBase.GetComparator>(getComparatorPtr);
             var comparator = getComparator();
             return comparator.Compare(a, alen, b, blen);
@@ -230,20 +244,14 @@ namespace RocksDbSharp
 
         private unsafe static void Comparator_Destroy(IntPtr state)
         {
-            var namePtr = (*((ComparatorState*)state)).NamePtr;
+            var namePtr = (*((OptionsBase.ComparatorState*)state)).NamePtr;
             Marshal.FreeHGlobal(namePtr);
             Marshal.FreeHGlobal(state);
         }
 
         private unsafe static IntPtr Comparator_GetNamePtr(IntPtr state)
-            => (*((ComparatorState*)state)).NamePtr;
+            => (*((OptionsBase.ComparatorState*)state)).NamePtr;
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct ComparatorState
-        {
-            public IntPtr GetComparatorPtr { get; set; }
-            public IntPtr NamePtr { get; set; }
-        }
 
         /// <summary>
         /// REQUIRES: The client must provide a merge operator if Merge operation
@@ -277,7 +285,7 @@ namespace RocksDbSharp
             };
 
             // Allocate the state
-            var state = new MergeOperatorState
+            var state = new OptionsBase.MergeOperatorState
             {
                 NamePtr = namePtr,
                 GetMergeOperatorPtr = CurrentFramework.GetFunctionPointerForDelegate<GetMergeOperator>(MergeOperatorRef.GetMergeOperator)
@@ -306,19 +314,19 @@ namespace RocksDbSharp
 
         private unsafe static IntPtr MergeOperator_PartialMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
         {
-            var mergeOperator = GetMergeOperatorFromPtr((*((MergeOperatorState*)state)).GetMergeOperatorPtr);
+            var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             return mergeOperator.PartialMerge(key, keyLength, operandsList, operandsListLength, numOperands, out success, out newValueLength);
         }
 
         private unsafe static IntPtr MergeOperator_FullMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
         {
-            var mergeOperator = GetMergeOperatorFromPtr((*((MergeOperatorState*)state)).GetMergeOperatorPtr);
+            var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             return mergeOperator.FullMerge(key, keyLength, existingValue, existingValueLength, operandsList, operandsListLength, numOperands, out success, out newValueLength);
         }
 
         private unsafe static void MergeOperator_DeleteValue(IntPtr state, IntPtr value, UIntPtr valueLength)
         {
-            var mergeOperator = GetMergeOperatorFromPtr((*((MergeOperatorState*)state)).GetMergeOperatorPtr);
+            var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             mergeOperator.DeleteValue(value, valueLength);
         }
 
@@ -335,20 +343,13 @@ namespace RocksDbSharp
 
         private unsafe static void MergeOperator_Destroy(IntPtr state)
         {
-            var namePtr = (*((MergeOperatorState*)state)).NamePtr;
+            var namePtr = (*((OptionsBase.MergeOperatorState*)state)).NamePtr;
             Marshal.FreeHGlobal(namePtr);
             Marshal.FreeHGlobal(state);
         }
 
         private unsafe static IntPtr MergeOperator_GetNamePtr(IntPtr state)
-            => (*((MergeOperatorState*)state)).NamePtr;
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct MergeOperatorState
-        {
-            public IntPtr GetMergeOperatorPtr { get; set; }
-            public IntPtr NamePtr { get; set; }
-        }
+            => (*((OptionsBase.MergeOperatorState*)state)).NamePtr;
 
         /// <summary>
         /// REQUIRES: The client must provide a merge operator if Merge operation
