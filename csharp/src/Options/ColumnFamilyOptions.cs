@@ -23,6 +23,21 @@ namespace RocksDbSharp
         }
     }
 
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ComparatorState
+    {
+        public IntPtr GetComparatorPtr { get; set; }
+        public IntPtr NamePtr { get; set; }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MergeOperatorState
+    {
+        public IntPtr GetMergeOperatorPtr { get; set; }
+        public IntPtr NamePtr { get; set; }
+    }
+
     public abstract partial class Options<T> : OptionsHandle where T : Options<T>
     {
         OptionsBase.ComparatorReferences ComparatorRef { get; set; }
@@ -238,13 +253,6 @@ namespace RocksDbSharp
         private unsafe static IntPtr Comparator_GetNamePtr(IntPtr state)
             => (*((ComparatorState*)state)).NamePtr;
 
-        [StructLayout(LayoutKind.Sequential)]
-        private struct ComparatorState
-        {
-            public IntPtr GetComparatorPtr { get; set; }
-            public IntPtr NamePtr { get; set; }
-        }
-
         /// <summary>
         /// REQUIRES: The client must provide a merge operator if Merge operation
         /// needs to be accessed. Calling Merge on a DB without a merge operator
@@ -342,13 +350,6 @@ namespace RocksDbSharp
 
         private unsafe static IntPtr MergeOperator_GetNamePtr(IntPtr state)
             => (*((MergeOperatorState*)state)).NamePtr;
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct MergeOperatorState
-        {
-            public IntPtr GetMergeOperatorPtr { get; set; }
-            public IntPtr NamePtr { get; set; }
-        }
 
         /// <summary>
         /// REQUIRES: The client must provide a merge operator if Merge operation
