@@ -76,8 +76,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         checkout "rocksdb" "$ROCKSDBREMOTE" "$ROCKSDBVERSION" "$ROCKSDBVERSION"
 
         mkdir -p build
-        VCPKG_HOME="$(realpath ../vcpkg/packages)"
-
+        # VCPKG_HOME="$(realpath ../vcpkg/packages)"
+        VCPKG_HOME="C:/vcpkg/packages/"
         ls -R ${VCPKG_HOME}
 
         export ZLIB_INCLUDE="${VCPKG_HOME}/zlib_x64-windows-static/include"
