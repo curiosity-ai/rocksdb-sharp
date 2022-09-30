@@ -35,6 +35,12 @@ namespace RocksDbSharp
             }
         }
 
+        public ReadOptions SetBackgroundPurgeOnIteratorCleanup(bool value)
+        {
+            Native.Instance.rocksdb_readoptions_set_background_purge_on_iterator_cleanup(Handle, value);
+            return this;
+        }
+
         public ReadOptions SetVerifyChecksums(bool value)
         {
             Native.Instance.rocksdb_readoptions_set_verify_checksums(Handle, value);

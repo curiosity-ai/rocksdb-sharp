@@ -199,6 +199,23 @@ namespace RocksDbSharp
             return result;
         }
 
+        public bool rocksdb_has_key(
+            IntPtr db,
+            IntPtr read_options,
+            byte[] key,
+            long keyLength,
+            ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_has_key(db, read_options, key, keyLength == 0 ? key.Length : keyLength, out IntPtr errptr, cf);
+            
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+
+            return result;
+        }
+
 #if !NETSTANDARD2_0
         public byte[] rocksdb_get(
             IntPtr db,
@@ -215,6 +232,21 @@ namespace RocksDbSharp
             return result;
         }
 
+        public bool rocksdb_has_key(
+                        IntPtr db,
+                        IntPtr read_options,
+                        ReadOnlySpan<byte> key,
+                        ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_has_key(db, read_options, key, out IntPtr errptr, cf);
+
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+
+            return result;
+        }
         public T rocksdb_get<T>(
                     IntPtr db,
                     IntPtr read_options,

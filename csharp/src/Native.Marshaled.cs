@@ -160,6 +160,32 @@ namespace RocksDbSharp
             return CurrentFramework.CreateString((sbyte*)resultPtr.ToPointer(), 0, (int)resultLength, encoding);
         }
 
+        public bool rocksdb_has_key(
+            IntPtr db,
+            IntPtr read_options,
+            byte[] key,
+            long keyLength,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)keyLength;
+            var resultPtr = cf is null
+                ? rocksdb_get(db, read_options, key, skLength, out _, out errptr)
+                : rocksdb_get_cf(db, read_options, cf.Handle, key, skLength, out _, out errptr);
+            if (errptr != IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            rocksdb_free(resultPtr);
+            return true;
+        }
+
         public byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,
@@ -219,6 +245,38 @@ namespace RocksDbSharp
             Marshal.Copy(resultPtr, result, 0, (int)valueLength);
             rocksdb_free(resultPtr);
             return result;
+        }
+
+        public unsafe bool rocksdb_has_key(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+
+            if (errptr != IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return false;
+            }
+            
+            rocksdb_free(resultPtr);
+
+            return true;
         }
 
         public unsafe T rocksdb_get<T>(
