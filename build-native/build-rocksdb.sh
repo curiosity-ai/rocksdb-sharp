@@ -77,7 +77,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
         mkdir -p build
         # VCPKG_HOME="$(realpath ../vcpkg/packages)"
-        VCPKG_HOME="C:/vcpkg/packages/"
+        VCPKG_HOME="D:/a/1/s/build-native/vcpkg/packages/"
         ls -R ${VCPKG_HOME}
 
         export ZLIB_INCLUDE="${VCPKG_HOME}/zlib_x64-windows-static/include"
