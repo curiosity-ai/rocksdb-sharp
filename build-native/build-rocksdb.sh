@@ -122,6 +122,7 @@ else
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
         
+        brew up
         brew install snappy
         brew install zstd
         brew install lz4
