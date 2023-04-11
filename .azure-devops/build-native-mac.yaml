@@ -80,7 +80,9 @@ steps:
   inputs:
     azureSubscription: 'Pay-As-You-Go(1)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "/usr/lib/libbz2.1.0.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.1.0.8.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+# for some reason macOS12 doesn't have /usr/lib/libbz2.1.0.dylib anymore, but there's a copy under /usr/local/miniconda/lib/
+
 
 - task: AzureCLI@1
   inputs:
