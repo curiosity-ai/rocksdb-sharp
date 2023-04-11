@@ -24,11 +24,26 @@ steps:
     version: 6.x
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      mkdir /tmp/rocksdbjar
+      pushd /tmp/rocksdbjar
+      wget https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/$(ROCKSDBVERSIONBASE)/rocksdbjni-$(ROCKSDBVERSIONBASE).jar
+      unzip rocksdbjni-$(ROCKSDBVERSIONBASE).jar
+      ls -hR
+      mv librocksdbjni-osx-arm64.jnilib $(Build.SourcesDirectory)/csharp/runtimes/osx-arm/native/librocksdb.dylib
+      mv librocksdbjni-linux-aarch64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-arm/native/librocksdb.so
+      ls $(Build.SourcesDirectory) -hR
+      popd
+
 - task: DotNetCoreCLI@2
   inputs:
     command: 'run'
     projects: '$(Build.SourcesDirectory)/build-codegen/CSharpGen.csproj'
     workingDirectory: '$(Build.SourcesDirectory)/build-codegen/'
+    
     
 - task: AzureCLI@2
   inputs:
@@ -99,6 +114,7 @@ steps:
 - task: CmdLine@2
   inputs:
     script: 'ls $(Build.SourcesDirectory) -hR'
+    
 - task: DotNetCoreCLI@2
   inputs:
     command: 'pack'

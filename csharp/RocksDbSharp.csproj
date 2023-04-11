@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0;net6.0;net7.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <PackageId>RocksDB</PackageId>
@@ -9,7 +9,7 @@
     <Company>Curiosity GmbH, Warren Falk</Company>
     <Description>.NET bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
     <PackageTags>rocksdb leveldb embedded database</PackageTags>
-    <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2019 Curiosity GmbH</Copyright>
+    <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2023 Curiosity GmbH</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
@@ -36,12 +36,20 @@
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll" Link="librocksdb.so" Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll" />
     <!--Linux-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so" />
+    
+    <!--Linux / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-arm/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-arm/native/librocksdb.so" />
+
     <!--OSX-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/liblz4.dylib" Link="liblz4.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/liblz4.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libsnappy.dylib" Link="libsnappy.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libsnappy.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libz.dylib" Link="libz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libz.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libzstd.dylib" Link="libzstd.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libzstd.dylib" />
+
+    <!--OSX / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-arm/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-arm/native/librocksdb.dylib" />
+
   </ItemGroup>
 
 
