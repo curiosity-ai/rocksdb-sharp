@@ -38,7 +38,7 @@
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so" />
     
     <!--Linux / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-arm64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-arm/native/librocksdb.so" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-arm64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-arm64/native/librocksdb.so" />
 
     <!--OSX-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib" />
@@ -48,7 +48,7 @@
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libzstd.dylib" Link="libzstd.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libzstd.dylib" />
 
     <!--OSX / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-arm64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-arm/native/librocksdb.dylib" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-arm64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/librocksdb.dylib" />
 
   </ItemGroup>
 
