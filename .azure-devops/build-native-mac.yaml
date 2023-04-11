@@ -17,6 +17,12 @@ steps:
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
     workingDirectory: '$(Build.SourcesDirectory)'
 
+
+- task: CmdLine@2
+  displayName: 'list /usr/lib folder'
+  inputs:
+    script: 'ls -hR /usr/lib/'
+
 - task: Bash@3
   inputs:
     filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
@@ -44,7 +50,8 @@ steps:
   displayName: 'list brew folder after'
   inputs:
     script: 'ls -hR $(HOMEBREW_CELLAR)'    
-  
+
+
 - task: AzureCLI@1
   inputs:
     azureSubscription: 'Pay-As-You-Go(1)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
