@@ -80,12 +80,6 @@ namespace RocksDbSharp
             return this;
         }
 
-        public BlockBasedTableOptions SetBlockCacheCompressed(IntPtr blockCacheCompressed)
-        {
-            Native.Instance.rocksdb_block_based_options_set_block_cache_compressed(Handle, blockCacheCompressed);
-            return this;
-        }
-
         public BlockBasedTableOptions SetWholeKeyFiltering(bool wholeKeyFiltering)
         {
             Native.Instance.rocksdb_block_based_options_set_whole_key_filtering(Handle, wholeKeyFiltering);
