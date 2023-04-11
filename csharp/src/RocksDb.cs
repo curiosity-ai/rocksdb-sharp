@@ -236,6 +236,11 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_has_key(Handle, (readOptions ?? DefaultReadOptions).Handle, key, keyLength, cf);
         }
 
+        public bool HasKey(string key, ColumnFamilyHandle cf = null, ReadOptions readOptions = null, Encoding encoding = null)
+        {
+            return Native.Instance.rocksdb_has_key(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf, encoding ?? DefaultEncoding);
+        }
+
         /// <summary>
         /// Reads the contents of the database value associated with <paramref name="key"/>, if present, into the supplied
         /// <paramref name="buffer"/> at <paramref name="offset"/> up to <paramref name="length"/> bytes, returning the

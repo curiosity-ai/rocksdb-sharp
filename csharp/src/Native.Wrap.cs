@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Xml.Linq;
 using size_t = System.UIntPtr;
 
 #pragma warning disable IDE1006 // Intentionally violating naming conventions because this is meant to match the C API
@@ -215,6 +216,50 @@ namespace RocksDbSharp
 
             return result;
         }
+
+        internal bool rocksdb_has_key(IntPtr db, IntPtr read_options, string key, ColumnFamilyHandle cf, Encoding encoding)
+        {
+            if (encoding is null)
+            {
+                encoding = Encoding.UTF8;
+            }
+            
+            IntPtr errptr;
+
+            unsafe
+            {
+                fixed (char* k = key)
+                {
+                    int klength = key.Length;
+                    int bklength = encoding.GetByteCount(k, klength);
+                    var buffer = Marshal.AllocHGlobal(bklength);
+                    byte* bk = (byte*)buffer.ToPointer();
+                    encoding.GetBytes(k, klength, bk, bklength);
+                    UIntPtr sklength = (UIntPtr)bklength;
+
+                    var resultPtr = cf is null
+                        ? rocksdb_get(db, read_options, bk, sklength, out UIntPtr bvlength, out errptr)
+                        : rocksdb_get_cf(db, read_options, cf.Handle, bk, sklength, out bvlength, out errptr);
+      
+                    Marshal.FreeHGlobal(buffer);
+
+                    if (errptr != IntPtr.Zero)
+                    {
+                        throw new RocksDbException(errptr);
+                    }
+
+                    if (resultPtr == IntPtr.Zero)
+                    {
+                        return false;
+                    }
+
+                    rocksdb_free(resultPtr);
+
+                    return true;
+                }
+            }
+        }
+
 
 #if !NETSTANDARD2_0
         public byte[] rocksdb_get(
@@ -528,5 +573,6 @@ namespace RocksDbSharp
 
             return result;
         }
+
     }
 }
