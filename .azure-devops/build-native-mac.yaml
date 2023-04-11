@@ -42,6 +42,11 @@ steps:
       otool -L librocksdb.dylib
 
 - task: CmdLine@2
+  displayName: 'list /usr/lib folder after'
+  inputs:
+    script: 'ls -hR /usr/lib/'
+
+- task: CmdLine@2
   displayName: 'list build folder'
   inputs:
     script: 'ls $(Build.SourcesDirectory)'
