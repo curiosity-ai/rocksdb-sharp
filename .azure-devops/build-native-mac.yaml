@@ -23,6 +23,11 @@ steps:
   inputs:
     script: 'ls -hR /usr/lib/'
 
+- task: CmdLine@2
+  displayName: 'list /usr/local folder'
+  inputs:
+    script: 'ls -hR /usr/local/'
+
 - task: Bash@3
   inputs:
     filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
