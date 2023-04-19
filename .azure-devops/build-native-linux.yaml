@@ -4,7 +4,7 @@ trigger:
 pool:
   vmImage: 'ubuntu-20.04'
 
-container: buildpack-deps:18.04
+container: curiosityai/rocksdb-build-linux:latest
 
 steps:
 
