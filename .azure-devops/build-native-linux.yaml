@@ -14,8 +14,8 @@ steps:
     script: |
       ROCKSDBVNUM=`cat rocksdbversion`
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
-      apt update
-      apt install build-essential
+      sudo apt-get update
+      sudo apt-get install build-essential git wget zip curl
     workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: Bash@3
