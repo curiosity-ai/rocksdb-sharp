@@ -147,6 +147,7 @@ else
 
     else
         echo "Linux detected"
+        ldd --version
         CFLAGS=-static-libstdc++
         LIBEXT=.so
         RUNTIME=linux-x64
