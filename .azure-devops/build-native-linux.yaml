@@ -4,7 +4,7 @@ trigger:
 pool:
   vmImage: 'ubuntu-20.04'
 
-container: ubuntu:18.04	
+container: ubuntu:18.04
 
 steps:
 
@@ -14,8 +14,8 @@ steps:
     script: |
       ROCKSDBVNUM=`cat rocksdbversion`
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
-      sudo apt-get update
-      sudo apt-get install build-essential git wget zip curl
+      apt-get update
+      apt-get install build-essential git wget zip curl
     workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: Bash@3
