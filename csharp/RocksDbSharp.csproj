@@ -45,6 +45,7 @@
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/liblz4.dylib" Link="liblz4.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/liblz4.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libsnappy.dylib" Link="libsnappy.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libsnappy.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libz.dylib" Link="libz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libz.dylib" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libbz.dylib" Link="libbz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libbz.dylib" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libzstd.dylib" Link="libzstd.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libzstd.dylib" />
 
     <!--OSX / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
