@@ -68,7 +68,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     (cd vcpkg && {
         checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
         cmd //c "bootstrap-vcpkg.bat"  || fail "unable to build vcpkg.exe"
-        ./vcpkg.exe install jemalloc:x64-windows-static zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static --overlay-ports=../vcpkg-curiosity/ports || fail "unable to install libraries with vcpkg.exe"
+        ./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static --overlay-ports=../vcpkg-curiosity/ports || fail "unable to install libraries with vcpkg.exe"
     })
 
     mkdir -p rocksdb || fail "unable to create rocksdb directory"
@@ -95,13 +95,9 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         export ZSTD_INCLUDE="${VCPKG_HOME}/zstd_x64-windows-static/include"
         export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_x64-windows-static/debug/lib/zstd_d.lib"
         export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd.lib"
-        
-        #export JEMALLOC_INCLUDE="${VCPKG_HOME}/jemalloc_x64-windows-static/include"
-        #export JEMALLOC_LIB_DEBUG="${VCPKG_HOME}/jemalloc_x64-windows-static/debug/lib/jemalloc_d.lib"
-        #export JEMALLOC_LIB_RELEASE="${VCPKG_HOME}/jemalloc_x64-windows-static/lib/jemalloc.lib"
-        
+                
         (cd build && {
-            cmake -G "Visual Studio 16 2019" -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DFORCE_AVX=0 -DFORCE_AVX2=0 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1 -DWITH_JEMALLOC=1 .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 16 2019" -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DFORCE_AVX=0 -DFORCE_AVX2=0 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
@@ -153,7 +149,6 @@ else
         CFLAGS=-static-libstdc++
         LIBEXT=.so
         RUNTIME=linux-x64
-        export WITH_JEMALLOC=1
         # Linux Dependencies    
         # sudo apt-get install libsnappy-dev libbz2-dev libz-dev liblz4-dev libzstd-dev
         # Linux dependencies must be now installed in the docker image located here: 
