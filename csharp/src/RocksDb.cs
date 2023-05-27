@@ -10,7 +10,7 @@ using Transitional;
 namespace RocksDbSharp
 {
 
-    public sealed class RocksDb : IDisposable
+    public class RocksDb : IDisposable
     {
         private bool _disposed;
         internal static ReadOptions DefaultReadOptions { get; } = new ReadOptions();
@@ -24,7 +24,7 @@ namespace RocksDbSharp
 
         public IntPtr Handle { get; internal set; }
 
-        private RocksDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
+        internal RocksDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
         {
             this.Handle = handle;
             References.Options = optionsReferences;
@@ -647,6 +647,6 @@ namespace RocksDbSharp
                 Native.Instance.rocksdb_livefiles_destroy(buffer);
                 buffer = IntPtr.Zero;
             }
-        }        
+        }
     }
 }
