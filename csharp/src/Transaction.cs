@@ -117,8 +117,8 @@ namespace RocksDbSharp
         public Iterator NewIterator(ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
             IntPtr iteratorHandle = cf is null
-                ? Native.Instance.rocksdb_transactiondb_create_iterator(Handle, (readOptions ?? RocksDb.DefaultReadOptions).Handle)
-                : Native.Instance.rocksdb_transactiondb_create_iterator_cf(Handle, (readOptions ?? RocksDb.DefaultReadOptions).Handle, cf.Handle);
+                ? Native.Instance.rocksdb_transaction_create_iterator(Handle, (readOptions ?? RocksDb.DefaultReadOptions).Handle)
+                : Native.Instance.rocksdb_transaction_create_iterator_cf(Handle, (readOptions ?? RocksDb.DefaultReadOptions).Handle, cf.Handle);
 
             return new Iterator(iteratorHandle, readOptions);
         }
