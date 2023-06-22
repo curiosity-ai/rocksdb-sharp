@@ -37,6 +37,17 @@ namespace RocksDbSharp
         }
     }
 
+    internal delegate MergeOperator GetMergeOperator();
+    internal class MergeOperatorReferences
+    {
+        public GetMergeOperator GetMergeOperator { get; set; }
+        public DestructorDelegate DestructorDelegate { get; set; }
+        public NameDelegate NameDelegate { get; set; }
+        public DeleteValueDelegate DeleteValueDelegate { get; set; }
+        public FullMergeDelegate FullMergeDelegate { get; set; }
+        public PartialMergeDelegate PartialMergeDelegate { get; set; }
+    }
+
     public abstract partial class Options<T> : OptionsHandle where T : Options<T>
     {
         OptionsBase.ComparatorReferences ComparatorRef { get; set; }
@@ -328,17 +339,6 @@ namespace RocksDbSharp
         {
             var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             mergeOperator.DeleteValue(value, valueLength);
-        }
-
-        delegate MergeOperator GetMergeOperator();
-        private class MergeOperatorReferences
-        {
-            public GetMergeOperator GetMergeOperator { get; set; }
-            public DestructorDelegate DestructorDelegate { get; set; }
-            public NameDelegate NameDelegate { get; set; }
-            public DeleteValueDelegate DeleteValueDelegate { get; set; }
-            public FullMergeDelegate FullMergeDelegate { get; set; }
-            public PartialMergeDelegate PartialMergeDelegate { get; set; }
         }
 
         private unsafe static void MergeOperator_Destroy(IntPtr state)
