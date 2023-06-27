@@ -4,6 +4,8 @@ trigger:
 pool:
   vmImage: 'ubuntu-20.04'
 
+container: curiosityai/rocksdb-build-linux:latest
+
 steps:
 
 - task: Bash@3
