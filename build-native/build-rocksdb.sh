@@ -127,7 +127,7 @@ else
         brew install zstd
         brew install lz4
         brew install zlib
-        brew install bzip2
+        # brew install bzip2
         # brew install gflags
         
         export ZLIB_INCLUDE="${HOMEBREW_CELLAR}/zlib/1.2.11/include"
@@ -141,7 +141,7 @@ else
 
         export ZSTD_INCLUDE="${HOMEBREW_CELLAR}/zstd/1.5.0/include"
         export ZSTD_LIB_RELEASE="${HOMEBREW_CELLAR}/zstd/1.5.0/lib/libzstd.a"
-        
+        export WITH_BZ2=0
         export ROCKSDB_DISABLE_JEMALLOC=1       
     else
         echo "Linux detected"
