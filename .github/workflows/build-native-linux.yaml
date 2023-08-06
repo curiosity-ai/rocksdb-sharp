@@ -16,4 +16,4 @@ jobs:
           fetch-depth: 0
       - name: Execute 
         working-directory: ${{ github.workspace }}/build-native/
-        run: .${{ github.workspace }}/build-native/build-rocksdb.sh
+        run: sh ${{ github.workspace }}/build-native/build-rocksdb.sh
