@@ -5,6 +5,8 @@ ROCKSDBVERSION=v${ROCKSDBVNUM}
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
 
+echo "Detected RocksDB version \"${ROCKSDBVERSION}\":"
+
 CONCURRENCY=8
 
 fail() {
