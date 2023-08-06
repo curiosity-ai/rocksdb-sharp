@@ -16,4 +16,6 @@ jobs:
           fetch-depth: 0
       - name: Execute 
         working-directory: ${{ github.workspace }}/build-native/
-        run: bash ${{ github.workspace }}/build-native/build-rocksdb.sh
+        run: |
+          apt-get install libsnappy-dev -y
+          bash ${{ github.workspace }}/build-native/build-rocksdb.sh
