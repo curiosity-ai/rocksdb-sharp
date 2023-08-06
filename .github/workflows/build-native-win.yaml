@@ -15,4 +15,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: Execute 
-        run:  bash ${{ github.workspace }}/build-native/build-rocksdb.sh
+        run:  C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\Common7\\Tools\\vsdevcmd ${{ github.workspace }}/build-native/build-rocksdb.sh
