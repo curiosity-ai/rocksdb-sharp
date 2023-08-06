@@ -18,6 +18,5 @@ jobs:
         with:
           fetch-depth: 0
       - name: Execute 
-        uses: actions/vsdevenv-shell@v1
         shell: vsdevenv x64 bash {0}
         run: ${{ github.workspace }}/build-native/build-rocksdb.sh
