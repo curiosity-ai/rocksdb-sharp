@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROCKSDBVNUM=$(<rocksdbversion)
+ROCKSDBVNUM=$(<../rocksdbversion)
 ROCKSDBVERSION=v${ROCKSDBVNUM}
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
