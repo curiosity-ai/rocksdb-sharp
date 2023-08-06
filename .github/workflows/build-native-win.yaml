@@ -20,4 +20,4 @@ jobs:
       - name: Execute 
         shell: vsdevenv x64 bash {0}
         run: build-rocksdb.sh
-        working-directory: ${{ github.workspace }}/build-native/
+        working-directory: ${{ runner.workspace }}/build-native/
