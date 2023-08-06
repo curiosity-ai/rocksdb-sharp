@@ -9,9 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    container:
-      image: curiosityai/rocksdb-build-linux:latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
