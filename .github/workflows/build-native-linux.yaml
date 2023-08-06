@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install libsnappy-dev
-        run: sudo apt-get install -y libsnappy-dev
+        run: sudo apt-get install -y libsnappy-dev libzstd-dev
       - name: Execute 
         working-directory: ${{ github.workspace }}/build-native/
         run: bash ${{ github.workspace }}/build-native/build-rocksdb.sh
