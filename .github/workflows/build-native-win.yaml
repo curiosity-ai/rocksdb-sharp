@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: humbletim/vsdevenv-shell@v1
     
       - name: Checkout
@@ -19,4 +19,5 @@ jobs:
           fetch-depth: 0
       - name: Execute 
         shell: vsdevenv x64 bash {0}
-        run: build-native/build-rocksdb.sh
+        run: build-rocksdb.sh
+        working-directory: ${{ github.workspace }}/build-native/
