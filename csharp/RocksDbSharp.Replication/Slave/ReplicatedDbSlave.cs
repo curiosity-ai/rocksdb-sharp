@@ -68,11 +68,11 @@ namespace RocksDbSharp.Replication.Slave
                 {
                     LastSequenceNumber = lastSequence,
                 });
-                resp.EnsureSuccessStatusCode();
+                resp2.EnsureSuccessStatusCode();
 
-                response = await resp.Content.ReadFromJsonAsync<SyncSessionResponse>();
+                response = await resp2.Content.ReadFromJsonAsync<SyncSessionResponse>();
 
-                if (response.SessionKey == null)
+                if (response?.SessionKey == null)
                 {
                     throw new Exception("Failed to obtain session key");
                 }
