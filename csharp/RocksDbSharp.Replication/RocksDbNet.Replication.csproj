@@ -15,6 +15,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\RocksDbSharp\RocksDbSharp.csproj" />
+	  <ProjectReference Include="..\RocksDbSharp\RocksDbNet.csproj" />
 	</ItemGroup>
 </Project>
