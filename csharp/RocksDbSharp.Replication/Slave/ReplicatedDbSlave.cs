@@ -12,7 +12,7 @@ using RocksDbSharp.Backup;
 
 namespace RocksDbSharp.Replication.Slave
 {
-    public class RocksDBReplicationSlave
+    public class ReplicatedDbSlave
     {
         private HttpClient _http = new HttpClient();
 
@@ -24,7 +24,7 @@ namespace RocksDbSharp.Replication.Slave
         private RocksDBReplicationSlaveSession? SlaveSession { get; set; }
         public OptionsHandle DbOptions { get; private set; }
 
-        public RocksDBReplicationSlave(OptionsHandle options, string path, string masterEndpoint, int controlPort, int servicePort, string authKey)
+        public ReplicatedDbSlave(OptionsHandle options, string path, string masterEndpoint, int controlPort, int servicePort, string authKey)
         {
             DbOptions = options;
             DbPath = path;

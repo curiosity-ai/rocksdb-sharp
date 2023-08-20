@@ -16,7 +16,7 @@ namespace RocksDbSharp.Replication.Slave
         private TcpClient _client;
         private Stream _stream;
 
-        public RocksDBReplicationSlave Slave { get; set; }
+        public ReplicatedDbSlave Slave { get; set; }
 
         public string SessionKey { get; set; }
         private byte[] _dataBuffer = new byte[1024 * 1024 * 32];
@@ -28,7 +28,7 @@ namespace RocksDbSharp.Replication.Slave
         /// <param name="endpoint"></param>
         /// <param name="port"></param>
         /// <param name="sessionKey"></param>
-        public RocksDBReplicationSlaveSession(RocksDBReplicationSlave slave, string endpoint, int port, string sessionKey)
+        public RocksDBReplicationSlaveSession(ReplicatedDbSlave slave, string endpoint, int port, string sessionKey)
         {
             _client = new TcpClient(endpoint, port);
             _stream = _client.GetStream();

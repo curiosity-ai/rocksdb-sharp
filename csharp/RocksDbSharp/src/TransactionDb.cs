@@ -18,7 +18,7 @@ namespace RocksDbSharp
         internal static TransactionOptions DefaultTransactionOptions { get; set; } = new TransactionOptions();
         internal static TransactionOptions DefaultTransactionOptionsSetSnapshot { get; set; } = new TransactionOptions(true);
 
-        private TransactionDb(string path, IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null) : base(path, handle, (object)optionsReferences, (object)cfOptionsRefs, columnFamilies: columnFamilies)
+        private TransactionDb(string path, IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null) : base(handle, (object)optionsReferences, (object)cfOptionsRefs, columnFamilies: columnFamilies)
         {
         }
 
