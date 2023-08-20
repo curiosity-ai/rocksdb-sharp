@@ -54,7 +54,7 @@ namespace RocksDbSharp.Replication.Master
             var app = builder.Build();
             app.UseMiddleware<AuthMiddleware>();
             app.MapControllers();
-            app.Run($"http://127.0.0.1:{ControlPort}");
+            app.Run($"http://*:{ControlPort}");
         }
     }
 }

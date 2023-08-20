@@ -39,7 +39,7 @@ namespace RocksDbSharp.Replication.Slave
         public async Task StartAsync()
         {
             var lastSequence = Db.GetLastSequenceNumber();
-            var resp = await _http.PostAsJsonAsync<SyncSessionRequest>($"http://{MasterEndpoint}:{ControlPort}/session/register", new SyncSessionRequest()
+            using var resp = await _http.PostAsJsonAsync<SyncSessionRequest>($"http://{MasterEndpoint}:{ControlPort}/session/register", new SyncSessionRequest()
             {
                 LastSequenceNumber= lastSequence,
             });
@@ -50,17 +50,35 @@ namespace RocksDbSharp.Replication.Slave
             {
                 throw new Exception("Failed to connect to master");
             }
-            if(!response.Success)
+            if (response.Success)
+            {
+                if (response.SessionKey == null)
+                {
+                    throw new Exception("Failed to obtain session key");
+                }
+
+                await StartSlaveSessionAsync(response.SessionKey);
+            }
+            else 
             {
                 await DownloadAndRestoreSnapshotAsync();
-            }
 
-            if(response.SessionKey == null)
-            {
-                throw new Exception("Failed to obtain session key");
-            }
+                lastSequence = Db.GetLastSequenceNumber();
+                using var resp2 = await _http.PostAsJsonAsync<SyncSessionRequest>($"http://{MasterEndpoint}:{ControlPort}/session/register", new SyncSessionRequest()
+                {
+                    LastSequenceNumber = lastSequence,
+                });
+                resp.EnsureSuccessStatusCode();
 
-            await StartSlaveSessionAsync(response.SessionKey);
+                response = await resp.Content.ReadFromJsonAsync<SyncSessionResponse>();
+
+                if (response.SessionKey == null)
+                {
+                    throw new Exception("Failed to obtain session key");
+                }
+
+                await StartSlaveSessionAsync(response.SessionKey);
+            }
         }
 
         private void OpenAbc()
