@@ -42,9 +42,9 @@ steps:
       install_name_tool -change /usr/local/opt/snappy/lib/libsnappy.1.dylib "@loader_path/libsnappy.dylib" librocksdb.dylib
       install_name_tool -change /usr/local/opt/zstd/lib/libzstd.1.dylib "@loader_path/libzstd.dylib" librocksdb.dylib
       install_name_tool -change /usr/lib/libz.1.dylib "@loader_path/libz.dylib" librocksdb.dylib
-      install_name_tool -change /usr/lib/libbz2.1.0.dylib "@loader_path/libbz.dylib" librocksdb.dylib
       install_name_tool -change /usr/local/opt/lz4/lib/liblz4.1.dylib "@loader_path/liblz4.dylib" librocksdb.dylib
       otool -L librocksdb.dylib
+#       install_name_tool -change /usr/lib/libbz2.1.0.dylib "@loader_path/libbz.dylib" librocksdb.dylib
 
 - task: CmdLine@2
   displayName: 'list /usr/lib folder after'
@@ -80,12 +80,13 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.2.13/lib/libz.1.dylib" --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Pay-As-You-Go(1)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+#- task: AzureCLI@1
+#  inputs:
+#    azureSubscription: 'Pay-As-You-Go(1)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#    scriptLocation: 'inlineScript'
+#    inlineScript: 'az storage blob upload -f "/usr/lib/libbz2.1.0.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 # for some reason macOS12 doesn't have /usr/lib/libbz2.1.0.dylib anymore, but there's a copy under /usr/local/miniconda/lib/
+# inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 - task: AzureCLI@1
   inputs:
