@@ -1,0 +1,23 @@
+
+name: .NET Core Desktop
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v3
+      - uses: humbletim/vsdevenv-shell@v1
+    
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Execute 
+        shell: vsdevenv x64 bash {0}
+        working-directory: ${{ runner.workspace }}/build-native/
+        run: ${{ runner.workspace }}build-rocksdb.sh
