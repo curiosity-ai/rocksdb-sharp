@@ -1440,12 +1440,6 @@ namespace RocksDbSharp
         }
 
         [Obsolete("Use the UIntPtr version instead")]
-        public void rocksdb_options_set_plain_table_factory(IntPtr options, uint p1, int p2, double p3, ulong p4)
-        {
-            rocksdb_options_set_plain_table_factory(options, p1, p2, p3, new UIntPtr(p4));
-        }
-
-        [Obsolete("Use the UIntPtr version instead")]
         public void rocksdb_options_set_max_successive_merges(IntPtr options, ulong value)
         {
             rocksdb_options_set_max_successive_merges(options, new UIntPtr(value));

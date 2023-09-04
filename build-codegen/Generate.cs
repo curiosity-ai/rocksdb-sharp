@@ -552,7 +552,7 @@ namespace RocksDbPrepareCApiHeader
         class ManagedArgVariation
         {
             public string Type { get; }
-            public string Name { get; }
+            public string Name { get; set;  }
             public string TypeStrategy { get; }
 
             public ManagedArgVariation(string type, string name, string typeStrategy)
@@ -575,8 +575,39 @@ namespace RocksDbPrepareCApiHeader
                 returnType: GetManagedType(nativeFunc.ReturnType),
                 name: nativeFunc.Name,
                 comment: nativeFunc.Comments.Trim(),
-                args: nativeFunc.Args.Select(a => GetManagedArg(a, nativeFunc.Args.Length, nativeFunc.Name))
+                args: MakeUniqueNames(nativeFunc.Args.Select(a => GetManagedArg(a, nativeFunc.Args.Length, nativeFunc.Name)))
             );
+        }
+
+        private static IEnumerable<ManagedArg> MakeUniqueNames(IEnumerable<ManagedArg> managedArgs)
+        {
+            var uniqueSet = new Dictionary<string, int>();
+            foreach(var arg in managedArgs)
+            {
+                var name = arg.Variations[0].Name;
+
+                if (!uniqueSet.TryGetValue(name, out var count))
+                {
+                    count = 0;
+                }
+
+                if(count == 0)
+                {
+                    yield return arg;
+                }
+                else
+                {
+                    foreach(var v in arg.Variations)
+                    {
+                        v.Name = $"{v.Name}_{count}";
+                    }
+
+                    yield return arg;
+                }
+
+                count++;
+                uniqueSet[name] = count;
+            }
         }
 
         private static string SnakeCaseToPascalCase(string commonPrefix)

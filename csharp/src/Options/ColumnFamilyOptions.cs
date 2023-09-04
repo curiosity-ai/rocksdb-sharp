@@ -895,9 +895,9 @@ namespace RocksDbSharp
             return (T)this;
         }
 
-        public T SetHashSkipListRep(ulong p1, int p2, int p3)
+        public T SetHashSkipListRep(ulong bucket_count, int skiplist_height, int skiplist_branching_factor)
         {
-            Native.Instance.rocksdb_options_set_hash_skip_list_rep(Handle, (UIntPtr)p1, p2, p3);
+            Native.Instance.rocksdb_options_set_hash_skip_list_rep(Handle, (UIntPtr)bucket_count, skiplist_height, skiplist_branching_factor);
             return (T)this;
         }
 
@@ -907,9 +907,16 @@ namespace RocksDbSharp
             return (T)this;
         }
 
-        public T SetPlainTableFactory(uint p1, int p2, double p3, ulong p4)
+        public T SetPlainTableFactory(uint user_key_len,
+            int bloom_bits_per_key,
+            double hash_table_ratio,
+            int index_sparseness,
+            int huge_page_tlb_size,
+            char encoding_type,
+            bool full_scan_mode,
+            bool store_index_in_file)
         {
-            Native.Instance.rocksdb_options_set_plain_table_factory(Handle, p1, p2, p3, (UIntPtr)p4);
+            Native.Instance.rocksdb_options_set_plain_table_factory(Handle, user_key_len, bloom_bits_per_key, hash_table_ratio, (UIntPtr)index_sparseness, (UIntPtr)huge_page_tlb_size, encoding_type, full_scan_mode, store_index_in_file);
             return (T)this;
         }
 
