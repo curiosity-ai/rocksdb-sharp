@@ -139,7 +139,7 @@ namespace RocksDbSharp
 
         public byte[] Get(byte[] key, long keyLength, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
-            return Native.Instance.rocksdb_get(Handle, (readOptions ?? RocksDbBase.DefaultReadOptions).Handle, key, keyLength, cf);
+            return Native.Instance.rocksdb_transaction_get(Handle, (readOptions ?? RocksDbBase.DefaultReadOptions).Handle, key, keyLength, cf);
         }
 
         public bool HasKey(byte[] key, long keyLength, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
