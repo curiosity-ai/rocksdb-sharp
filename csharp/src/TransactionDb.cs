@@ -8,9 +8,10 @@ namespace RocksDbSharp
     {
         internal static TransactionOptions DefaultTransactionOptions { get; set; } = new TransactionOptions();
 
-        private TransactionDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
+        private TransactionDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, TransactionDbOptions transactionDbOptions, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
             : base(handle, (object)optionsReferences, (object)cfOptionsRefs, columnFamilies)
         {
+            References.TransactionDbOptions = transactionDbOptions;
         }
 
         protected override void ReleaseUnmanagedResources()
@@ -30,7 +31,7 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_transactiondb_open(options.Handle, transactionDbOptions.Handle, pathSafe.Handle);
-                return new TransactionDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new TransactionDb(db, optionsReferences: options, cfOptionsRefs: null, transactionDbOptions: transactionDbOptions);
             }
         }
 
@@ -51,6 +52,7 @@ namespace RocksDbSharp
                 return new TransactionDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
+                    transactionDbOptions: transactionDbOptions,
                     columnFamilies: cfHandleMap);
             }
         }
