@@ -1,18 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0</TargetFrameworks>
-        <LangVersion>latest</LangVersion>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+
+        <RootNamespace>RocksDbSharp.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
-        <PackageReference Include="MSTest.TestAdapter" Version="2.2.8" />
-        <PackageReference Include="MSTest.TestFramework" Version="2.2.8" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2"/>
+        <PackageReference Include="MSTest.TestAdapter" Version="2.2.10"/>
+        <PackageReference Include="MSTest.TestFramework" Version="2.2.10"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\csharp\RocksDbSharp.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="rocksdb.dll" />
+      <Content Include="rocksdb.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
     
 </Project>
