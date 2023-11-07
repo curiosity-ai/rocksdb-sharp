@@ -1,4 +1,4 @@
-﻿/*
+/*
     The functions in this file provide some wrappers around the lowest level C API to aid in marshalling.
     This is kept separate so that the lowest level imports can be kept as close as possible to c.h from rocksdb.
     See Native.Raw.cs for more information.
@@ -102,6 +102,51 @@ namespace RocksDbSharp
             }
         }
 
+        public void rocksdb_transaction_put(
+            /*rocksdb_t**/ IntPtr db,
+            string key,
+            string val,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null,
+            Encoding encoding = null)
+        {
+            unsafe
+            {
+                if (encoding is null)
+                {
+                    encoding = Encoding.UTF8;
+                }
+
+                fixed (char* k = key, v = val)
+                {
+                    int klength = key.Length;
+                    int vlength = val.Length;
+                    int bklength = encoding.GetByteCount(k, klength);
+                    int bvlength = encoding.GetByteCount(v, vlength);
+                    var buffer = Marshal.AllocHGlobal(bklength + bvlength);
+                    byte* bk = (byte*)buffer.ToPointer();
+                    encoding.GetBytes(k, klength, bk, bklength);
+                    byte* bv = bk + bklength;
+                    encoding.GetBytes(v, vlength, bv, bvlength);
+                    UIntPtr sklength = (UIntPtr)bklength;
+                    UIntPtr svlength = (UIntPtr)bvlength;
+
+                    if (cf is null)
+                    {
+                        rocksdb_transaction_put(db, bk, sklength, bv, svlength, out errptr);
+                    }
+                    else
+                    {
+                        rocksdb_transaction_put_cf(db, cf.Handle, bk, sklength, bv, svlength, out errptr);
+                    }
+#if DEBUG
+                    Zero(bk, bklength);
+#endif
+                    Marshal.FreeHGlobal(buffer);
+                }
+            }
+        }
+
         public string rocksdb_get(
             /*rocksdb_t**/ IntPtr db,
             /*const rocksdb_readoptions_t**/ IntPtr read_options,
@@ -129,6 +174,53 @@ namespace RocksDbSharp
                     var resultPtr = cf is null
                         ? rocksdb_get(db, read_options, bk, sklength, out UIntPtr bvlength, out errptr)
                         : rocksdb_get_cf(db, read_options, cf.Handle, bk, sklength, out bvlength, out errptr);
+#if DEBUG
+                    Zero(bk, bklength);
+#endif
+                    Marshal.FreeHGlobal(buffer);
+
+                    if (errptr != IntPtr.Zero)
+                    {
+                        return null;
+                    }
+
+                    if (resultPtr == IntPtr.Zero)
+                    {
+                        return null;
+                    }
+
+                    return MarshalAndFreeRocksDbString(resultPtr, (long)bvlength, encoding);
+                }
+            }
+        }
+
+        public string rocksdb_transaction_get(
+            /*rocksdb_t**/ IntPtr db,
+            /*const rocksdb_readoptions_t**/ IntPtr read_options,
+            string key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null,
+            Encoding encoding = null)
+        {
+            if (encoding is null)
+            {
+                encoding = Encoding.UTF8;
+            }
+
+            unsafe
+            {
+                fixed (char* k = key)
+                {
+                    int klength = key.Length;
+                    int bklength = encoding.GetByteCount(k, klength);
+                    var buffer = Marshal.AllocHGlobal(bklength);
+                    byte* bk = (byte*)buffer.ToPointer();
+                    encoding.GetBytes(k, klength, bk, bklength);
+                    UIntPtr sklength = (UIntPtr)bklength;
+
+                    var resultPtr = cf is null
+                        ? rocksdb_transaction_get(db, read_options, bk, sklength, out UIntPtr bvlength, out errptr)
+                        : rocksdb_transaction_get_cf(db, read_options, cf.Handle, bk, sklength, out bvlength, out errptr);
 #if DEBUG
                     Zero(bk, bklength);
 #endif
@@ -186,6 +278,32 @@ namespace RocksDbSharp
             return true;
         }
 
+        public bool rocksdb_transaction_has_key(
+            IntPtr db,
+            IntPtr read_options,
+            byte[] key,
+            long keyLength,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)keyLength;
+            var resultPtr = cf is null
+                ? rocksdb_transaction_get(db, read_options, key, skLength, out _, out errptr)
+                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, key, skLength, out _, out errptr);
+            if (errptr != IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            rocksdb_free(resultPtr);
+            return true;
+        }
+
         public byte[] rocksdb_get(
             IntPtr db,
             IntPtr read_options,
@@ -198,6 +316,34 @@ namespace RocksDbSharp
             var resultPtr = cf is null
                 ? rocksdb_get(db, read_options, key, skLength, out UIntPtr valueLength, out errptr)
                 : rocksdb_get_cf(db, read_options, cf.Handle, key, skLength, out valueLength, out errptr);
+            if (errptr != IntPtr.Zero)
+            {
+                return null;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            var result = new byte[(ulong)valueLength];
+            Marshal.Copy(resultPtr, result, 0, (int)valueLength);
+            rocksdb_free(resultPtr);
+            return result;
+        }
+
+        public byte[] rocksdb_transaction_get(
+            IntPtr db,
+            IntPtr read_options,
+            byte[] key,
+            long keyLength,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)keyLength;
+            var resultPtr = cf is null
+                ? rocksdb_transaction_get(db, read_options, key, skLength, out UIntPtr valueLength, out errptr)
+                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, key, skLength, out valueLength, out errptr);
             if (errptr != IntPtr.Zero)
             {
                 return null;
@@ -333,6 +479,146 @@ namespace RocksDbSharp
                 resultPtr = cf is null
                                 ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
                                 : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            try
+            {
+                using var stream = new UnmanagedMemoryStream((byte*)resultPtr, (long)valueLength);
+                return deserializer(stream);
+            }
+            finally
+            {
+                rocksdb_free(resultPtr);
+            }
+        }
+
+        public unsafe byte[] rocksdb_transaction_get(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_transaction_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+            {
+                return null;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            var result = new byte[(ulong)valueLength];
+            Marshal.Copy(resultPtr, result, 0, (int)valueLength);
+            rocksdb_free(resultPtr);
+            return result;
+        }
+
+        public unsafe bool rocksdb_transaction_has_key(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_transaction_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+
+            if (errptr != IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            rocksdb_free(resultPtr);
+
+            return true;
+        }
+
+        public unsafe T rocksdb_transaction_get<T>(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            ISpanDeserializer<T> deserializer,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_transaction_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+            if (errptr != IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            var span = new ReadOnlySpan<byte>((void*)resultPtr, (int)valueLength);
+            try
+            {
+                return deserializer.Deserialize(span);
+            }
+            finally
+            {
+                rocksdb_free(resultPtr);
+            }
+        }
+
+        public unsafe T rocksdb_transaction_get<T>(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            Func<Stream, T> deserializer,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_transaction_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_transaction_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
             }
             if (errptr != IntPtr.Zero)
             {
@@ -554,6 +840,204 @@ namespace RocksDbSharp
             return values;
         }
 
+        /// <summary>
+        /// Executes a multi_get with automatic marshalling
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="read_options"></param>
+        /// <param name="keys"></param>
+        /// <param name="numKeys">when non-zero, specifies the number of keys in the array to fetch</param>
+        /// <param name="keyLengths">when non-null specifies the lengths of each key to fetch</param>
+        /// <param name="errptrs">when non-null, must be an array that will be populated with error codes</param>
+        /// <param name="values">when non-null is a pre-allocated array to put the resulting values in</param>
+        /// <param name="cf"></param>
+        /// <returns></returns>
+        public unsafe KeyValuePair<byte[], byte[]>[] rocksdb_transaction_multi_get(
+            IntPtr db,
+            IntPtr read_options,
+            byte[][] keys,
+            IntPtr[] errptrs,
+            ulong numKeys = 0,
+            ulong[] keyLengths = null,
+            KeyValuePair<byte[], byte[]>[] values = null,
+            ColumnFamilyHandle[] cf = null)
+        {
+            uint count = numKeys == 0 ? (uint)keys.Length : (uint)numKeys;
+            UIntPtr sCount = (UIntPtr)count;
+            GCHandle[] pinned = new GCHandle[count];
+            IntPtr[] keyPtrs = new IntPtr[count];
+            IntPtr[] valuePtrs = new IntPtr[count];
+            UIntPtr[] valueLengths = new UIntPtr[count];
+            UIntPtr[] keyLengthsConverted = new UIntPtr[count];
+
+            if (values is null)
+            {
+                values = new KeyValuePair<byte[], byte[]>[count];
+            }
+
+            if (errptrs is null)
+            {
+                errptrs = new IntPtr[count];
+            }
+
+            if (keyLengths is null)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    keyLengthsConverted[i] = new UIntPtr((uint)keys[i].Length);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    keyLengthsConverted[i] = new UIntPtr((uint)keyLengths[i]);
+                }
+            }
+
+            // first we have to pin and take the address of each key
+            for (int i = 0; i < count; i++)
+            {
+                var gch = GCHandle.Alloc(keys[i], GCHandleType.Pinned);
+                pinned[i] = gch;
+                keyPtrs[i] = gch.AddrOfPinnedObject();
+            }
+            if (cf is null)
+            {
+                rocksdb_transaction_multi_get(db, read_options, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
+            }
+            else
+            {
+                IntPtr[] cfhs = new IntPtr[cf.Length];
+                for (int i = 0; i < count; i++)
+                {
+                    cfhs[i] = cf[i].Handle;
+                }
+
+                rocksdb_transaction_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
+            }
+            // unpin the keys
+            foreach (var gch in pinned)
+            {
+                gch.Free();
+            }
+
+            // now marshal all of the values
+            for (int i = 0; i < count; i++)
+            {
+                var valuePtr = valuePtrs[i];
+                if (valuePtr != IntPtr.Zero)
+                {
+                    var valueLength = (ulong)valueLengths[i];
+                    byte[] value = new byte[valueLength];
+                    Marshal.Copy(valuePtr, value, 0, (int)valueLength);
+                    values[i] = new KeyValuePair<byte[], byte[]>(keys[i], value);
+                    rocksdb_free(valuePtr);
+                }
+                else
+                {
+                    values[i] = new KeyValuePair<byte[], byte[]>(keys[i], null);
+                }
+            }
+            return values;
+        }
+        /// <summary>
+        /// Executes a multi_get with automatic marshalling
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="read_options"></param>
+        /// <param name="keys"></param>
+        /// <param name="numKeys">when non-zero, specifies the number of keys in the array to fetch</param>
+        /// <param name="keyLengths">when non-null specifies the lengths of each key to fetch</param>
+        /// <param name="errptrs">when non-null, must be an array that will be populated with error codes</param>
+        /// <param name="values">when non-null is a pre-allocated array to put the resulting values in</param>
+        /// <param name="cf"></param>
+        /// <returns></returns>
+        public unsafe KeyValuePair<string, string>[] rocksdb_transaction_multi_get(
+            IntPtr db,
+            IntPtr read_options,
+            string[] keys,
+            IntPtr[] errptrs,
+            ulong numKeys = 0,
+            KeyValuePair<string, string>[] values = null,
+            ColumnFamilyHandle[] cf = null,
+            Encoding encoding = null)
+        {
+            if (encoding is null)
+            {
+                encoding = Encoding.UTF8;
+            }
+
+            uint count = numKeys == 0 ? (uint)keys.Length : (uint)numKeys;
+            UIntPtr sCount = (UIntPtr)count;
+            IntPtr[] keyPtrs = new IntPtr[count];
+            UIntPtr[] keyLengths = new UIntPtr[count];
+            IntPtr[] valuePtrs = new IntPtr[count];
+            UIntPtr[] valueLengths = new UIntPtr[count];
+
+            if (values is null)
+            {
+                values = new KeyValuePair<string, string>[count];
+            }
+
+            if (errptrs is null)
+            {
+                errptrs = new IntPtr[count];
+            }
+
+            // first we have to encode each key
+            for (int i = 0; i < count; i++)
+            {
+                var key = keys[i];
+                fixed (char* k = key)
+                {
+                    var klength = key.Length;
+                    int bklength = encoding.GetByteCount(k, klength);
+                    var bk = Marshal.AllocHGlobal(bklength);
+                    encoding.GetBytes(k, klength, (byte*)bk.ToPointer(), bklength);
+                    keyPtrs[i] = bk;
+                    keyLengths[i] = new UIntPtr((uint)bklength);
+                }
+            }
+            if (cf is null)
+            {
+                rocksdb_transaction_multi_get(db, read_options, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
+            }
+            else
+            {
+                IntPtr[] cfhs = new IntPtr[cf.Length];
+                for (int i = 0; i < count; i++)
+                {
+                    cfhs[i] = cf[i].Handle;
+                }
+
+                rocksdb_transaction_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
+            }
+            // free the buffers allocated for each encoded key
+            foreach (var keyPtr in keyPtrs)
+            {
+                Marshal.FreeHGlobal(keyPtr);
+            }
+
+            // now marshal all of the values
+            for (int i = 0; i < count; i++)
+            {
+                var resultPtr = valuePtrs[i];
+                if (resultPtr != IntPtr.Zero)
+                {
+                    var bv = (sbyte*)resultPtr.ToPointer();
+                    var bvLength = valueLengths[i];
+                    values[i] = new KeyValuePair<string, string>(keys[i], CurrentFramework.CreateString(bv, 0, (int)bvLength, encoding));
+                    rocksdb_free(resultPtr);
+                }
+                else
+                {
+                    values[i] = new KeyValuePair<string, string>(keys[i], null);
+                }
+            }
+            return values;
+        }
+
         public void rocksdb_delete(
             /*rocksdb_t**/ IntPtr db,
             /*const rocksdb_writeoptions_t**/ IntPtr writeOptions,
@@ -571,6 +1055,25 @@ namespace RocksDbSharp
             else
             {
                 rocksdb_delete_cf(db, writeOptions, cf.Handle, bkey, kLength, out errptr);
+            }
+        }
+
+        public void rocksdb_transaction_delete(
+            /*rocksdb_t**/ IntPtr db,
+            /*const*/ string key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf,
+            Encoding encoding = null)
+        {
+            var bkey = (encoding ?? Encoding.UTF8).GetBytes(key);
+            UIntPtr kLength = (UIntPtr)bkey.GetLongLength(0);
+            if (cf is null)
+            {
+                rocksdb_transaction_delete(db, bkey, kLength, out errptr);
+            }
+            else
+            {
+                rocksdb_transaction_delete_cf(db, cf.Handle, bkey, kLength, out errptr);
             }
         }
 
