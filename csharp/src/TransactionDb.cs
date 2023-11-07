@@ -63,5 +63,21 @@ namespace RocksDbSharp
                 writeOptions ?? DefaultWriteOptions,
                 transactionOptions ?? DefaultTransactionOptions);
         }
+
+        /// <summary>
+        /// Usage:
+        /// <code><![CDATA[
+        /// using (var cp = db.Checkpoint())
+        /// {
+        ///     cp.Save("path/to/checkpoint");
+        /// }
+        /// ]]></code>
+        /// </summary>
+        /// <returns></returns>
+        public Checkpoint Checkpoint()
+        {
+            var checkpoint = Native.Instance.rocksdb_transactiondb_checkpoint_object_create(Handle);
+            return new Checkpoint(checkpoint);
+        }
     }
 }
