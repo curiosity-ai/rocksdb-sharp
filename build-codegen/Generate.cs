@@ -788,9 +788,18 @@ namespace RocksDbPrepareCApiHeader
                 var name = match.Groups[2].Success ? match.Groups[2].Value : null;
                 var body = match.Groups[3].Value;
                 var v = 1;
+                
+                body = Regex.Replace(body, @" =\n +", " = ");
+                body = body.Replace("= rocksdb_statistics_level_disable_all", "= 0"); //Fix bug in https://github.com/facebook/rocksdb/blob/9202db1867e412e51e72fc04062ca3664deb097b/include/rocksdb/c.h#L1268
+
                 var values = Regex.Matches(body, @"([0-9a-zA-Z_]+)\s*(?:=\s*([0-9]+))?,?")
                     .AsEnumerable()
-                    .Select(e => new NativeEnumValue(name: e.Groups[1].Value, value: e.Groups[2].Success ? (v = int.Parse(e.Groups[2].Value)) : ++v))
+                    .Select(e => 
+                    {
+                        var n = e.Groups[1].Value;
+                        var val = e.Groups[2].Success ? (v = int.Parse(e.Groups[2].Value)) : ++v;
+                        return new NativeEnumValue(name: n, value: val);
+                    })
                     .ToList();
                 yield return new NativeEnum(name: name, values: values, comment: comment);
             }
