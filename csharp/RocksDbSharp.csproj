@@ -34,19 +34,23 @@
   <ItemGroup>
     <!--Windows-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll" Link="librocksdb.so" Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll" />
-    <!--Linux-->
+    
+    <!--Linux, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb-musl.so" Link="librocksdb-musl.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb-musl.so" />
     
     <!--Linux / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-arm64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-arm64/native/librocksdb.so" />
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-arm64/native/librocksdb-musl.so" Link="librocksdb-musl.so" Pack="true" PackagePath="runtimes/linux-arm64/native/librocksdb-musl.so" />
 
-    <!--OSX-->
+    <!--OSX, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/-->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/librocksdb.dylib" />
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/liblz4.dylib" Link="liblz4.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/liblz4.dylib" />
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libsnappy.dylib" Link="libsnappy.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libsnappy.dylib" />
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libz.dylib" Link="libz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libz.dylib" />
-    <!-- <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libbz.dylib" Link="libbz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libbz.dylib" /> -->
-    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libzstd.dylib" Link="libzstd.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libzstd.dylib" />
+    <!-- removed due to switch to official build: <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/liblz4.dylib" Link="liblz4.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/liblz4.dylib" /> -->
+    <!-- removed due to switch to official build: <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libsnappy.dylib" Link="libsnappy.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libsnappy.dylib" /> -->
+    <!-- removed due to switch to official build: <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libz.dylib" Link="libz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libz.dylib" /> -->
+    <!-- removed due to switch to official build: <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libzstd.dylib" Link="libzstd.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libzstd.dylib" /> -->
+
+    <!-- not available anymore: <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-x64/native/libbz.dylib" Link="libbz.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/libbz.dylib" /> -->
 
     <!--OSX / ARM, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/ -->
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/osx-arm64/native/librocksdb.dylib" Link="librocksdb.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/librocksdb.dylib" />

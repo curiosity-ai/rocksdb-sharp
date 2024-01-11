@@ -35,6 +35,10 @@ steps:
       ls -hR
       mv librocksdbjni-osx-arm64.jnilib $(Build.SourcesDirectory)/csharp/runtimes/osx-arm64/native/librocksdb.dylib
       mv librocksdbjni-linux-aarch64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-arm64/native/librocksdb.so
+      mv librocksdbjni-linux-aarch64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-arm64/native/librocksdb-musl.so
+      mv librocksdbjni-osx-x86_64.jnilib $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib
+      mv librocksdbjni-linux64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb.so
+      mv librocksdbjni-linux64-musl.so $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb-musl.so
       ls $(Build.SourcesDirectory) -hR
       popd
 
@@ -52,55 +56,55 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-x64/native/rocksdb.dll --account-name curiositydev  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSIONBASE).dll'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).so'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).so'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).dylib'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).dylib'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/liblz4.dylib --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSIONBASE).dylib'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/liblz4.dylib --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSIONBASE).dylib'
 
-#- task: AzureCLI@2
-#  inputs:
-#    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-#    scriptType: 'bash'
-#    scriptLocation: 'inlineScript'
-#    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libbz.dylib --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSIONBASE).dylib'
+# #- task: AzureCLI@2
+# #  inputs:
+# #    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+# #    scriptType: 'bash'
+# #    scriptLocation: 'inlineScript'
+# #    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libbz.dylib --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSIONBASE).dylib'
 
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libsnappy.dylib --account-name curiositydev  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSIONBASE).dylib'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libsnappy.dylib --account-name curiositydev  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSIONBASE).dylib'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libz.dylib --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSIONBASE).dylib'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libz.dylib --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSIONBASE).dylib'
 
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libzstd.dylib --account-name curiositydev  -c rocksdb  -n libzstd-v$(ROCKSDBVERSIONBASE).dylib'
+# - task: AzureCLI@2
+#   inputs:
+#     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+#     scriptType: 'bash'
+#     scriptLocation: 'inlineScript'
+#     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/libzstd.dylib --account-name curiositydev  -c rocksdb  -n libzstd-v$(ROCKSDBVERSIONBASE).dylib'
 
 
 

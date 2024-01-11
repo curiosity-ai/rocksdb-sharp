@@ -45,7 +45,7 @@ namespace NativeImport
         IntPtr LoadLibrary(string name);
         IntPtr GetProcAddress(IntPtr lib, string entryPoint);
         void FreeLibrary(IntPtr lib);
-        string Translate(string name);
+        string Translate(string name, string suffix = "");
         object GetDelegate(IntPtr lib, string entryPoint, Type delegateType);
     }
 
@@ -99,9 +99,9 @@ namespace NativeImport
                 WinFreeLibrary(lib);
             }
 
-            public string Translate(string name)
+            public string Translate(string name, string suffix = "")
             {
-                return name + ".dll";
+                return name + suffix + ".dll";
             }
         }
 
@@ -251,9 +251,9 @@ namespace NativeImport
                 so2_dlclose(lib);
             }
 
-            public string Translate(string name)
+            public string Translate(string name, string suffix = "")
             {
-                return "lib" + name + "." + LibraryExtension;
+                return "lib" + name + suffix + "." + LibraryExtension;
             }
         }
 
@@ -456,14 +456,22 @@ namespace NativeImport
                 basePaths.Add("/opt/homebrew/lib");
             }
 
-            var search = basePaths
-                .Where(p => p is object)
-                .SelectMany(basePath =>
-                    paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n))))
-                         .Concat(names.Select(n => importer.Translate(n)))
-                )
-                .Select(path => new SearchPath { Path = path })
-                .ToArray();
+
+            var baseSearchPaths = basePaths.Where(p => p is object)
+                                           .SelectMany(basePath =>
+                                               paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n))))
+                                                    .Concat(names.Select(n => importer.Translate(n))));
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                //Try also to load the -musl variants
+                baseSearchPaths = baseSearchPaths.Concat(basePaths.Where(p => p is object)
+                                                                  .SelectMany(basePath =>
+                                                                                paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n, "-musl"))))
+                                                                  .Concat(names.Select(n => importer.Translate(n, "-musl")))));
+            }
+
+            var search = baseSearchPaths.Select(path => new SearchPath { Path = path }).ToArray();
 
             foreach (var spec in search)
             {
