@@ -16,6 +16,7 @@ namespace NativeImport
 {
     public static class Auto
     {
+        public static string LoadedPath { get; private set; }
         /// <summary>
         /// Imports the library by name (without extensions) locating it based on platform.
         /// 
@@ -490,6 +491,7 @@ namespace NativeImport
                     lib = importer.LoadLibrary(spec.Path);
                     if (lib == IntPtr.Zero)
                         throw new NativeLoadException("LoadLibrary returned 0", null);
+                    LoadedPath = spec.Path;
                 }
                 catch (TargetInvocationException tie)
                 {
