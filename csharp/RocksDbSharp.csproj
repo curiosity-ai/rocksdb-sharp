@@ -36,6 +36,7 @@
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/win-x64/native/rocksdb.dll" Link="librocksdb.so" Pack="true" PackagePath="runtimes/win-x64/native/rocksdb.dll" />
     
     <!--Linux, copied from the RocksDB_JNI builds https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/-->
+    <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb-jemalloc.so" Link="librocksdb-jemalloc.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb-jemalloc.so" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb.so" Link="librocksdb.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb.so" />
     <Content CopyToOutputDirectory="PreserveNewest" Include="runtimes/linux-x64/native/librocksdb-musl.so" Link="librocksdb-musl.so" Pack="true" PackagePath="runtimes/linux-x64/native/librocksdb-musl.so" />
     
