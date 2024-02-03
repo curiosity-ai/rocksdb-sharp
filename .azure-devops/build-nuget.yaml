@@ -56,12 +56,12 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-x64/native/rocksdb.dll --account-name curiositydev  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSIONBASE).dll'
 
- - task: AzureCLI@2
-   inputs:
-     azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-     scriptType: 'bash'
-     scriptLocation: 'inlineScript'
-     inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb-jemalloc.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).so'
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb-jemalloc.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSIONBASE).so'
 
 # - task: AzureCLI@2
 #   inputs:
