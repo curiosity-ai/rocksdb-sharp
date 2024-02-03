@@ -149,6 +149,9 @@ else
         CFLAGS=-static-libstdc++
         LIBEXT=.so
         RUNTIME=linux-x64
+        export ROCKSDB_DISABLE_JEMALLOC=0
+        export WITH_JEMALLOC=1
+
         # Linux Dependencies    
         # sudo apt-get install libsnappy-dev libbz2-dev libz-dev liblz4-dev libzstd-dev
         # Linux dependencies must be now installed in the docker image located here: 
