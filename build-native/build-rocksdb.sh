@@ -152,7 +152,7 @@ else
         export WITH_JEMALLOC=1
         export JEMALLOC=1
         export WITH_JEMALLOC_FLAG=1
-        export JEMALLOC_INCLUDE="/usr/include/jemalloc/"
+        export JEMALLOC_INCLUDE="-I/usr/include/jemalloc/"
         export JEMALLOC_LIB="/usr/lib/x86_64-linux-gnu/libjemalloc_pic.a"
 
         # Linux Dependencies    
