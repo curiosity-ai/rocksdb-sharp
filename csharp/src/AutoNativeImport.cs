@@ -464,6 +464,14 @@ namespace NativeImport
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+                //Try also to load the -jemalloc variants
+                baseSearchPaths = basePaths.Where(p => p is object)
+                                           .SelectMany(basePath =>
+                                                       paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n, "-jemalloc"))))
+                                           .Concat(names.Select(n => importer.Translate(n, "-jemalloc"))))
+                                           .Concat(baseSearchPaths)
+                                           .ToArray();
+
                 //Try also to load the -musl variants
                 baseSearchPaths = baseSearchPaths.Concat(basePaths.Where(p => p is object)
                                                                   .SelectMany(basePath =>
