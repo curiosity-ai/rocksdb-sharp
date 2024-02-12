@@ -7,6 +7,8 @@
     <PackageId>RocksDB</PackageId>
     <Authors>Curiosity GmbH, Warren Falk</Authors>
     <Company>Curiosity GmbH, Warren Falk</Company>
+    <RepositoryUrl>https://github.com/curiosity-ai/rocksdb-sharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <Description>.NET bindings for RocksDB, including the matching native libraries for Linux, Windows and macOS.</Description>
     <PackageTags>rocksdb leveldb embedded database</PackageTags>
     <Copyright>(c) Copyright 2016 Warren Falk, (c) Copyright 2023 Curiosity GmbH</Copyright>
