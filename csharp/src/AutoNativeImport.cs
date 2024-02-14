@@ -459,9 +459,8 @@ namespace NativeImport
 
 
             var baseSearchPaths = basePaths.Where(p => p is object)
-                                           .SelectMany(basePath =>
-                                               paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n)))))
-                                                    .Concat(names.Select(n => importer.Translate(n)));
+                                           .SelectMany(basePath => paths.SelectMany(path => names.Select(n => Path.Combine(basePath, path, importer.Translate(n)))))
+                                           .Concat(names.Select(n => importer.Translate(n)));
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
