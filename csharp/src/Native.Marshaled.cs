@@ -17,6 +17,8 @@ namespace RocksDbSharp
     {
         private unsafe string MarshalNullTermAsciiStr(IntPtr nullTermStr)
         {
+            if (nullTermStr == IntPtr.Zero) return null;
+
             byte* bv = (byte*)nullTermStr.ToPointer();
             byte* n = bv;
             while (*n != 0)
