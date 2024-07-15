@@ -486,17 +486,6 @@ namespace RocksDbSharp
         }
 
         /// <summary>
-        /// Specify the file access pattern once a compaction is started.
-        /// It will be applied to all input files of a compaction.
-        /// Default: NORMAL
-        /// </summary>
-        public T SetAccessHintOnCompactionStart(int value)
-        {
-            Native.Instance.rocksdb_options_set_access_hint_on_compaction_start(Handle, value);
-            return (T)this;
-        }
-
-        /// <summary>
         /// Use adaptive mutex, which spins in the user space before resorting
         /// to kernel. This could reduce context switch when the mutex is not
         /// heavily contended. However, if the mutex is hot, we could end up
