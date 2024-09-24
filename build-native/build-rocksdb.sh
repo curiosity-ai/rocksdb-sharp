@@ -68,7 +68,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     (cd vcpkg && {
         checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
         cmd //c "bootstrap-vcpkg.bat"  || fail "unable to build vcpkg.exe"
-        ./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static --overlay-ports=../vcpkg-curiosity/ports || fail "unable to install libraries with vcpkg.exe"
+        # --overlay-ports=../vcpkg-curiosity/ports
+        ./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
         dir D:\a\1\s\build-native\vcpkg\packages\ /c
     })
 
