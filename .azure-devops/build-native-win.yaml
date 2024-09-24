@@ -34,6 +34,6 @@ steps:
   
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/win-x64/native/rocksdb.dll --account-name curiositydev  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSION).dll  --overwrite true'
