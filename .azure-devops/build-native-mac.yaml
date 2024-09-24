@@ -92,7 +92,7 @@ steps:
   inputs:
     azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.9.4/lib/liblz4.dylib" --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.10.0/lib/liblz4.dylib" --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
