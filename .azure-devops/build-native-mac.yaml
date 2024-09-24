@@ -90,19 +90,19 @@ steps:
 
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.9.4/lib/liblz4.dylib" --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.1/lib/libsnappy.dylib" --account-name curiositydev  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.6/lib/libzstd.dylib" --account-name curiositydev  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
     
