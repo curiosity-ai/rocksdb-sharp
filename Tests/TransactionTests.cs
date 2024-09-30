@@ -1,4 +1,7 @@
-﻿namespace RocksDbSharp.Tests;
+﻿using System;
+using System.IO;
+
+namespace RocksDbSharp.Tests;
 
 [TestClass]
 public class TransactionTests
