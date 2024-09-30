@@ -39,7 +39,7 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="value">The number of sub-tables</param>
         /// <returns></returns>
-        public TransactionDbOptions SetNumStripes(ulong value)
+        public TransactionDbOptions SetNumStripes(ulong value = 16)
         {
             Native.Instance.rocksdb_transactiondb_options_set_num_stripes(Handle, (UIntPtr)value);
             return this;
@@ -54,7 +54,7 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="value">The default wait timeout in milliseconds</param>
         /// <returns></returns>
-        public TransactionDbOptions SetTransactionLockTimeout(long value)
+        public TransactionDbOptions SetTransactionLockTimeout(long value = 1000)
         {
             Native.Instance.rocksdb_transactiondb_options_set_transaction_lock_timeout(Handle, value);
             return this;
@@ -72,7 +72,7 @@ namespace RocksDbSharp
         /// </summary>
         /// <param name="value">The timeout in milliseconds when writing a key OUTSIDE of a transaction.</param>
         /// <returns></returns>
-        public TransactionDbOptions SetDefaultLockTimeout(long value)
+        public TransactionDbOptions SetDefaultLockTimeout(long value = 1000)
         {
             Native.Instance.rocksdb_transactiondb_options_set_default_lock_timeout(Handle, value);
             return this;
