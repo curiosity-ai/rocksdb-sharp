@@ -44,6 +44,10 @@ OSINFO=$(uname)
 
 if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     echo "Detected Windows (MSYS)..."
+    export SystemDrive="$SYSTEMDRIVE"
+    export SystemRoot="$SYSTEMROOT"
+    export windir="$WINDIR"
+    
     # Make sure cmake is installed
     hash cmake 2> /dev/null || { fail "CMake is not installed (https://cmake.org/download/)"; }
 
