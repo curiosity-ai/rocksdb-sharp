@@ -102,7 +102,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         # VCPKG_HOME="D:/a/1/s/build-native/vcpkg/packages/"
         
         # Newer DevOps images have vcpkg pre-installed
-        VCPKG_HOME="C:/vcpkg"
+        VCPKG_HOME="C:/vcpkg/packages/"
         ls -R ${VCPKG_HOME}
         
         export
