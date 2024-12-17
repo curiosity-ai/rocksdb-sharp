@@ -87,7 +87,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
         # Newer DevOps images have vcpkg pre-installed
         vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
-        ls -R "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/packages/"
+        ls -R "C:/vcpkg/packages/"
     })
 
     mkdir -p rocksdb || fail "unable to create rocksdb directory"
@@ -95,9 +95,12 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         checkout "rocksdb" "$ROCKSDBREMOTE" "$ROCKSDBVERSION" "$ROCKSDBVERSION"
 
         mkdir -p build
+        
         # VCPKG_HOME="$(realpath ../vcpkg/packages)"
         # VCPKG_HOME="D:/a/1/s/build-native/vcpkg/packages/"
-        VCPKG_HOME="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg"
+        
+        # Newer DevOps images have vcpkg pre-installed
+        VCPKG_HOME="C:/vcpkg"
         ls -R ${VCPKG_HOME}
         
         export
