@@ -81,8 +81,13 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         # checkout "vcpkg" "https://github.com/Microsoft/vcpkg" "master" "master"
         # cmd //c "bootstrap-vcpkg.bat"  || fail "unable to build vcpkg.exe"
         # --overlay-ports=../vcpkg-curiosity/ports
-        ./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
+        #./vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
         # ls -R D:/a/1/s/build-native/vcpkg/packages/
+
+
+        # Newer DevOps images have vcpkg pre-installed
+        vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
+        ls -R "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/vcpkg/packages/"
     })
 
     mkdir -p rocksdb || fail "unable to create rocksdb directory"
