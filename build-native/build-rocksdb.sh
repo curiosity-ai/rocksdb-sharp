@@ -48,6 +48,14 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     export SystemRoot="$SYSTEMROOT"
     export windir="$WINDIR"
     
+    echo "--------- PATH -----------"
+    echo $PATH
+    echo "--------------------------"
+
+    echo "--------- CMAKE -----------"
+    which cmake
+    echo "--------------------------"    
+
     # Make sure cmake is installed
     hash cmake 2> /dev/null || { fail "CMake is not installed (https://cmake.org/download/)"; }
 
