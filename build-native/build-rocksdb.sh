@@ -46,7 +46,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
     echo "Detected Windows (MSYS)..."
     #export SystemDrive="$SYSTEMDRIVE"
     #export SystemRoot="$SYSTEMROOT"
-    export windir="$WINDIR"
+    #export windir="$WINDIR"
     
     echo "--------- PATH -----------"
     echo $PATH
