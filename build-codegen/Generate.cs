@@ -119,6 +119,14 @@ namespace RocksDbPrepareCApiHeader
             // Transform from CRLF to LF
             var modified = original.Replace("\r\n", "\n");
 
+            //Fix missing callback name 
+            modified = modified.Replace("void (*)(void* priv, unsigned lev,", "void (*logger_callback)(void* priv, unsigned int lev,");
+
+            if(modified.Contains("void (*)("))
+            {
+                Console.WriteLine("Warning: There might be a missing callback type name: void (*)(...)");
+            }
+            
             var regions = ParseRocksHeaderFileRegion(modified).ToList();
 
             var managedFunctions = regions.ToDictionary(r => r.Title, r => GetManagedFunctions(r).ToArray());
@@ -301,7 +309,7 @@ namespace RocksDbPrepareCApiHeader
             return $"}}\npublic enum {enumName} {{\n{string.Join("\n", entriesOut)}\n}}\npublic abstract partial class Native {{";
             */
             throw new NotImplementedException();
-        } 
+        }
 
         private static string AsArrayType(string managedType)
             => Regex.Replace(managedType, "_ptr$|_const_ptr$", "[]");
@@ -333,6 +341,7 @@ namespace RocksDbPrepareCApiHeader
             {
                 case "const_bool":
                 case "unsigned_char": return "bool";
+                case "uint8_t": return "byte";
                 default:return managedType;
             }
         }
@@ -792,6 +801,15 @@ namespace RocksDbPrepareCApiHeader
                 body = Regex.Replace(body, @" =\n +", " = ");
                 body = body.Replace("= rocksdb_statistics_level_disable_all", "= 0"); //Fix bug in https://github.com/facebook/rocksdb/blob/9202db1867e412e51e72fc04062ca3664deb097b/include/rocksdb/c.h#L1268
 
+                if(body.Contains("<<"))
+                {
+                    for(int i = 255; i >=0; i-- )
+                    {
+                        body = body.Replace($"1 << {i}", (1 << i).ToString());
+                        body = body.Replace($"2 << {i}", (2 << i).ToString());
+                    }
+                }
+
                 var values = Regex.Matches(body, @"([0-9a-zA-Z_]+)\s*(?:=\s*([0-9]+))?,?")
                     .AsEnumerable()
                     .Select(e => 
@@ -818,6 +836,9 @@ namespace RocksDbPrepareCApiHeader
                 var prolog = m.Groups[1].Value;
                 var typeAndName = m.Groups[2].Value;
                 (var funcName, var rawType) = typeAndName.PopRight(@"\s+([a-zA-Z0-9][a-zA-Z0-9_]*)\s*");
+
+                Console.WriteLine($"Found function {funcName} with raw type {rawType}");
+
                 var type = rawType.RegexReplace(@"\s+", " ");
                 if (type == null || funcName == null)
                     throw new Exception($"Error parsing function type and name from:\n{typeAndName}");
