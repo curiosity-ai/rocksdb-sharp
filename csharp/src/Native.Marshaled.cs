@@ -225,27 +225,33 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null)
         {
             UIntPtr skLength = (UIntPtr)key.Length;
-            IntPtr resultPtr;
-            UIntPtr valueLength;
+            IntPtr handle;
             fixed (byte* ptr = &MemoryMarshal.GetReference(key))
             {
-                resultPtr = cf is null
-                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
-                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+                handle = cf is null
+                                ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
+                                : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
             if (errptr != IntPtr.Zero)
             {
                 return null;
             }
 
-            if (resultPtr == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 return null;
             }
 
-            var result = new byte[(ulong)valueLength];
-            Marshal.Copy(resultPtr, result, 0, (int)valueLength);
-            rocksdb_free(resultPtr);
+            IntPtr valuePtr = rocksdb_pinnableslice_value(handle, out UIntPtr valueLength);
+            if (valuePtr == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            int length = (int)valueLength;
+            byte[] result = new byte[length];
+            Marshal.Copy(handle, result, 0, length);
+            rocksdb_pinnableslice_destroy(handle);
             return result;
         }
 
@@ -257,13 +263,12 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null)
         {
             UIntPtr skLength = (UIntPtr)key.Length;
-            IntPtr resultPtr;
-            UIntPtr valueLength;
+            IntPtr handle;
             fixed (byte* ptr = &MemoryMarshal.GetReference(key))
             {
-                resultPtr = cf is null
-                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
-                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+                handle = cf is null
+                                ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
+                                : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
 
             if (errptr != IntPtr.Zero)
@@ -271,12 +276,12 @@ namespace RocksDbSharp
                 return false;
             }
 
-            if (resultPtr == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 return false;
             }
-            
-            rocksdb_free(resultPtr);
+
+            rocksdb_pinnableslice_destroy(handle);
 
             return true;
         }
@@ -290,32 +295,37 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null)
         {
             UIntPtr skLength = (UIntPtr)key.Length;
-            IntPtr resultPtr;
-            UIntPtr valueLength;
+            IntPtr handle;
             fixed (byte* ptr = &MemoryMarshal.GetReference(key))
             {
-                resultPtr = cf is null
-                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
-                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+                handle = cf is null
+                                ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
+                                : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
             if (errptr != IntPtr.Zero)
             {
                 return default(T);
             }
 
-            if (resultPtr == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 return default(T);
             }
 
-            var span = new ReadOnlySpan<byte>((void*)resultPtr, (int)valueLength);
+            IntPtr valuePtr = rocksdb_pinnableslice_value(handle, out UIntPtr valueLength);
+            if (valuePtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
+
+            var span = new ReadOnlySpan<byte>((void*)valuePtr, (int)valueLength);
             try
             {
                 return deserializer.Deserialize(span);
             }
             finally
             {
-                rocksdb_free(resultPtr);
+                rocksdb_pinnableslice_destroy(handle);
             }
         }
 
@@ -328,32 +338,36 @@ namespace RocksDbSharp
             ColumnFamilyHandle cf = null)
         {
             UIntPtr skLength = (UIntPtr)key.Length;
-            IntPtr resultPtr;
-            UIntPtr valueLength;
+            IntPtr handle;
             fixed (byte* ptr = &MemoryMarshal.GetReference(key))
             {
-                resultPtr = cf is null
-                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
-                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+                handle = cf is null
+                                ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
+                                : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
             if (errptr != IntPtr.Zero)
             {
                 return default(T);
             }
 
-            if (resultPtr == IntPtr.Zero)
+            if (handle == IntPtr.Zero)
             {
                 return default(T);
             }
 
+            IntPtr valuePtr = rocksdb_pinnableslice_value(handle, out UIntPtr valueLength);
+            if (valuePtr == IntPtr.Zero)
+            {
+                return default(T);
+            }
             try
             {
-                using var stream = new UnmanagedMemoryStream((byte*)resultPtr, (long)valueLength);
+                using var stream = new UnmanagedMemoryStream((byte*)valuePtr, (long)valueLength);
                 return deserializer(stream);
             }
             finally
             {
-                rocksdb_free(resultPtr);
+                rocksdb_pinnableslice_destroy(handle);
             }
         }
 #endif
