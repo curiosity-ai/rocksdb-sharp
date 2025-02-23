@@ -250,7 +250,7 @@ namespace RocksDbSharp
 
             int length = (int)valueLength;
             byte[] result = new byte[length];
-            Marshal.Copy(handle, result, 0, length);
+            Marshal.Copy(valuePtr, result, 0, length);
             rocksdb_pinnableslice_destroy(handle);
             return result;
         }
@@ -277,6 +277,11 @@ namespace RocksDbSharp
             }
 
             if (handle == IntPtr.Zero)
+            {
+                return false;
+            }
+            IntPtr valuePtr = rocksdb_pinnableslice_value(handle, out UIntPtr _);
+            if (valuePtr == IntPtr.Zero)
             {
                 return false;
             }
