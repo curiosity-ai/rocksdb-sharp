@@ -5,6 +5,10 @@
 */
 using System;
 using System.Collections.Generic;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -232,9 +236,10 @@ namespace RocksDbSharp
                                 ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
                                 : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
+
             if (errptr != IntPtr.Zero)
             {
-                return null;
+                ThrowRocksDbException(errptr);
             }
 
             if (handle == IntPtr.Zero)
@@ -273,7 +278,7 @@ namespace RocksDbSharp
 
             if (errptr != IntPtr.Zero)
             {
-                return false;
+                ThrowRocksDbException(errptr);
             }
 
             if (handle == IntPtr.Zero)
@@ -307,9 +312,10 @@ namespace RocksDbSharp
                                 ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
                                 : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
+
             if (errptr != IntPtr.Zero)
             {
-                return default(T);
+                ThrowRocksDbException(errptr);
             }
 
             if (handle == IntPtr.Zero)
@@ -350,9 +356,10 @@ namespace RocksDbSharp
                                 ? rocksdb_get_pinned(db, read_options, ptr, skLength, out errptr)
                                 : rocksdb_get_pinned_cf(db, read_options, cf.Handle, ptr, skLength, out errptr);
             }
+
             if (errptr != IntPtr.Zero)
             {
-                return default(T);
+                ThrowRocksDbException(errptr);
             }
 
             if (handle == IntPtr.Zero)
@@ -374,6 +381,15 @@ namespace RocksDbSharp
             {
                 rocksdb_pinnableslice_destroy(handle);
             }
+        }
+
+#if NET6_0_OR_GREATER
+        [DoesNotReturn]
+        [StackTraceHidden]
+#endif
+        static unsafe void ThrowRocksDbException(nint errPtr)
+        {
+            throw new RocksDbException(errPtr);
         }
 #endif
 
