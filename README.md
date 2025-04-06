@@ -1,7 +1,7 @@
 
 [![Build Status](https://dev.azure.com/curiosity-ai/mosaik/_apis/build/status/rocksdb-sharp?branchName=master)](https://dev.azure.com/curiosity-ai/mosaik/_build/latest?definitionId=20&branchName=master) [![Nuget](https://img.shields.io/nuget/v/rocksdb.svg?maxAge=0&colorB=brightgreen)](https://www.nuget.org/packages/rocksdb/) 
 
-<a href="https://curiosity.ai"><img src="https://curiosity.ai/media/cat.color.square.svg" width="100" height="100" align="right" /></a>
+<img src="https://raw.githubusercontent.com/curiosity-ai/rocksdb-sharp/refs/heads/master/csharp/logo-128.png" width="100" height="100" align="right" />
 
 _**rocksdb-sharp**_ is a C# binding for Facebook's [RocksDB](https://github.com/facebook/rocksdb/), based on the original work from [@warrenfalk](https://github.com/warrenfalk). This fork from the original repository has been modified to keep in sync with the latest release from Facebook, and will automatically re-built on new [RocksDB releases](https://github.com/facebook/rocksdb/releases) using Azure Pipelines.
 
