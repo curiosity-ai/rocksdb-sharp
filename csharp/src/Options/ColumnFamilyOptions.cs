@@ -749,34 +749,14 @@ namespace RocksDbSharp
         }
 
         /// <summary>
-        /// The total maximum number of write buffers to maintain in memory including
-        /// copies of buffers that have already been flushed.  Unlike
-        /// max_write_buffer_number, this parameter does not affect flushing.
-        /// This controls the minimum amount of write history that will be available
-        /// in memory for conflict checking when Transactions are used.
-        ///
-        /// When using an OptimisticTransactionDB:
-        /// If this value is too low, some transactions may fail at commit time due
-        /// to not being able to determine whether there were any write conflicts.
-        ///
-        /// When using a TransactionDB:
-        /// If Transaction::SetSnapshot is used, TransactionDB will read either
-        /// in-memory write buffers or SST files to do write-conflict checking.
-        /// Increasing this value can reduce the number of reads to SST files
-        /// done for conflict detection.
-        ///
-        /// Setting this value to 0 will cause write buffers to be freed immediately
-        /// after they are flushed.
-        /// If this value is set to -1, 'max_write_buffer_number' will be used.
-        ///
-        /// Default:
-        /// If using a TransactionDB/OptimisticTransactionDB, the default value will
-        /// be set to the value of 'max_write_buffer_number' if it is not explicitly
-        /// set by the user.  Otherwise, the default is 0.
+        ///  The amount of write history to maintain in memory, in bytes. This includes the current memtable size, 
+        ///  sealed but unflushed memtables, and flushed memtables that are kept around. RocksDB will try to keep 
+        ///  at least this much history in memory - if dropping a flushed memtable would result in history falling 
+        ///  below this threshold, it would not be dropped. (Default: 0)
         /// </summary>
-        public T SetMaxWriteBufferNumberToMaintain(int value)
+        public T SetMaxWriteBufferSizeToMaintain(int value)
         {
-            Native.Instance.rocksdb_options_set_max_write_buffer_number_to_maintain(Handle, value);
+            Native.Instance.rocksdb_options_set_max_write_buffer_size_to_maintain(Handle, value);
             return (T)this;
         }
 
