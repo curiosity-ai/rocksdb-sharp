@@ -69,40 +69,40 @@ steps:
 
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/librocksdb.dylib --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/librocksdb.dylib --account-name curiosityreleases  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.3.1/lib/libz.1.dylib" --account-name curiositydev  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.3.1/lib/libz.1.dylib" --account-name curiosityreleases  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 #- task: AzureCLI@1
 #  inputs:
 #    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
 #    scriptLocation: 'inlineScript'
-#    inlineScript: 'az storage blob upload -f "/usr/lib/libbz2.1.0.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+#    inlineScript: 'az storage blob upload -f "/usr/lib/libbz2.1.0.dylib" --account-name curiosityreleases  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 # for some reason macOS12 doesn't have /usr/lib/libbz2.1.0.dylib anymore, but there's a copy under /usr/local/miniconda/lib/
-# inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.dylib" --account-name curiositydev  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+# inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.dylib" --account-name curiosityreleases  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.10.0/lib/liblz4.dylib" --account-name curiositydev  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.10.0/lib/liblz4.dylib" --account-name curiosityreleases  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.1/lib/libsnappy.dylib" --account-name curiositydev  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.1/lib/libsnappy.dylib" --account-name curiosityreleases  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(2)(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7/lib/libzstd.dylib" --account-name curiositydev  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7/lib/libzstd.dylib" --account-name curiosityreleases  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
     
