@@ -151,6 +151,16 @@ namespace RocksDbSharp
             Native.Instance.rocksdb_readoptions_set_readahead_size(Handle, readaheadSize);
             return this;
         }
+        public ReadOptions SetAutoReadaheadSize(bool value)
+        {
+            Native.Instance.rocksdb_readoptions_set_auto_readahead_size(Handle, value);
+            return this;
+        }
+        public ReadOptions SetAsyncIO(bool value)
+        {
+            Native.Instance.rocksdb_readoptions_set_async_io(Handle, value);
+            return this;
+        }
 
         public ReadOptions SetPinData(bool enable)
         {
