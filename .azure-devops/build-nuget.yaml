@@ -38,7 +38,7 @@ steps:
       mv librocksdbjni-linux-aarch64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-arm64/native/librocksdb-musl.so
       mv librocksdbjni-linux64.so $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb.so
       mv librocksdbjni-linux64-musl.so $(Build.SourcesDirectory)/csharp/runtimes/linux-x64/native/librocksdb-musl.so
-      ls $(Build.SourcesDirectory)//csharp/runtimes -hRa
+      ls $(Build.SourcesDirectory)/csharp/runtimes -hRa
       popd
 
 - task: Bash@3
@@ -52,7 +52,7 @@ steps:
       ls -ha
       mv librocksdbjni-osx-arm64.jnilib $(Build.SourcesDirectory)/csharp/runtimes/osx-arm64/native/librocksdb.dylib
       mv librocksdbjni-osx-x86_64.jnilib $(Build.SourcesDirectory)/csharp/runtimes/osx-x64/native/librocksdb.dylib
-      ls $(Build.SourcesDirectory)//csharp/runtimes -hRa
+      ls $(Build.SourcesDirectory)/csharp/runtimes -hRa
       popd
 
 - task: DotNetCoreCLI@2
