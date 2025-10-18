@@ -18,10 +18,11 @@ steps:
 - task: NuGetToolInstaller@1
 
 - task: UseDotNet@2
-  displayName: 'Use .NET 9.0 sdk'
+  displayName: 'Use .NET 10.0 sdk'
   inputs:
     packageType: sdk
-    version: 9.x
+    version: 10.x
+    includePreviewVersions: true
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: Bash@3
