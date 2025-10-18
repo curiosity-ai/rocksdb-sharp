@@ -195,6 +195,21 @@ namespace RocksDbPrepareCApiHeader
                     nativeRawCs.AppendLineWithoutIndent($"#error Unable to create single delegate because arguments named {nameGroup.Key} have different delegate signatures");
                 }
             }
+
+            //Temporary fix for code generation for typedefs not currently being recognized
+            nativeRawCs.AppendLine("public delegate void on_flush_begin_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_flushjobinfo_t_ptr rocksdb_flushjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_flush_completed_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_flushjobinfo_t_ptr rocksdb_flushjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_compaction_begin_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_compactionjobinfo_t_ptr rocksdb_compactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_compaction_completed_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_compactionjobinfo_t_ptr rocksdb_compactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_subcompaction_begin_cb(void_ptr p0, const_rocksdb_subcompactionjobinfo_t_ptr rocksdb_subcompactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_subcompaction_completed_cb(void_ptr p0, const_rocksdb_subcompactionjobinfo_t_ptr rocksdb_subcompactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_external_file_ingested_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_externalfileingestioninfo_t_ptr rocksdb_externalfileingestioninfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_background_error_cb(void_ptr p0, uint32_t err, rocksdb_status_ptr_t_ptr rocksdb_status_t);");
+            nativeRawCs.AppendLine("public delegate void on_stall_conditions_changed_cb(void_ptr p0, const_rocksdb_writestallinfo_t_ptr rocksdb_writestallinfo_t);");
+            nativeRawCs.AppendLine("public delegate void rocksdb_logger_logv_cb(void_ptr p0, uint32_t log_level, char_ptr_ptr val);");
+            nativeRawCs.AppendLine("public delegate void on_memtable_sealed_cb(void_ptr p0, const_rocksdb_memtableinfo_t_ptr rocksdb_memtableinfo_t);");
+        
+
             nativeRawCs.AppendLine("#endregion");
 
             foreach (var region in regions.Where(r => (r.NativeEnums.Length + r.NativeFunctions.Length) > 0))
