@@ -98,7 +98,7 @@ steps:
   inputs:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.1/lib/libsnappy.dylib" --account-name curiosityreleases  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.2/lib/libsnappy.dylib" --account-name curiosityreleases  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
     
 - task: AzureCLI@1
   inputs:
