@@ -145,8 +145,8 @@ namespace RocksDbSharp
     public delegate int CompareDelegate(void_ptr p0, const_char_ptr a, size_t alen, const_char_ptr b, size_t blen);
     public delegate int CompareTsDelegate(void_ptr p0, const_char_ptr a_ts, size_t a_tslen, const_char_ptr b_ts, size_t b_tslen);
     public delegate int CompareWithoutTsDelegate(void_ptr p0, const_char_ptr a, size_t alen, bool a_has_ts, const_char_ptr b, size_t blen, bool b_has_ts);
-    public delegate char_ptr FullMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr existing_value, size_t existing_value_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out unsigned_char_ptr success, out size_t_ptr new_value_length);
-    public delegate char_ptr PartialMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out unsigned_char_ptr success, out size_t_ptr new_value_length);
+    public delegate char_ptr FullMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr existing_value, size_t existing_value_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out byte success, out size_t_ptr new_value_length);
+    public delegate char_ptr PartialMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out byte success, out size_t_ptr new_value_length);
     public delegate void DeleteValueDelegate(void_ptr p0, const_char_ptr value, size_t value_length);
     public delegate char_ptr TransformDelegate(void_ptr p0, const_char_ptr key, size_t length, size_t_ptr dst_length);
     public delegate char InDomainDelegate(void_ptr p0, const_char_ptr key, size_t length);

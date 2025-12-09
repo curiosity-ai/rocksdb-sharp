@@ -8,8 +8,8 @@ namespace RocksDbSharp
     public interface MergeOperator
     {
         string Name { get; }
-        IntPtr PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength);
-        IntPtr FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength);
+        IntPtr PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength);
+        IntPtr FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength);
         void DeleteValue(IntPtr value, UIntPtr valueLength);
     }
 
@@ -81,7 +81,7 @@ namespace RocksDbSharp
                 FullMerge = fullMerge;
             }
 
-            unsafe IntPtr MergeOperator.PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+            unsafe IntPtr MergeOperator.PartialMerge(IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength)
             {
                 var keySpan                = new ReadOnlySpan<byte>((void*)key, (int)keyLength);
                 var operandsListSpan       = new ReadOnlySpan<IntPtr>((void*)operandsList, numOperands);
@@ -94,12 +94,12 @@ namespace RocksDbSharp
                 Marshal.Copy(value, 0, ret, value.Length);
                 newValueLength = (IntPtr)value.Length;
 
-                success = (IntPtr)Convert.ToInt32(_success);
+                success = (byte)(_success ? 1 : 0);
 
                 return ret;
             }
 
-            unsafe IntPtr MergeOperator.FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+            unsafe IntPtr MergeOperator.FullMerge(IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength)
             {
                 var keySpan                = new ReadOnlySpan<byte>((void*)key, (int)keyLength);
                 var operandsListSpan       = new ReadOnlySpan<IntPtr>((void*)operandsList, numOperands);
@@ -114,7 +114,7 @@ namespace RocksDbSharp
                 Marshal.Copy(value, 0, ret, value.Length);
                 newValueLength = (IntPtr)value.Length;
 
-                success = (IntPtr)Convert.ToInt32(_success);
+                success = (byte)(_success ? 1 : 0);
 
                 return ret;
             }
