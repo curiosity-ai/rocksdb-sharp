@@ -86,7 +86,7 @@ namespace RocksDbPrepareCApiHeader
             }
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "success")
             {
-                yield return ("out unsigned_char_ptr", "default");
+                yield return ("out byte", "default");
             }
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
@@ -94,7 +94,7 @@ namespace RocksDbPrepareCApiHeader
             }
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "success")
             {
-                yield return ("out unsigned_char_ptr", "default");
+                yield return ("out byte", "default");
             }
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
