@@ -6,7 +6,7 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RocksDbSharp;
 
-namespace Tests;
+namespace RocksDb.Tests;
 
 [TestClass]
 public class CustomMergeOperatorTests
@@ -42,7 +42,7 @@ public class CustomMergeOperatorTests
         var dbPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
         {
-            using var db = RocksDb.Open(new DbOptions().SetCreateIfMissing(),
+            using var db = RocksDbSharp.RocksDb.Open(new DbOptions().SetCreateIfMissing(),
                 dbPath,
                 new ColumnFamilies(opts));
 
