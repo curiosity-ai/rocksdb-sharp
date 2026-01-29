@@ -3,8 +3,12 @@ using RocksDbSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace RocksDb.Tests
 {
@@ -12,6 +16,91 @@ namespace RocksDb.Tests
     public class RocksDbNiceApiTests
     {
         private string _tempPath;
+
+        [AssemblyInitialize]
+        public static void AssemblyInit(TestContext context)
+        {
+            DownloadAndExtractNativeLibrary().GetAwaiter().GetResult();
+        }
+
+        private static async Task DownloadAndExtractNativeLibrary()
+        {
+            string rid = null;
+            string libName = null;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                rid = "linux-x64";
+                libName = "librocksdb.so";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                rid = "win-x64";
+                libName = "rocksdb.dll";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                rid = "osx-x64"; // or osx-arm64 depending on arch
+                libName = "librocksdb.dylib";
+            }
+            else
+            {
+                Console.WriteLine("Unknown OS platform, skipping native lib download.");
+                return;
+            }
+
+            var currentDir = AppDomain.CurrentDomain.BaseDirectory;
+            var libPath = Path.Combine(currentDir, libName);
+
+            if (File.Exists(libPath))
+            {
+                Console.WriteLine($"Native library already exists at {libPath}");
+                return;
+            }
+
+            string version = "10.4.2.63147";
+            string url = $"https://www.nuget.org/api/v2/package/RocksDb/{version}";
+
+            Console.WriteLine($"Downloading RocksDB package version {version} from {url}...");
+
+            using (var client = new HttpClient())
+            {
+                using (var response = await client.GetAsync(url))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    using (var archive = new ZipArchive(stream))
+                    {
+                        var entryPath = $"runtimes/{rid}/native/{libName}";
+                        var entry = archive.GetEntry(entryPath);
+
+                        if (entry != null)
+                        {
+                            Console.WriteLine($"Extracting {entryPath} to {libPath}...");
+                            entry.ExtractToFile(libPath, overwrite: true);
+
+                            // Set executable permissions on Linux/macOS
+                            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            {
+                                try
+                                {
+                                    File.SetUnixFileMode(libPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Failed to set unix file mode: {ex.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Could not find {entryPath} in the NuGet package.");
+                            // Try fallbacks for musl or different naming if needed, but for now specific version is known
+                        }
+                    }
+                }
+            }
+        }
 
         [TestInitialize]
         public void Initialize()
