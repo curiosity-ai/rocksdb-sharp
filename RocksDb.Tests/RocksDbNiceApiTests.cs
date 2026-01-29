@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Tests
+namespace RocksDb.Tests
 {
     [TestClass]
     public class RocksDbNiceApiTests
@@ -37,7 +37,7 @@ namespace Tests
         public void TestLifecycle()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 Assert.IsNotNull(db);
             }
@@ -47,7 +47,7 @@ namespace Tests
         public void TestBasicCrudStrings()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
                 var val = db.Get("key1");
@@ -63,7 +63,7 @@ namespace Tests
         public void TestBasicCrudBytes()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 byte[] key = Encoding.UTF8.GetBytes("key1");
                 byte[] value = Encoding.UTF8.GetBytes("value1");
@@ -82,7 +82,7 @@ namespace Tests
         public void TestWriteBatch()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 using (var batch = new WriteBatch())
                 {
@@ -102,7 +102,7 @@ namespace Tests
         public void TestIteration()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 for (int i = 0; i < 5; i++)
                 {
@@ -135,7 +135,7 @@ namespace Tests
         {
             var options = new DbOptions().SetCreateIfMissing(true);
             // Open DB initially
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 var cf = db.CreateColumnFamily(new ColumnFamilyOptions(), "cf1");
                 db.Put("key1", "value1", cf);
@@ -150,7 +150,7 @@ namespace Tests
             var columnFamilies = new ColumnFamilies();
             columnFamilies.Add("cf1", cfOptions);
 
-            using (var db = RocksDb.Open(options, _tempPath, columnFamilies))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath, columnFamilies))
             {
                 var cf1 = db.GetColumnFamily("cf1");
                 Assert.AreEqual("value1", db.Get("key1", cf1));
@@ -164,7 +164,7 @@ namespace Tests
         public void TestSnapshots()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
 
@@ -184,7 +184,7 @@ namespace Tests
         public void TestMultiGet()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
                 db.Put("key2", "value2");
@@ -205,7 +205,7 @@ namespace Tests
         public void TestMetadata()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
                 db.Flush(new FlushOptions().SetWaitForFlush(true));
@@ -223,7 +223,7 @@ namespace Tests
         public void TestProperties()
         {
              var options = new DbOptions().SetCreateIfMissing(true);
-             using (var db = RocksDb.Open(options, _tempPath))
+             using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
              {
                  var stats = db.GetProperty("rocksdb.stats");
                  Assert.IsNotNull(stats);
@@ -234,7 +234,7 @@ namespace Tests
         public void TestCompactRange()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
                 db.Put("key2", "value2");
@@ -250,7 +250,7 @@ namespace Tests
         public void TestCheckpoint()
         {
             var options = new DbOptions().SetCreateIfMissing(true);
-            using (var db = RocksDb.Open(options, _tempPath))
+            using (var db = RocksDbSharp.RocksDb.Open(options, _tempPath))
             {
                 db.Put("key1", "value1");
 
@@ -261,7 +261,7 @@ namespace Tests
                 }
 
                 // Verify checkpoint exists and can be opened
-                using (var dbCheck = RocksDb.Open(options, checkpointPath))
+                using (var dbCheck = RocksDbSharp.RocksDb.Open(options, checkpointPath))
                 {
                     Assert.AreEqual("value1", dbCheck.Get("key1"));
                 }
