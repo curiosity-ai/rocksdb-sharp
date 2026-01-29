@@ -29,7 +29,7 @@ namespace RocksDbSharp
             this.Handle = handle;
             References.Options = optionsReferences;
             References.CfOptions = cfOptionsRefs;
-            this.columnFamilies = columnFamilies;
+            this.columnFamilies = columnFamilies ?? new Dictionary<string, ColumnFamilyHandleInternal>();
         }
 
         ~RocksDb()
