@@ -18,9 +18,9 @@ namespace RocksDb.Tests
         private string _tempPath;
 
         [AssemblyInitialize]
-        public static void AssemblyInit(TestContext context)
+        public static async Task AssemblyInit(TestContext context)
         {
-            DownloadAndExtractNativeLibrary().GetAwaiter().GetResult();
+            await DownloadAndExtractNativeLibrary();
         }
 
         private static async Task DownloadAndExtractNativeLibrary()
@@ -28,17 +28,17 @@ namespace RocksDb.Tests
             string rid = null;
             string libName = null;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (OperatingSystem.IsLinux())
             {
                 rid = "linux-x64";
                 libName = "librocksdb.so";
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            else if (OperatingSystem.IsWindows())
             {
                 rid = "win-x64";
                 libName = "rocksdb.dll";
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            else if (OperatingSystem.IsMacOS())
             {
                 rid = "osx-x64"; // or osx-arm64 depending on arch
                 libName = "librocksdb.dylib";
@@ -58,7 +58,14 @@ namespace RocksDb.Tests
                 return;
             }
 
-            string version = "10.4.2.63147";
+            string version = await GetLatestRocksDbVersion();
+            if (string.IsNullOrEmpty(version))
+            {
+                // Fallback version if API fetch fails
+                version = "10.4.2.63147";
+                Console.WriteLine($"Failed to fetch latest version, using fallback: {version}");
+            }
+
             string url = $"https://www.nuget.org/api/v2/package/RocksDb/{version}";
 
             Console.WriteLine($"Downloading RocksDB package version {version} from {url}...");
@@ -80,7 +87,7 @@ namespace RocksDb.Tests
                             entry.ExtractToFile(libPath, overwrite: true);
 
                             // Set executable permissions on Linux/macOS
-                            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            if (!OperatingSystem.IsWindows())
                             {
                                 try
                                 {
@@ -95,11 +102,61 @@ namespace RocksDb.Tests
                         else
                         {
                             Console.WriteLine($"Could not find {entryPath} in the NuGet package.");
-                            // Try fallbacks for musl or different naming if needed, but for now specific version is known
                         }
                     }
                 }
             }
+        }
+
+        private static async Task<string> GetLatestRocksDbVersion()
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Using a simpler query that parses the raw HTML or a lightweight API is better if we don't want to add JSON parsing libs
+                    // But for robustness in a modern .NET app, we can use System.Text.Json
+                    // Given the constraints, let's try the registration API which returns JSON.
+                    // We need to parse it. Let's use basic string manipulation to avoid complex dependencies if simpler
+                    // Or just use System.Text.Json since we are on .NET 10.
+
+                    var response = await client.GetStringAsync("https://api.nuget.org/v3/registration5-semver1/rocksdb/index.json");
+                    // Quick and dirty JSON parsing to find the latest version.
+                    // The JSON structure has "items" -> "upper" (version). The last item in the list is usually the latest.
+                    // However, sorting properly is hard without a library.
+                    // Let's stick to a known working query if possible, or use a regex on the response.
+
+                    // Regex to find all versions: "version":"(.*?)"
+                    // Then sort and pick latest.
+
+                    var versions = new List<Version>();
+                    var matches = System.Text.RegularExpressions.Regex.Matches(response, "\"version\":\"([^\"]+)\"");
+                    foreach (System.Text.RegularExpressions.Match match in matches)
+                    {
+                        if (Version.TryParse(match.Groups[1].Value, out var v))
+                        {
+                            versions.Add(v);
+                        }
+                    }
+
+                    if (versions.Any())
+                    {
+                         // Sort descending
+                         versions.Sort();
+                         var latest = versions.Last();
+                         // We need to find the original string representation because Version might normalize (e.g. 1.0 -> 1.0.0.0)
+                         // effectively losing the NuGet specific string if it had non-standard parts, but RocksDbSharp uses standard 4-part versions.
+                         // Let's iterate matches again to find the one that corresponds to the max version.
+
+                         return latest.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching latest version: {ex.Message}");
+            }
+            return null;
         }
 
         [TestInitialize]
