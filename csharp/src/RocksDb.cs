@@ -347,6 +347,58 @@ namespace RocksDbSharp
             }
         }
 
+        public void SingleDelete(string key, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            Native.Instance.rocksdb_singledelete(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, cf);
+        }
+
+        public void SingleDelete(byte[] key, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            SingleDelete(key, key.Length, cf, writeOptions);
+        }
+
+#if !NETSTANDARD2_0
+        public unsafe void SingleDelete(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            Native.Instance.rocksdb_singledelete(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, cf);
+        }
+#endif
+
+        public void SingleDelete(byte[] key, long keyLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            Native.Instance.rocksdb_singledelete(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, keyLength, cf);
+        }
+
+        public void DeleteRange(string startKey, string endKey, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null, Encoding encoding = null)
+        {
+            var start = (encoding ?? DefaultEncoding).GetBytes(startKey);
+            var end = (encoding ?? DefaultEncoding).GetBytes(endKey);
+            DeleteRange(start, start.Length, end, end.Length, cf, writeOptions);
+        }
+
+        public void DeleteRange(byte[] startKey, byte[] endKey, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            DeleteRange(startKey, startKey.Length, endKey, endKey.Length, cf, writeOptions);
+        }
+
+#if !NETSTANDARD2_0
+        public unsafe void DeleteRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            fixed (byte* startPtr = startKey)
+            fixed (byte* endPtr = endKey)
+            {
+                var cfHandle = cf ?? GetDefaultColumnFamily();
+                Native.Instance.rocksdb_delete_range_cf(Handle, (writeOptions ?? DefaultWriteOptions).Handle, cfHandle.Handle, startPtr, (UIntPtr)startKey.Length, endPtr, (UIntPtr)endKey.Length);
+            }
+        }
+#endif
+
+        public void DeleteRange(byte[] startKey, long startKeyLength, byte[] endKey, long endKeyLength, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null)
+        {
+            var cfHandle = cf ?? GetDefaultColumnFamily();
+            Native.Instance.rocksdb_delete_range_cf(Handle, (writeOptions ?? DefaultWriteOptions).Handle, cfHandle.Handle, startKey, (UIntPtr)startKeyLength, endKey, (UIntPtr)endKeyLength);
+        }
+
         public void Put(string key, string value, ColumnFamilyHandle cf = null, WriteOptions writeOptions = null, Encoding encoding = null)
         {
             Native.Instance.rocksdb_put(Handle, (writeOptions ?? DefaultWriteOptions).Handle, key, value, cf, encoding ?? DefaultEncoding);
