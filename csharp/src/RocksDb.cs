@@ -533,6 +533,28 @@ namespace RocksDbSharp
         {
             Native.Instance.rocksdb_try_catch_up_with_primary(Handle);
         }
+
+        public void DisableFileDeletions()
+        {
+            Native.Instance.rocksdb_disable_file_deletions(Handle);
+        }
+
+        public void EnableFileDeletions()
+        {
+            Native.Instance.rocksdb_enable_file_deletions(Handle);
+        }
+
+        public TransactionLogIterator GetUpdatesSince(ulong sequenceNumber)
+        {
+            // options is null for now as we don't have a wrapper and pass null to C API
+            IntPtr iteratorHandle = Native.Instance.rocksdb_get_updates_since(Handle, sequenceNumber, IntPtr.Zero);
+            return new TransactionLogIterator(iteratorHandle);
+        }
+
+        public ulong GetLatestSequenceNumber()
+        {
+            return Native.Instance.rocksdb_get_latest_sequence_number(Handle);
+        }
         
         public void Flush(FlushOptions flushOptions)
         {
