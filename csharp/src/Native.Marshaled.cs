@@ -16,7 +16,7 @@ namespace RocksDbSharp
     public abstract partial class Native
     {
         public static byte MarshalBool(bool input) => input ? (byte)1 : (byte)0;
-        private unsafe string MarshalNullTermAsciiStr(IntPtr nullTermStr)
+        public static unsafe string MarshalNullTermAsciiStr(IntPtr nullTermStr)
         {
             if (nullTermStr == IntPtr.Zero) return null;
 
