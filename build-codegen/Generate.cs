@@ -84,21 +84,18 @@ namespace RocksDbPrepareCApiHeader
                 yield return ("PerfMetric", "enum"); 
                 yield return ("int", "default");
             }
-            if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "success")
-            {
-                yield return ("out byte", "default");
-            }
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
             }
-            if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "success")
-            {
-                yield return ("out byte", "default");
-            }
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
+            }
+
+            if (arg.NativeType == "unsigned char*")
+            {
+                yield return ("out byte", "default");
             }
 
             yield break;

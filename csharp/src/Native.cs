@@ -139,7 +139,7 @@ namespace RocksDbSharp
     public delegate void Destructor_Delegate(void_ptr p0);
     public delegate void LoggerCallbackDelegate(void_ptr priv, unsigned_int lev, char_ptr msg, size_t len);
     public delegate void DestructorDelegate(void_ptr p0);
-    public delegate char FilterDelegate(void_ptr p0, int level, const_char_ptr key, size_t key_length, const_char_ptr existing_value, size_t value_length, char_ptr_ptr new_value, size_t_ptr new_value_length, unsigned_char_ptr value_changed);
+    public delegate char FilterDelegate(void_ptr p0, int level, const_char_ptr key, size_t key_length, const_char_ptr existing_value, size_t value_length, char_ptr_ptr new_value, size_t_ptr new_value_length, out byte value_changed);
     public delegate char_ptr NameDelegate(void_ptr p0);
     public delegate rocksdb_compactionfilter_t_ptr CreateCompactionFilterDelegate(void_ptr p0, rocksdb_compactionfiltercontext_t_ptr context);
     public delegate int CompareDelegate(void_ptr p0, const_char_ptr a, size_t alen, const_char_ptr b, size_t blen);
@@ -2933,7 +2933,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
@@ -2946,7 +2946,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
@@ -2959,7 +2959,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
@@ -2973,7 +2973,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
@@ -2987,7 +2987,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
@@ -3001,7 +3001,7 @@ namespace RocksDbSharp
             out size_t val_len,
             const_char_ptr timestamp,
             size_t timestamp_len,
-            unsigned_char_ptr value_found);
+            out byte value_found);
 
         public abstract rocksdb_iterator_t_ptr rocksdb_create_iterator(
             rocksdb_t_ptr db,
