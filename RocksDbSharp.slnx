@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".azure-devops/build-native-linux.yaml" />
+    <File Path=".azure-devops/build-native-mac.yaml" />
+    <File Path=".azure-devops/build-native-win.yaml" />
+    <File Path=".azure-devops/build-nuget.yaml" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/ConsoleTest/ConsoleTest.csproj" />
+    <Project Path="Tests/MergeTest/MergeTests.csproj" />
+    <Project Path="Tests/ReplicationTest/ReplicationTest.csproj" />
+  </Folder>
+  <Project Path="build-codegen/CSharpGen.csproj" />
+  <Project Path="csharp/RocksDbSharp.csproj" />
+</Solution>
