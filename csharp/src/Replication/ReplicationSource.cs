@@ -27,13 +27,15 @@ namespace RocksDbSharp
 
         public IEnumerable<ReplicationBatch> GetWalUpdates(ulong sequenceNumber)
         {
+            _db.DisableFileDeletions();
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
                 {
                     iterator.Status(); // Check for errors
+
                     var batch = iterator.GetBatch(out ulong seq);
-                    Console.WriteLine($"Read {seq}");
+
                     try
                     {
                         byte[] data = batch.ToBytes();
@@ -51,6 +53,7 @@ namespace RocksDbSharp
                     iterator.Next();
                 }
             }
+            _db.EnableFileDeletions();
         }
     }
 }

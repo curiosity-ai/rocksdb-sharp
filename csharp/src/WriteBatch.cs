@@ -471,6 +471,11 @@ namespace RocksDbSharp
             return this;
         }
 
+        public byte[] GetLogDataBytes()
+        {
+            return Native.Instance.rocksdb_writebatch_data(handle);
+        }
+
         public WriteBatch Iterate(IntPtr state, PutDelegate put, DeletedDelegate deleted)
         {
             Native.Instance.rocksdb_writebatch_iterate(handle, state, put, deleted);
