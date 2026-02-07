@@ -32,7 +32,7 @@ namespace RocksDbSharp
         public T SetCreateIfMissing(bool value = true)
         {
             CreateIfMissing = value; // remember this so that we can change treatment of column families during creation
-            Native.Instance.rocksdb_options_set_create_if_missing(Handle, value);
+            Native.Instance.rocksdb_options_set_create_if_missing(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -42,7 +42,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetCreateMissingColumnFamilies(bool value = true)
         {
-            Native.Instance.rocksdb_options_set_create_missing_column_families(Handle, value);
+            Native.Instance.rocksdb_options_set_create_missing_column_families(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -52,7 +52,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetErrorIfExists(bool value = true)
         {
-            Native.Instance.rocksdb_options_set_error_if_exists(Handle, value);
+            Native.Instance.rocksdb_options_set_error_if_exists(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -66,7 +66,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetParanoidChecks(bool value = true)
         {
-            Native.Instance.rocksdb_options_set_paranoid_checks(Handle, value);
+            Native.Instance.rocksdb_options_set_paranoid_checks(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -162,7 +162,7 @@ namespace RocksDbSharp
         /// <returns></returns>
         public T SkipStatsUpdateOnOpen(bool val = false)
         {
-            Native.Instance.rocksdb_options_set_skip_stats_update_on_db_open(Handle, val);
+            Native.Instance.rocksdb_options_set_skip_stats_update_on_db_open(Handle, Native.MarshalBool(val));
             return (T)this;
         }
 
@@ -392,7 +392,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetAllowMmapReads(bool value)
         {
-            Native.Instance.rocksdb_options_set_allow_mmap_reads(Handle, value);
+            Native.Instance.rocksdb_options_set_allow_mmap_reads(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -403,7 +403,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetAllowMmapWrites(bool value)
         {
-            Native.Instance.rocksdb_options_set_allow_mmap_writes(Handle, value);
+            Native.Instance.rocksdb_options_set_allow_mmap_writes(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -420,7 +420,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetUseDirectReads(bool value)
         {
-            Native.Instance.rocksdb_options_set_use_direct_reads(Handle, value);
+            Native.Instance.rocksdb_options_set_use_direct_reads(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -433,7 +433,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetUseDirectIoForFlushAndCompaction(bool value)
         {
-            Native.Instance.rocksdb_options_set_use_direct_io_for_flush_and_compaction(Handle, value);
+            Native.Instance.rocksdb_options_set_use_direct_io_for_flush_and_compaction(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -442,7 +442,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetIsFdCloseOnExec(bool value)
         {
-            Native.Instance.rocksdb_options_set_is_fd_close_on_exec(Handle, value);
+            Native.Instance.rocksdb_options_set_is_fd_close_on_exec(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -463,7 +463,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetAdviseRandomOnOpen(bool value)
         {
-            Native.Instance.rocksdb_options_set_advise_random_on_open(Handle, value);
+            Native.Instance.rocksdb_options_set_advise_random_on_open(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -494,7 +494,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetUseAdaptiveMutex(bool value)
         {
-            Native.Instance.rocksdb_options_set_use_adaptive_mutex(Handle, value);
+            Native.Instance.rocksdb_options_set_use_adaptive_mutex(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -531,7 +531,7 @@ namespace RocksDbSharp
         /// <returns></returns>
         public T SetAllowConcurrentMemtableWrite(bool value)
         {
-            Native.Instance.rocksdb_options_set_allow_concurrent_memtable_write(Handle, value);
+            Native.Instance.rocksdb_options_set_allow_concurrent_memtable_write(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -546,7 +546,7 @@ namespace RocksDbSharp
         /// <returns></returns>
         public T SetEnableWriteThreadAdaptiveYield(bool value)
         {
-            Native.Instance.rocksdb_options_set_enable_write_thread_adaptive_yield(Handle, value);
+            Native.Instance.rocksdb_options_set_enable_write_thread_adaptive_yield(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 

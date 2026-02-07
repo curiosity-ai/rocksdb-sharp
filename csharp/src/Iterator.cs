@@ -56,7 +56,7 @@ namespace RocksDbSharp
 
         public bool Valid()
         {
-            return Native.Instance.rocksdb_iter_valid(handle);
+            return Native.Instance.rocksdb_iter_valid(handle) != 0;
         }
 
         public Iterator SeekToFirst()

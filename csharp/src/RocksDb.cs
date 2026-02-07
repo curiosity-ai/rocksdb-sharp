@@ -84,7 +84,7 @@ namespace RocksDbSharp
         {
             using (var pathSafe = new RocksSafePath(path))
             {
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, errorIfLogFileExists);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, Native.MarshalBool(errorIfLogFileExists));
                 return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
             }
         }
@@ -136,7 +136,7 @@ namespace RocksDbSharp
                 string[] cfnames = columnFamilies.Names.ToArray();
                 IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
                 IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, Native.MarshalBool(errIfLogFileExists));
                 var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
                 foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
                 {

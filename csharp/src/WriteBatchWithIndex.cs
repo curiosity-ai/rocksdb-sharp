@@ -12,7 +12,7 @@ namespace RocksDbSharp
         private Encoding defaultEncoding = Encoding.UTF8;
 
         public WriteBatchWithIndex(ulong reservedBytes = 0, bool overwriteKeys = true)
-            : this(Native.Instance.rocksdb_writebatch_wi_create((UIntPtr)reservedBytes, overwriteKeys))
+            : this(Native.Instance.rocksdb_writebatch_wi_create((UIntPtr)reservedBytes, overwriteKeys ? (byte)1 : (byte)0))
         {
         }
 

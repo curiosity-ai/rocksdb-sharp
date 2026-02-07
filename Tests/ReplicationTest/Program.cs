@@ -24,9 +24,12 @@ namespace ReplicationTest
 
         static void RunTest()
         {
-            string tempRoot = Path.Combine(Path.GetTempPath(), "RocksDbReplicationTest_" + Guid.NewGuid().ToString());
+            string tempRoot = Path.Combine(Path.GetTempPath(), "RocksDbReplicationTest");
+
+            if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+
             string sourcePath = Path.Combine(tempRoot, "source_db");
-            string destPath = Path.Combine(tempRoot, "dest_db");
+            string destPath   = Path.Combine(tempRoot, "dest_db");
 
             Directory.CreateDirectory(sourcePath);
             // Dest path will be created by IngestFile
@@ -80,7 +83,7 @@ namespace ReplicationTest
 
                         startSeq = destDb.GetLatestSequenceNumber() + 1;
                         Console.WriteLine($"Dest DB Sequence Number: {startSeq - 1}. Next update from: {startSeq}");
-                    }
+                    //}
 
                     Console.WriteLine("Populating Source DB (Phase 2 - WAL)...");
                     // Write more data
@@ -93,10 +96,10 @@ namespace ReplicationTest
                     sourceDb.Remove("key0");
 
                     Console.WriteLine($"Replicating WAL Updates from {startSeq}...");
-                    using (var destDb = RocksDb.Open(options, destPath))
-                    {
+                    //using (var destDb = RocksDb.Open(options, destPath))
+                    //{
                         var consumer = new ReplicationConsumer(destDb);
-
+                        Console.WriteLine($"Reading all the way to: {sourceDb.GetLatestSequenceNumber()}");
                         int batchCount = 0;
                         foreach (var batch in replicator.GetWalUpdates(startSeq))
                         {
@@ -107,7 +110,7 @@ namespace ReplicationTest
 
                         // Verify Phase 2
                         Console.WriteLine("Verifying WAL Replication...");
-                        string val = destDb.Get("key1000");
+                        val = destDb.Get("key1000");
                         if (val != "value1000") throw new Exception($"Verification failed. Expected 'value1000', got '{val}'");
 
                         val = destDb.Get("key0");

@@ -15,7 +15,7 @@ using int32_t = System.Int32;
 using int64_t = System.Int64;
 using uint64_t = System.UInt64;
 using uint64_t_ptr = System.IntPtr;
-using unsigned_char = System.Boolean;
+using unsigned_char = System.Byte;
 using unsigned_char_ptr = System.IntPtr;
 using char_ptr = System.IntPtr;
 using const_char_ptr = System.IntPtr;
@@ -144,7 +144,7 @@ namespace RocksDbSharp
     public delegate rocksdb_compactionfilter_t_ptr CreateCompactionFilterDelegate(void_ptr p0, rocksdb_compactionfiltercontext_t_ptr context);
     public delegate int CompareDelegate(void_ptr p0, const_char_ptr a, size_t alen, const_char_ptr b, size_t blen);
     public delegate int CompareTsDelegate(void_ptr p0, const_char_ptr a_ts, size_t a_tslen, const_char_ptr b_ts, size_t b_tslen);
-    public delegate int CompareWithoutTsDelegate(void_ptr p0, const_char_ptr a, size_t alen, bool a_has_ts, const_char_ptr b, size_t blen, bool b_has_ts);
+    public delegate int CompareWithoutTsDelegate(void_ptr p0, const_char_ptr a, size_t alen, byte a_has_ts, const_char_ptr b, size_t blen, byte b_has_ts);
     public delegate char_ptr FullMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr existing_value, size_t existing_value_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out byte success, out size_t_ptr new_value_length);
     public delegate char_ptr PartialMergeDelegate(void_ptr p0, const_char_ptr key, size_t key_length, const_char_ptr_const_ptr operands_list, const_size_t_ptr operands_list_length, int num_operands, out byte success, out size_t_ptr new_value_length);
     public delegate void DeleteValueDelegate(void_ptr p0, const_char_ptr value, size_t value_length);
@@ -233,13 +233,13 @@ namespace RocksDbSharp
         public abstract rocksdb_t_ptr rocksdb_open_for_read_only(
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only(
             const_rocksdb_options_t_ptr options,
             const_char_ptr name,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only(options, name, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -250,13 +250,13 @@ namespace RocksDbSharp
         public abstract rocksdb_t_ptr rocksdb_open_for_read_only(
             const_rocksdb_options_t_ptr options,
             string name,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only(
             const_rocksdb_options_t_ptr options,
             string name,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only(options, name, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -360,13 +360,13 @@ namespace RocksDbSharp
         public abstract void rocksdb_backup_engine_create_new_backup_flush(
             rocksdb_backup_engine_t_ptr be,
             rocksdb_t_ptr db,
-            bool flush_before_backup,
+            byte flush_before_backup,
             out char_ptr_ptr errptr);
 
         public void rocksdb_backup_engine_create_new_backup_flush(
             rocksdb_backup_engine_t_ptr be,
             rocksdb_t_ptr db,
-            bool flush_before_backup)
+            byte flush_before_backup)
         {
             rocksdb_backup_engine_create_new_backup_flush(be, db, flush_before_backup, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -1127,30 +1127,30 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_backup_engine_options_set_share_table_files(
             rocksdb_backup_engine_options_t_ptr options,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_backup_engine_options_get_share_table_files(
+        public abstract byte rocksdb_backup_engine_options_get_share_table_files(
             rocksdb_backup_engine_options_t_ptr options);
 
         public abstract void rocksdb_backup_engine_options_set_sync(
             rocksdb_backup_engine_options_t_ptr options,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_backup_engine_options_get_sync(
+        public abstract byte rocksdb_backup_engine_options_get_sync(
             rocksdb_backup_engine_options_t_ptr options);
 
         public abstract void rocksdb_backup_engine_options_set_destroy_old_data(
             rocksdb_backup_engine_options_t_ptr options,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_backup_engine_options_get_destroy_old_data(
+        public abstract byte rocksdb_backup_engine_options_get_destroy_old_data(
             rocksdb_backup_engine_options_t_ptr options);
 
         public abstract void rocksdb_backup_engine_options_set_backup_log_files(
             rocksdb_backup_engine_options_t_ptr options,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_backup_engine_options_get_backup_log_files(
+        public abstract byte rocksdb_backup_engine_options_get_backup_log_files(
             rocksdb_backup_engine_options_t_ptr options);
 
         public abstract void rocksdb_backup_engine_options_set_backup_rate_limit(
@@ -1566,7 +1566,7 @@ namespace RocksDbSharp
             const_char_ptr_const_ptr column_family_names,
             const_rocksdb_options_t_ptr_const_ptr column_family_options,
             rocksdb_column_family_handle_t_ptr_ptr column_family_handles,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only_column_families(
@@ -1576,7 +1576,7 @@ namespace RocksDbSharp
             const_char_ptr_const_ptr column_family_names,
             const_rocksdb_options_t_ptr_const_ptr column_family_options,
             rocksdb_column_family_handle_t_ptr_ptr column_family_handles,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -1591,7 +1591,7 @@ namespace RocksDbSharp
             const_char_ptr_const_ptr column_family_names,
             const_rocksdb_options_t_ptr_const_ptr column_family_options,
             rocksdb_column_family_handle_t_ptr_ptr column_family_handles,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only_column_families(
@@ -1601,7 +1601,7 @@ namespace RocksDbSharp
             const_char_ptr_const_ptr column_family_names,
             const_rocksdb_options_t_ptr_const_ptr column_family_options,
             rocksdb_column_family_handle_t_ptr_ptr column_family_handles,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -1616,7 +1616,7 @@ namespace RocksDbSharp
             string[] column_family_names,
             const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only_column_families(
@@ -1626,7 +1626,7 @@ namespace RocksDbSharp
             string[] column_family_names,
             const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -1641,7 +1641,7 @@ namespace RocksDbSharp
             string[] column_family_names,
             const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
-            bool error_if_wal_file_exists,
+            byte error_if_wal_file_exists,
             out char_ptr_ptr errptr);
 
         public rocksdb_t_ptr rocksdb_open_for_read_only_column_families(
@@ -1651,7 +1651,7 @@ namespace RocksDbSharp
             string[] column_family_names,
             const_rocksdb_options_t_ptr[] column_family_options,
             rocksdb_column_family_handle_t_ptr[] column_family_handles,
-            bool error_if_wal_file_exists)
+            byte error_if_wal_file_exists)
         {
             var result = rocksdb_open_for_read_only_column_families(options, name, num_column_families, column_family_names, column_family_options, column_family_handles, error_if_wal_file_exists, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -2883,7 +2883,7 @@ namespace RocksDbSharp
             const_size_t_ptr keys_list_sizes,
             rocksdb_pinnableslice_t_ptr_ptr values,
             char_ptr[] errs,
-            bool sorted_input);
+            byte sorted_input);
 
         // The MultiGet API that improves performance by batching operations
         // in the read path for greater efficiency. Currently, only the block based
@@ -2920,11 +2920,11 @@ namespace RocksDbSharp
             size_t[] keys_list_sizes,
             rocksdb_pinnableslice_t_ptr_ptr values,
             char_ptr[] errs,
-            bool sorted_input);
+            byte sorted_input);
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public abstract bool rocksdb_key_may_exist(
+        public abstract byte rocksdb_key_may_exist(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             const_char_ptr key,
@@ -2937,7 +2937,7 @@ namespace RocksDbSharp
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public unsafe abstract bool rocksdb_key_may_exist(
+        public unsafe abstract byte rocksdb_key_may_exist(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             byte* key,
@@ -2950,7 +2950,7 @@ namespace RocksDbSharp
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public abstract bool rocksdb_key_may_exist(
+        public abstract byte rocksdb_key_may_exist(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             byte[] key,
@@ -2963,7 +2963,7 @@ namespace RocksDbSharp
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public abstract bool rocksdb_key_may_exist_cf(
+        public abstract byte rocksdb_key_may_exist_cf(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             rocksdb_column_family_handle_t_ptr column_family,
@@ -2977,7 +2977,7 @@ namespace RocksDbSharp
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public unsafe abstract bool rocksdb_key_may_exist_cf(
+        public unsafe abstract byte rocksdb_key_may_exist_cf(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             rocksdb_column_family_handle_t_ptr column_family,
@@ -2991,7 +2991,7 @@ namespace RocksDbSharp
 
         // The value is only allocated (using malloc) and returned if it is found and
         // value_found isn't NULL. In that case the user is responsible for freeing it.
-        public abstract bool rocksdb_key_may_exist_cf(
+        public abstract byte rocksdb_key_may_exist_cf(
             rocksdb_t_ptr db,
             const_rocksdb_readoptions_t_ptr options,
             rocksdb_column_family_handle_t_ptr column_family,
@@ -3498,12 +3498,12 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_flush_wal(
             rocksdb_t_ptr db,
-            bool sync,
+            byte sync,
             out char_ptr_ptr errptr);
 
         public void rocksdb_flush_wal(
             rocksdb_t_ptr db,
-            bool sync)
+            byte sync)
         {
             rocksdb_flush_wal(db, sync, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -3603,7 +3603,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_iter_destroy(
             rocksdb_iterator_t_ptr iterator);
 
-        public abstract bool rocksdb_iter_valid(
+        public abstract byte rocksdb_iter_valid(
             const_rocksdb_iterator_t_ptr iterator);
 
         public abstract void rocksdb_iter_seek_to_first(
@@ -3687,7 +3687,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_wal_iter_next(
             rocksdb_wal_iterator_t_ptr iter);
 
-        public abstract bool rocksdb_wal_iter_valid(
+        public abstract byte rocksdb_wal_iter_valid(
             const_rocksdb_wal_iterator_t_ptr wal_iterator);
 
         public abstract void rocksdb_wal_iter_status(
@@ -4281,7 +4281,7 @@ namespace RocksDbSharp
     {
         public abstract rocksdb_writebatch_wi_t_ptr rocksdb_writebatch_wi_create(
             size_t reserved_bytes,
-            bool overwrite_keys);
+            byte overwrite_keys);
 
         public abstract rocksdb_writebatch_wi_t_ptr rocksdb_writebatch_wi_create_from(
             const_char_ptr rep,
@@ -4298,7 +4298,7 @@ namespace RocksDbSharp
         public abstract rocksdb_writebatch_wi_t_ptr rocksdb_writebatch_wi_create_with_params(
             rocksdb_comparator_t_ptr backup_index_comparator,
             size_t reserved_bytes,
-            bool overwrite_key,
+            byte overwrite_key,
             size_t max_bytes,
             size_t protection_bytes_per_key);
 
@@ -5203,7 +5203,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_load_latest_options(
             const_char_ptr db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5226,7 +5226,7 @@ namespace RocksDbSharp
         public void rocksdb_load_latest_options(
             const_char_ptr db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5253,7 +5253,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_load_latest_options(
             string db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5276,7 +5276,7 @@ namespace RocksDbSharp
         public void rocksdb_load_latest_options(
             string db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5303,7 +5303,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_load_latest_options(
             const_char_ptr db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5326,7 +5326,7 @@ namespace RocksDbSharp
         public void rocksdb_load_latest_options(
             const_char_ptr db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5353,7 +5353,7 @@ namespace RocksDbSharp
         public abstract void rocksdb_load_latest_options(
             string db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5376,7 +5376,7 @@ namespace RocksDbSharp
         public void rocksdb_load_latest_options(
             string db_path,
             rocksdb_env_t_ptr env,
-            bool ignore_unknown_options,
+            byte ignore_unknown_options,
             rocksdb_cache_t_ptr cache,
             rocksdb_options_t_ptr_ptr db_options,
             size_t_ptr num_column_families,
@@ -5461,15 +5461,15 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_block_based_options_set_partition_filters(
             rocksdb_block_based_table_options_t_ptr options,
-            bool partition_filters);
+            byte partition_filters);
 
         public abstract void rocksdb_block_based_options_set_optimize_filters_for_memory(
             rocksdb_block_based_table_options_t_ptr options,
-            bool optimize_filters_for_memory);
+            byte optimize_filters_for_memory);
 
         public abstract void rocksdb_block_based_options_set_use_delta_encoding(
             rocksdb_block_based_table_options_t_ptr options,
-            bool use_delta_encoding);
+            byte use_delta_encoding);
 
         public abstract void rocksdb_block_based_options_set_filter_policy(
             rocksdb_block_based_table_options_t_ptr options,
@@ -5477,7 +5477,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_block_based_options_set_no_block_cache(
             rocksdb_block_based_table_options_t_ptr options,
-            bool no_block_cache);
+            byte no_block_cache);
 
         public abstract void rocksdb_block_based_options_set_block_cache(
             rocksdb_block_based_table_options_t_ptr options,
@@ -5485,7 +5485,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_block_based_options_set_whole_key_filtering(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
-            bool whole_key_filtering);
+            byte whole_key_filtering);
 
         public abstract void rocksdb_block_based_options_set_format_version(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
@@ -5513,19 +5513,19 @@ namespace RocksDbSharp
         // is removed
         public abstract void rocksdb_block_based_options_set_cache_index_and_filter_blocks(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
-            bool cache_index_and_filter_blocks);
+            byte cache_index_and_filter_blocks);
 
         public abstract void rocksdb_block_based_options_set_cache_index_and_filter_blocks_with_high_priority(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
-            bool cache_index_and_filter_blocks_with_high_priority);
+            byte cache_index_and_filter_blocks_with_high_priority);
 
         public abstract void rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
-            bool pin_l0_filter_and_index_blocks_in_cache);
+            byte pin_l0_filter_and_index_blocks_in_cache);
 
         public abstract void rocksdb_block_based_options_set_pin_top_level_index_and_filter(
             rocksdb_block_based_table_options_t_ptr block_based_table_options,
-            bool pin_top_level_index_and_filter);
+            byte pin_top_level_index_and_filter);
 
         public abstract void rocksdb_options_set_block_based_table_factory(
             rocksdb_options_t_ptr opt,
@@ -5560,10 +5560,10 @@ namespace RocksDbSharp
             const_rocksdb_flushjobinfo_t_ptr flushjobinfo,
             size_t_ptr p1);
 
-        public abstract bool rocksdb_flushjobinfo_triggered_writes_slowdown(
+        public abstract byte rocksdb_flushjobinfo_triggered_writes_slowdown(
             const_rocksdb_flushjobinfo_t_ptr flushjobinfo);
 
-        public abstract bool rocksdb_flushjobinfo_triggered_writes_stop(
+        public abstract byte rocksdb_flushjobinfo_triggered_writes_stop(
             const_rocksdb_flushjobinfo_t_ptr flushjobinfo);
 
         public abstract uint64_t rocksdb_flushjobinfo_largest_seqno(
@@ -5761,11 +5761,11 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_cuckoo_options_set_identity_as_first_hash(
             rocksdb_cuckoo_table_options_t_ptr options,
-            bool v);
+            byte v);
 
         public abstract void rocksdb_cuckoo_options_set_use_module_hash(
             rocksdb_cuckoo_table_options_t_ptr options,
-            bool v);
+            byte v);
 
         public abstract void rocksdb_options_set_cuckoo_table_factory(
             rocksdb_options_t_ptr opt,
@@ -5900,9 +5900,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_allow_ingest_behind(
             rocksdb_options_t_ptr options,
-            bool allow_ingest_behind);
+            byte allow_ingest_behind);
 
-        public abstract bool rocksdb_options_get_allow_ingest_behind(
+        public abstract byte rocksdb_options_get_allow_ingest_behind(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_compaction_filter(
@@ -5943,30 +5943,30 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_create_if_missing(
             rocksdb_options_t_ptr options,
-            bool create_if_missing);
+            byte create_if_missing);
 
-        public abstract bool rocksdb_options_get_create_if_missing(
+        public abstract byte rocksdb_options_get_create_if_missing(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_create_missing_column_families(
             rocksdb_options_t_ptr options,
-            bool create_missing_column_families);
+            byte create_missing_column_families);
 
-        public abstract bool rocksdb_options_get_create_missing_column_families(
+        public abstract byte rocksdb_options_get_create_missing_column_families(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_error_if_exists(
             rocksdb_options_t_ptr options,
-            bool error_if_exists);
+            byte error_if_exists);
 
-        public abstract bool rocksdb_options_get_error_if_exists(
+        public abstract byte rocksdb_options_get_error_if_exists(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_paranoid_checks(
             rocksdb_options_t_ptr options,
-            bool paranoid_checks);
+            byte paranoid_checks);
 
-        public abstract bool rocksdb_options_get_paranoid_checks(
+        public abstract byte rocksdb_options_get_paranoid_checks(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_db_paths(
@@ -6065,9 +6065,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_compression_options_use_zstd_dict_trainer(
             rocksdb_options_t_ptr options,
-            bool compression_options_use_zstd_dict_trainer);
+            byte compression_options_use_zstd_dict_trainer);
 
-        public abstract bool rocksdb_options_get_compression_options_use_zstd_dict_trainer(
+        public abstract byte rocksdb_options_get_compression_options_use_zstd_dict_trainer(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_compression_options_parallel_threads(
@@ -6090,25 +6090,25 @@ namespace RocksDbSharp
             int p2,
             int p3,
             int p4,
-            bool p5);
+            byte p5);
 
         public abstract void rocksdb_options_set_bottommost_compression_options_zstd_max_train_bytes(
             rocksdb_options_t_ptr options,
             int p1,
-            bool p2);
+            byte p2);
 
         public abstract void rocksdb_options_set_bottommost_compression_options_use_zstd_dict_trainer(
             rocksdb_options_t_ptr options,
-            bool p1,
-            bool p2);
+            byte p1,
+            byte p2);
 
-        public abstract bool rocksdb_options_get_bottommost_compression_options_use_zstd_dict_trainer(
+        public abstract byte rocksdb_options_get_bottommost_compression_options_use_zstd_dict_trainer(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_bottommost_compression_options_max_dict_buffer_bytes(
             rocksdb_options_t_ptr options,
             uint64_t p1,
-            bool p2);
+            byte p2);
 
         public abstract void rocksdb_options_set_prefix_extractor(
             rocksdb_options_t_ptr options,
@@ -6165,9 +6165,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_level_compaction_dynamic_level_bytes(
             rocksdb_options_t_ptr options,
-            bool level_compaction_dynamic_level_bytes);
+            byte level_compaction_dynamic_level_bytes);
 
-        public abstract bool rocksdb_options_get_level_compaction_dynamic_level_bytes(
+        public abstract byte rocksdb_options_get_level_compaction_dynamic_level_bytes(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_max_bytes_for_level_multiplier(
@@ -6227,24 +6227,24 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_skip_stats_update_on_db_open(
             rocksdb_options_t_ptr opt,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_options_get_skip_stats_update_on_db_open(
+        public abstract byte rocksdb_options_get_skip_stats_update_on_db_open(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_skip_checking_sst_file_sizes_on_db_open(
             rocksdb_options_t_ptr opt,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_options_get_skip_checking_sst_file_sizes_on_db_open(
+        public abstract byte rocksdb_options_get_skip_checking_sst_file_sizes_on_db_open(
             rocksdb_options_t_ptr opt);
 
         /* Blob Options Settings */
         public abstract void rocksdb_options_set_enable_blob_files(
             rocksdb_options_t_ptr opt,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_options_get_enable_blob_files(
+        public abstract byte rocksdb_options_get_enable_blob_files(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_min_blob_size(
@@ -6270,9 +6270,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_enable_blob_gc(
             rocksdb_options_t_ptr opt,
-            bool val);
+            byte val);
 
-        public abstract bool rocksdb_options_get_enable_blob_gc(
+        public abstract byte rocksdb_options_get_enable_blob_gc(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_blob_gc_age_cutoff(
@@ -6350,16 +6350,16 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_enable_pipelined_write(
             rocksdb_options_t_ptr options,
-            bool enable_pipelined_write);
+            byte enable_pipelined_write);
 
-        public abstract bool rocksdb_options_get_enable_pipelined_write(
+        public abstract byte rocksdb_options_get_enable_pipelined_write(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_unordered_write(
             rocksdb_options_t_ptr options,
-            bool unordered_write);
+            byte unordered_write);
 
-        public abstract bool rocksdb_options_get_unordered_write(
+        public abstract byte rocksdb_options_get_unordered_write(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_max_subcompactions(
@@ -6499,37 +6499,37 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_allow_mmap_reads(
             rocksdb_options_t_ptr options,
-            bool allow_mmap_reads);
+            byte allow_mmap_reads);
 
-        public abstract bool rocksdb_options_get_allow_mmap_reads(
+        public abstract byte rocksdb_options_get_allow_mmap_reads(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_allow_mmap_writes(
             rocksdb_options_t_ptr options,
-            bool allow_mmap_writes);
+            byte allow_mmap_writes);
 
-        public abstract bool rocksdb_options_get_allow_mmap_writes(
+        public abstract byte rocksdb_options_get_allow_mmap_writes(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_use_direct_reads(
             rocksdb_options_t_ptr options,
-            bool use_direct_reads);
+            byte use_direct_reads);
 
-        public abstract bool rocksdb_options_get_use_direct_reads(
+        public abstract byte rocksdb_options_get_use_direct_reads(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_use_direct_io_for_flush_and_compaction(
             rocksdb_options_t_ptr options,
-            bool use_direct_io_for_flush_and_compaction);
+            byte use_direct_io_for_flush_and_compaction);
 
-        public abstract bool rocksdb_options_get_use_direct_io_for_flush_and_compaction(
+        public abstract byte rocksdb_options_get_use_direct_io_for_flush_and_compaction(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_is_fd_close_on_exec(
             rocksdb_options_t_ptr options,
-            bool is_fd_close_on_exec);
+            byte is_fd_close_on_exec);
 
-        public abstract bool rocksdb_options_get_is_fd_close_on_exec(
+        public abstract byte rocksdb_options_get_is_fd_close_on_exec(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_stats_dump_period_sec(
@@ -6548,16 +6548,16 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_advise_random_on_open(
             rocksdb_options_t_ptr options,
-            bool advise_random_on_open);
+            byte advise_random_on_open);
 
-        public abstract bool rocksdb_options_get_advise_random_on_open(
+        public abstract byte rocksdb_options_get_advise_random_on_open(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_use_adaptive_mutex(
             rocksdb_options_t_ptr options,
-            bool use_adaptive_mutex);
+            byte use_adaptive_mutex);
 
-        public abstract bool rocksdb_options_get_use_adaptive_mutex(
+        public abstract byte rocksdb_options_get_use_adaptive_mutex(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_bytes_per_sync(
@@ -6583,16 +6583,16 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_allow_concurrent_memtable_write(
             rocksdb_options_t_ptr options,
-            bool allow_concurrent_memtable_write);
+            byte allow_concurrent_memtable_write);
 
-        public abstract bool rocksdb_options_get_allow_concurrent_memtable_write(
+        public abstract byte rocksdb_options_get_allow_concurrent_memtable_write(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_enable_write_thread_adaptive_yield(
             rocksdb_options_t_ptr options,
-            bool enable_write_thread_adaptive_yield);
+            byte enable_write_thread_adaptive_yield);
 
-        public abstract bool rocksdb_options_get_enable_write_thread_adaptive_yield(
+        public abstract byte rocksdb_options_get_enable_write_thread_adaptive_yield(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_max_sequential_skip_in_iterations(
@@ -6606,14 +6606,14 @@ namespace RocksDbSharp
             rocksdb_options_t_ptr options,
             int disable_auto_compactions);
 
-        public abstract bool rocksdb_options_get_disable_auto_compactions(
+        public abstract byte rocksdb_options_get_disable_auto_compactions(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_optimize_filters_for_hits(
             rocksdb_options_t_ptr options,
             int optimize_filters_for_hits);
 
-        public abstract bool rocksdb_options_get_optimize_filters_for_hits(
+        public abstract byte rocksdb_options_get_optimize_filters_for_hits(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_delete_obsolete_files_period_micros(
@@ -6661,29 +6661,29 @@ namespace RocksDbSharp
             size_t size,
             size_t size_1,
             char p6,
-            bool p7,
-            bool p8);
+            byte p7,
+            byte p8);
 
-        public abstract bool rocksdb_options_get_write_dbid_to_manifest(
+        public abstract byte rocksdb_options_get_write_dbid_to_manifest(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_write_dbid_to_manifest(
             rocksdb_options_t_ptr options,
-            bool write_dbid_to_manifest);
+            byte write_dbid_to_manifest);
 
-        public abstract bool rocksdb_options_get_write_identity_file(
+        public abstract byte rocksdb_options_get_write_identity_file(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_write_identity_file(
             rocksdb_options_t_ptr options,
-            bool write_identity_file);
+            byte write_identity_file);
 
-        public abstract bool rocksdb_options_get_track_and_verify_wals_in_manifest(
+        public abstract byte rocksdb_options_get_track_and_verify_wals_in_manifest(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_track_and_verify_wals_in_manifest(
             rocksdb_options_t_ptr options,
-            bool track_and_verify_wals_in_manifest);
+            byte track_and_verify_wals_in_manifest);
 
         public abstract void rocksdb_options_set_min_level_to_compress(
             rocksdb_options_t_ptr opt,
@@ -6712,9 +6712,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_inplace_update_support(
             rocksdb_options_t_ptr options,
-            bool inplace_update_support);
+            byte inplace_update_support);
 
-        public abstract bool rocksdb_options_get_inplace_update_support(
+        public abstract byte rocksdb_options_get_inplace_update_support(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_inplace_update_num_locks(
@@ -6728,14 +6728,14 @@ namespace RocksDbSharp
             rocksdb_options_t_ptr options,
             int report_bg_io_stats);
 
-        public abstract bool rocksdb_options_get_report_bg_io_stats(
+        public abstract byte rocksdb_options_get_report_bg_io_stats(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_avoid_unnecessary_blocking_io(
             rocksdb_options_t_ptr options,
-            bool avoid_unnecessary_blocking_io);
+            byte avoid_unnecessary_blocking_io);
 
-        public abstract bool rocksdb_options_get_avoid_unnecessary_blocking_io(
+        public abstract byte rocksdb_options_get_avoid_unnecessary_blocking_io(
             rocksdb_options_t_ptr options);
 
         public abstract void rocksdb_options_set_experimental_mempurge_threshold(
@@ -6799,9 +6799,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_atomic_flush(
             rocksdb_options_t_ptr opt,
-            bool atomic_flush);
+            byte atomic_flush);
 
-        public abstract bool rocksdb_options_get_atomic_flush(
+        public abstract byte rocksdb_options_get_atomic_flush(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_row_cache(
@@ -6821,9 +6821,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_manual_wal_flush(
             rocksdb_options_t_ptr opt,
-            bool manual_wal_flush);
+            byte manual_wal_flush);
 
-        public abstract bool rocksdb_options_get_manual_wal_flush(
+        public abstract byte rocksdb_options_get_manual_wal_flush(
             rocksdb_options_t_ptr opt);
 
         public abstract void rocksdb_options_set_wal_compression(
@@ -6860,7 +6860,7 @@ namespace RocksDbSharp
             int64_t refill_period_us,
             int32_t fairness,
             int mode,
-            bool auto_tuned);
+            byte auto_tuned);
 
         public abstract void rocksdb_ratelimiter_destroy(
             rocksdb_ratelimiter_t_ptr ratelimiter);
@@ -6979,7 +6979,7 @@ namespace RocksDbSharp
 
         public abstract char_ptr rocksdb_perfcontext_report(
             rocksdb_perfcontext_t_ptr context,
-            bool exclude_zero_counters);
+            byte exclude_zero_counters);
 
         public abstract uint64_t rocksdb_perfcontext_metric(
             rocksdb_perfcontext_t_ptr context,
@@ -7011,7 +7011,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_compactionfilter_set_ignore_snapshots(
             rocksdb_compactionfilter_t_ptr compactionfilter,
-            bool ignore_snapshots);
+            byte ignore_snapshots);
 
         public abstract void rocksdb_compactionfilter_destroy(
             rocksdb_compactionfilter_t_ptr compactionfilter);
@@ -7021,10 +7021,10 @@ namespace RocksDbSharp
     #region Compaction Filter Context
     public partial class Native
     {
-        public abstract bool rocksdb_compactionfiltercontext_is_full_compaction(
+        public abstract byte rocksdb_compactionfiltercontext_is_full_compaction(
             rocksdb_compactionfiltercontext_t_ptr context);
 
-        public abstract bool rocksdb_compactionfiltercontext_is_manual_compaction(
+        public abstract byte rocksdb_compactionfiltercontext_is_manual_compaction(
             rocksdb_compactionfiltercontext_t_ptr context);
 
     } // class Native
@@ -7143,16 +7143,16 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_verify_checksums(
             rocksdb_readoptions_t_ptr readoptions,
-            bool verify_checksums);
+            byte verify_checksums);
 
-        public abstract bool rocksdb_readoptions_get_verify_checksums(
+        public abstract byte rocksdb_readoptions_get_verify_checksums(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_fill_cache(
             rocksdb_readoptions_t_ptr readoptions,
-            bool fill_cache);
+            byte fill_cache);
 
-        public abstract bool rocksdb_readoptions_get_fill_cache(
+        public abstract byte rocksdb_readoptions_get_fill_cache(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_snapshot(
@@ -7198,15 +7198,15 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_tailing(
             rocksdb_readoptions_t_ptr readoptions,
-            bool tailing);
+            byte tailing);
 
-        public abstract bool rocksdb_readoptions_get_tailing(
+        public abstract byte rocksdb_readoptions_get_tailing(
             rocksdb_readoptions_t_ptr readoptions);
 
         // The functionality that this option controlled has been removed.
         public abstract void rocksdb_readoptions_set_managed(
             rocksdb_readoptions_t_ptr readoptions,
-            bool managed);
+            byte managed);
 
         public abstract void rocksdb_readoptions_set_readahead_size(
             rocksdb_readoptions_t_ptr readoptions,
@@ -7217,23 +7217,23 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_prefix_same_as_start(
             rocksdb_readoptions_t_ptr readoptions,
-            bool prefix_same_as_start);
+            byte prefix_same_as_start);
 
-        public abstract bool rocksdb_readoptions_get_prefix_same_as_start(
+        public abstract byte rocksdb_readoptions_get_prefix_same_as_start(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_pin_data(
             rocksdb_readoptions_t_ptr readoptions,
-            bool pin_data);
+            byte pin_data);
 
-        public abstract bool rocksdb_readoptions_get_pin_data(
+        public abstract byte rocksdb_readoptions_get_pin_data(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_total_order_seek(
             rocksdb_readoptions_t_ptr readoptions,
-            bool total_order_seek);
+            byte total_order_seek);
 
-        public abstract bool rocksdb_readoptions_get_total_order_seek(
+        public abstract byte rocksdb_readoptions_get_total_order_seek(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_max_skippable_internal_keys(
@@ -7245,16 +7245,16 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_background_purge_on_iterator_cleanup(
             rocksdb_readoptions_t_ptr readoptions,
-            bool background_purge_on_iterator_cleanup);
+            byte background_purge_on_iterator_cleanup);
 
-        public abstract bool rocksdb_readoptions_get_background_purge_on_iterator_cleanup(
+        public abstract byte rocksdb_readoptions_get_background_purge_on_iterator_cleanup(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_ignore_range_deletions(
             rocksdb_readoptions_t_ptr readoptions,
-            bool ignore_range_deletions);
+            byte ignore_range_deletions);
 
-        public abstract bool rocksdb_readoptions_get_ignore_range_deletions(
+        public abstract byte rocksdb_readoptions_get_ignore_range_deletions(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_deadline(
@@ -7273,9 +7273,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_async_io(
             rocksdb_readoptions_t_ptr readoptions,
-            bool async_io);
+            byte async_io);
 
-        public abstract bool rocksdb_readoptions_get_async_io(
+        public abstract byte rocksdb_readoptions_get_async_io(
             rocksdb_readoptions_t_ptr readoptions);
 
         public abstract void rocksdb_readoptions_set_timestamp(
@@ -7290,7 +7290,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_readoptions_set_auto_readahead_size(
             rocksdb_readoptions_t_ptr readoptions,
-            bool auto_readahead_size);
+            byte auto_readahead_size);
 
     } // class Native
     #endregion // Read options
@@ -7305,44 +7305,44 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_writeoptions_set_sync(
             rocksdb_writeoptions_t_ptr writeoptions,
-            bool sync);
+            byte sync);
 
-        public abstract bool rocksdb_writeoptions_get_sync(
+        public abstract byte rocksdb_writeoptions_get_sync(
             rocksdb_writeoptions_t_ptr writeoptions);
 
         public abstract void rocksdb_writeoptions_disable_WAL(
             rocksdb_writeoptions_t_ptr opt,
             int disable);
 
-        public abstract bool rocksdb_writeoptions_get_disable_WAL(
+        public abstract byte rocksdb_writeoptions_get_disable_WAL(
             rocksdb_writeoptions_t_ptr opt);
 
         public abstract void rocksdb_writeoptions_set_ignore_missing_column_families(
             rocksdb_writeoptions_t_ptr writeoptions,
-            bool ignore_missing_column_families);
+            byte ignore_missing_column_families);
 
-        public abstract bool rocksdb_writeoptions_get_ignore_missing_column_families(
+        public abstract byte rocksdb_writeoptions_get_ignore_missing_column_families(
             rocksdb_writeoptions_t_ptr writeoptions);
 
         public abstract void rocksdb_writeoptions_set_no_slowdown(
             rocksdb_writeoptions_t_ptr writeoptions,
-            bool no_slowdown);
+            byte no_slowdown);
 
-        public abstract bool rocksdb_writeoptions_get_no_slowdown(
+        public abstract byte rocksdb_writeoptions_get_no_slowdown(
             rocksdb_writeoptions_t_ptr writeoptions);
 
         public abstract void rocksdb_writeoptions_set_low_pri(
             rocksdb_writeoptions_t_ptr writeoptions,
-            bool low_pri);
+            byte low_pri);
 
-        public abstract bool rocksdb_writeoptions_get_low_pri(
+        public abstract byte rocksdb_writeoptions_get_low_pri(
             rocksdb_writeoptions_t_ptr writeoptions);
 
         public abstract void rocksdb_writeoptions_set_memtable_insert_hint_per_batch(
             rocksdb_writeoptions_t_ptr writeoptions,
-            bool memtable_insert_hint_per_batch);
+            byte memtable_insert_hint_per_batch);
 
-        public abstract bool rocksdb_writeoptions_get_memtable_insert_hint_per_batch(
+        public abstract byte rocksdb_writeoptions_get_memtable_insert_hint_per_batch(
             rocksdb_writeoptions_t_ptr writeoptions);
 
     } // class Native
@@ -7358,23 +7358,23 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_compactoptions_set_exclusive_manual_compaction(
             rocksdb_compactoptions_t_ptr compactoptions,
-            bool exclusive_manual_compaction);
+            byte exclusive_manual_compaction);
 
-        public abstract bool rocksdb_compactoptions_get_exclusive_manual_compaction(
+        public abstract byte rocksdb_compactoptions_get_exclusive_manual_compaction(
             rocksdb_compactoptions_t_ptr compactoptions);
 
         public abstract void rocksdb_compactoptions_set_bottommost_level_compaction(
             rocksdb_compactoptions_t_ptr compactoptions,
-            bool bottommost_level_compaction);
+            byte bottommost_level_compaction);
 
-        public abstract bool rocksdb_compactoptions_get_bottommost_level_compaction(
+        public abstract byte rocksdb_compactoptions_get_bottommost_level_compaction(
             rocksdb_compactoptions_t_ptr compactoptions);
 
         public abstract void rocksdb_compactoptions_set_change_level(
             rocksdb_compactoptions_t_ptr compactoptions,
-            bool change_level);
+            byte change_level);
 
-        public abstract bool rocksdb_compactoptions_get_change_level(
+        public abstract byte rocksdb_compactoptions_get_change_level(
             rocksdb_compactoptions_t_ptr compactoptions);
 
         public abstract void rocksdb_compactoptions_set_target_level(
@@ -7393,9 +7393,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_compactoptions_set_allow_write_stall(
             rocksdb_compactoptions_t_ptr compactoptions,
-            bool allow_write_stall);
+            byte allow_write_stall);
 
-        public abstract bool rocksdb_compactoptions_get_allow_write_stall(
+        public abstract byte rocksdb_compactoptions_get_allow_write_stall(
             rocksdb_compactoptions_t_ptr compactoptions);
 
         public abstract void rocksdb_compactoptions_set_max_subcompactions(
@@ -7423,9 +7423,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_flushoptions_set_wait(
             rocksdb_flushoptions_t_ptr flushoptions,
-            bool wait);
+            byte wait);
 
-        public abstract bool rocksdb_flushoptions_get_wait(
+        public abstract byte rocksdb_flushoptions_get_wait(
             rocksdb_flushoptions_t_ptr flushoptions);
 
     } // class Native
@@ -7511,20 +7511,20 @@ namespace RocksDbSharp
     {
         public abstract rocksdb_write_buffer_manager_t_ptr rocksdb_write_buffer_manager_create(
             size_t buffer_size,
-            bool allow_stall);
+            byte allow_stall);
 
         public abstract rocksdb_write_buffer_manager_t_ptr rocksdb_write_buffer_manager_create_with_cache(
             size_t buffer_size,
             const_rocksdb_cache_t_ptr cache,
-            bool allow_stall);
+            byte allow_stall);
 
         public abstract void rocksdb_write_buffer_manager_destroy(
             rocksdb_write_buffer_manager_t_ptr wbm);
 
-        public abstract bool rocksdb_write_buffer_manager_enabled(
+        public abstract byte rocksdb_write_buffer_manager_enabled(
             rocksdb_write_buffer_manager_t_ptr wbm);
 
-        public abstract bool rocksdb_write_buffer_manager_cost_to_cache(
+        public abstract byte rocksdb_write_buffer_manager_cost_to_cache(
             rocksdb_write_buffer_manager_t_ptr wbm);
 
         public abstract size_t rocksdb_write_buffer_manager_memory_usage(
@@ -7545,7 +7545,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_write_buffer_manager_set_allow_stall(
             rocksdb_write_buffer_manager_t_ptr wbm,
-            bool new_allow_stall);
+            byte new_allow_stall);
 
     } // class Native
     #endregion // WriteBufferManager
@@ -7566,10 +7566,10 @@ namespace RocksDbSharp
             rocksdb_sst_file_manager_t_ptr sfm,
             uint64_t compaction_buffer_size);
 
-        public abstract bool rocksdb_sst_file_manager_is_max_allowed_space_reached(
+        public abstract byte rocksdb_sst_file_manager_is_max_allowed_space_reached(
             rocksdb_sst_file_manager_t_ptr sfm);
 
-        public abstract bool rocksdb_sst_file_manager_is_max_allowed_space_reached_including_compactions(
+        public abstract byte rocksdb_sst_file_manager_is_max_allowed_space_reached_including_compactions(
             rocksdb_sst_file_manager_t_ptr sfm);
 
         public abstract uint64_t rocksdb_sst_file_manager_get_total_size(
@@ -8220,27 +8220,27 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_ingestexternalfileoptions_set_move_files(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool move_files);
+            byte move_files);
 
         public abstract void rocksdb_ingestexternalfileoptions_set_snapshot_consistency(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool snapshot_consistency);
+            byte snapshot_consistency);
 
         public abstract void rocksdb_ingestexternalfileoptions_set_allow_global_seqno(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool allow_global_seqno);
+            byte allow_global_seqno);
 
         public abstract void rocksdb_ingestexternalfileoptions_set_allow_blocking_flush(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool allow_blocking_flush);
+            byte allow_blocking_flush);
 
         public abstract void rocksdb_ingestexternalfileoptions_set_ingest_behind(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool ingest_behind);
+            byte ingest_behind);
 
         public abstract void rocksdb_ingestexternalfileoptions_set_fail_if_not_bottommost_level(
             rocksdb_ingestexternalfileoptions_t_ptr opt,
-            bool fail_if_not_bottommost_level);
+            byte fail_if_not_bottommost_level);
 
         public abstract void rocksdb_ingestexternalfileoptions_destroy(
             rocksdb_ingestexternalfileoptions_t_ptr opt);
@@ -8428,9 +8428,9 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_fifo_compaction_options_set_allow_compaction(
             rocksdb_fifo_compaction_options_t_ptr fifo_opts,
-            bool allow_compaction);
+            byte allow_compaction);
 
-        public abstract bool rocksdb_fifo_compaction_options_get_allow_compaction(
+        public abstract byte rocksdb_fifo_compaction_options_get_allow_compaction(
             rocksdb_fifo_compaction_options_t_ptr fifo_opts);
 
         public abstract void rocksdb_fifo_compaction_options_set_max_table_files_size(
@@ -9361,7 +9361,7 @@ namespace RocksDbSharp
             const_char_ptr key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public char_ptr rocksdb_transaction_get_for_update(
@@ -9370,7 +9370,7 @@ namespace RocksDbSharp
             const_char_ptr key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update(txn, options, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9384,7 +9384,7 @@ namespace RocksDbSharp
             byte* key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public unsafe char_ptr rocksdb_transaction_get_for_update(
@@ -9393,7 +9393,7 @@ namespace RocksDbSharp
             byte* key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update(txn, options, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9407,7 +9407,7 @@ namespace RocksDbSharp
             byte[] key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public char_ptr rocksdb_transaction_get_for_update(
@@ -9416,7 +9416,7 @@ namespace RocksDbSharp
             byte[] key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update(txn, options, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9429,7 +9429,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             const_char_ptr key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update(
@@ -9437,7 +9437,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             const_char_ptr key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update(txn, options, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9450,7 +9450,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             byte* key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public unsafe rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update(
@@ -9458,7 +9458,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             byte* key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update(txn, options, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9471,7 +9471,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             byte[] key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update(
@@ -9479,7 +9479,7 @@ namespace RocksDbSharp
             const_rocksdb_readoptions_t_ptr options,
             byte[] key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update(txn, options, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9494,7 +9494,7 @@ namespace RocksDbSharp
             const_char_ptr key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public char_ptr rocksdb_transaction_get_for_update_cf(
@@ -9504,7 +9504,7 @@ namespace RocksDbSharp
             const_char_ptr key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update_cf(txn, options, column_family, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9519,7 +9519,7 @@ namespace RocksDbSharp
             byte* key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public unsafe char_ptr rocksdb_transaction_get_for_update_cf(
@@ -9529,7 +9529,7 @@ namespace RocksDbSharp
             byte* key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update_cf(txn, options, column_family, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9544,7 +9544,7 @@ namespace RocksDbSharp
             byte[] key,
             size_t klen,
             out size_t vlen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public char_ptr rocksdb_transaction_get_for_update_cf(
@@ -9554,7 +9554,7 @@ namespace RocksDbSharp
             byte[] key,
             size_t klen,
             out size_t vlen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_for_update_cf(txn, options, column_family, key, klen, out vlen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9568,7 +9568,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             const_char_ptr key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update_cf(
@@ -9577,7 +9577,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             const_char_ptr key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update_cf(txn, options, column_family, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9591,7 +9591,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             byte* key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public unsafe rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update_cf(
@@ -9600,7 +9600,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             byte* key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update_cf(txn, options, column_family, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -9614,7 +9614,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             byte[] key,
             size_t klen,
-            bool exclusive,
+            byte exclusive,
             out char_ptr_ptr errptr);
 
         public rocksdb_pinnableslice_t_ptr rocksdb_transaction_get_pinned_for_update_cf(
@@ -9623,7 +9623,7 @@ namespace RocksDbSharp
             rocksdb_column_family_handle_t_ptr column_family,
             byte[] key,
             size_t klen,
-            bool exclusive)
+            byte exclusive)
         {
             var result = rocksdb_transaction_get_pinned_for_update_cf(txn, options, column_family, key, klen, exclusive, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -10858,12 +10858,12 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_transactiondb_flush_wal(
             rocksdb_transactiondb_t_ptr txn_db,
-            bool sync,
+            byte sync,
             out char_ptr_ptr errptr);
 
         public void rocksdb_transactiondb_flush_wal(
             rocksdb_transactiondb_t_ptr txn_db,
-            bool sync)
+            byte sync)
         {
             rocksdb_transactiondb_flush_wal(txn_db, sync, out char_ptr_ptr errptr);
             if (errptr != IntPtr.Zero)
@@ -11084,11 +11084,11 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_transaction_options_set_set_snapshot(
             rocksdb_transaction_options_t_ptr opt,
-            bool v);
+            byte v);
 
         public abstract void rocksdb_transaction_options_set_deadlock_detect(
             rocksdb_transaction_options_t_ptr opt,
-            bool v);
+            byte v);
 
         public abstract void rocksdb_transaction_options_set_lock_timeout(
             rocksdb_transaction_options_t_ptr opt,
@@ -11108,7 +11108,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_transaction_options_set_skip_prepare(
             rocksdb_transaction_options_t_ptr opt,
-            bool v);
+            byte v);
 
         public abstract rocksdb_optimistictransaction_options_t_ptr rocksdb_optimistictransaction_options_create(
             );
@@ -11118,7 +11118,7 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_optimistictransaction_options_set_set_snapshot(
             rocksdb_optimistictransaction_options_t_ptr opt,
-            bool v);
+            byte v);
 
         public abstract char_ptr rocksdb_optimistictransactiondb_property_value(
             rocksdb_optimistictransactiondb_t_ptr db,
@@ -11314,15 +11314,15 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_options_set_dump_malloc_stats(
             rocksdb_options_t_ptr options,
-            bool dump_malloc_stats);
+            byte dump_malloc_stats);
 
         public abstract void rocksdb_options_set_memtable_whole_key_filtering(
             rocksdb_options_t_ptr options,
-            bool memtable_whole_key_filtering);
+            byte memtable_whole_key_filtering);
 
         public abstract void rocksdb_cancel_all_background_work(
             rocksdb_t_ptr db,
-            bool wait);
+            byte wait);
 
         public abstract void rocksdb_disable_manual_compaction(
             rocksdb_t_ptr db);
@@ -11385,23 +11385,23 @@ namespace RocksDbSharp
 
         public abstract void rocksdb_wait_for_compact_options_set_abort_on_pause(
             rocksdb_wait_for_compact_options_t_ptr opt,
-            bool v);
+            byte v);
 
-        public abstract bool rocksdb_wait_for_compact_options_get_abort_on_pause(
+        public abstract byte rocksdb_wait_for_compact_options_get_abort_on_pause(
             rocksdb_wait_for_compact_options_t_ptr opt);
 
         public abstract void rocksdb_wait_for_compact_options_set_flush(
             rocksdb_wait_for_compact_options_t_ptr opt,
-            bool v);
+            byte v);
 
-        public abstract bool rocksdb_wait_for_compact_options_get_flush(
+        public abstract byte rocksdb_wait_for_compact_options_get_flush(
             rocksdb_wait_for_compact_options_t_ptr opt);
 
         public abstract void rocksdb_wait_for_compact_options_set_close_db(
             rocksdb_wait_for_compact_options_t_ptr opt,
-            bool v);
+            byte v);
 
-        public abstract bool rocksdb_wait_for_compact_options_get_close_db(
+        public abstract byte rocksdb_wait_for_compact_options_get_close_db(
             rocksdb_wait_for_compact_options_t_ptr opt);
 
         public abstract void rocksdb_wait_for_compact_options_set_timeout(

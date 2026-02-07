@@ -14,7 +14,7 @@ namespace RocksDbSharp
 
         public bool Valid()
         {
-            return Native.Instance.rocksdb_wal_iter_valid(Handle);
+            return Native.Instance.rocksdb_wal_iter_valid(Handle) != 0;
         }
 
         public void Next()
