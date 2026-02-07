@@ -81,24 +81,21 @@ namespace RocksDbPrepareCApiHeader
             }
             if (funcName == "rocksdb_perfcontext_metric" && arg.NativeType == "int")
             {
-                yield return ("PerfMetric", "enum");
+                yield return ("PerfMetric", "enum"); 
                 yield return ("int", "default");
-            }
-            if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "success")
-            {
-                yield return ("out byte", "default");
             }
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
             }
-            if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "success")
-            {
-                yield return ("out byte", "default");
-            }
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
+            }
+
+            if (arg.NativeType == "unsigned char*")
+            {
+                yield return ("out byte", "default");
             }
 
             yield break;
@@ -342,7 +339,7 @@ namespace RocksDbPrepareCApiHeader
             return GetManagedType(nativeArg.NativeType);
         }
 
-        private static string GetManagedType(string nativeType)
+        private static string GetManagedType(string nativeType, string funcName = null)
         {
             var managedType = nativeType
                 .RegexReplace(@"\s+", "_")
@@ -354,9 +351,11 @@ namespace RocksDbPrepareCApiHeader
 
             switch (managedType)
             {
-                case "const_bool":
-                case "unsigned_char": return "bool";
-                case "uint8_t": return "byte";
+                case "unsigned char": return "byte";
+                case "const_bool":    return "byte";
+                case "bool":          return "byte";
+                case "unsigned_char": return "byte";
+                case "uint8_t":       return "byte";
                 default:return managedType;
             }
         }
@@ -596,7 +595,7 @@ namespace RocksDbPrepareCApiHeader
         private static ManagedFunction GetManagedFunction(NativeFunction nativeFunc)
         {
             return new ManagedFunction(
-                returnType: GetManagedType(nativeFunc.ReturnType),
+                returnType: GetManagedType(nativeFunc.ReturnType, nativeFunc.Name),
                 name: nativeFunc.Name,
                 comment: nativeFunc.Comments.Trim(),
                 args: MakeUniqueNames(nativeFunc.Args.Select(a => GetManagedArg(a, nativeFunc.Args.Length, nativeFunc.Name)))
@@ -691,7 +690,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using int64_t = System.Int64;",
                 @"using uint64_t = System.UInt64;",
                 @"using uint64_t_ptr = System.IntPtr;",
-                @"using unsigned_char = System.Boolean;",
+                @"using unsigned_char = System.Byte;",
                 @"using unsigned_char_ptr = System.IntPtr;",
                 @"using char_ptr = System.IntPtr;",
                 @"using const_char_ptr = System.IntPtr;",

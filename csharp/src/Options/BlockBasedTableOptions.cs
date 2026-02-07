@@ -63,7 +63,7 @@ namespace RocksDbSharp
 
         public BlockBasedTableOptions SetNoBlockCache(bool noBlockCache)
         {
-            Native.Instance.rocksdb_block_based_options_set_no_block_cache(Handle, noBlockCache);
+            Native.Instance.rocksdb_block_based_options_set_no_block_cache(Handle, Native.MarshalBool(noBlockCache));
             return this;
         }
 
@@ -82,7 +82,7 @@ namespace RocksDbSharp
 
         public BlockBasedTableOptions SetWholeKeyFiltering(bool wholeKeyFiltering)
         {
-            Native.Instance.rocksdb_block_based_options_set_whole_key_filtering(Handle, wholeKeyFiltering);
+            Native.Instance.rocksdb_block_based_options_set_whole_key_filtering(Handle, Native.MarshalBool(wholeKeyFiltering));
             return this;
         }
 
@@ -100,13 +100,13 @@ namespace RocksDbSharp
 
         public BlockBasedTableOptions SetCacheIndexAndFilterBlocks(bool cacheIndexAndFilterBlocks)
         {
-            Native.Instance.rocksdb_block_based_options_set_cache_index_and_filter_blocks(Handle, cacheIndexAndFilterBlocks);
+            Native.Instance.rocksdb_block_based_options_set_cache_index_and_filter_blocks(Handle, Native.MarshalBool(cacheIndexAndFilterBlocks));
             return this;
         }
 
         public BlockBasedTableOptions SetPinL0FilterAndIndexBlocksInCache(bool pinL0FilterAndIndexBlocksInCache)
         {
-            Native.Instance.rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(Handle, pinL0FilterAndIndexBlocksInCache);
+            Native.Instance.rocksdb_block_based_options_set_pin_l0_filter_and_index_blocks_in_cache(Handle, Native.MarshalBool(pinL0FilterAndIndexBlocksInCache));
             return this;
         }
     }

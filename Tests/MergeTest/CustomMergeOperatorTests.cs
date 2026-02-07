@@ -46,10 +46,10 @@ public class CustomMergeOperatorTests
                 dbPath,
                 new ColumnFamilies(opts));
 
-            db.Merge("key"u8.ToArray(), "hello"u8.ToArray());
-            db.Merge("key"u8.ToArray(), "world"u8.ToArray());
+            db.Merge("key"u8, "hello"u8);
+            db.Merge("key"u8, "world"u8);
 
-            var value = db.Get("key"u8.ToArray());
+            var value = db.Get("key"u8);
 
             Assert.IsNotNull(value);
             Assert.AreEqual("helloworld", Encoding.UTF8.GetString(value));

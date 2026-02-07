@@ -323,7 +323,7 @@ namespace NativeImport
             ConstructorBuilder constructor = typeBuilder.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName, CallingConventions.Standard, new Type[] { typeof(INativeLibImporter), typeof(IntPtr) });
 
             {
-                var baseConstructor = typeof(T).GetTypeInfo().GetConstructors().Where(con => con.GetParameters().Length == 0).First();
+                var baseConstructor = typeof(T).GetTypeInfo().GetConstructors().First(con => con.GetParameters().Length == 0);
                 ILGenerator il = constructor.GetILGenerator();
 
                 // Call base constructor

@@ -94,7 +94,7 @@ namespace RocksDbSharp
                 Marshal.Copy(value, 0, ret, value.Length);
                 newValueLength = (IntPtr)value.Length;
 
-                success = (byte)(_success ? 1 : 0);
+                success =  Native.MarshalBool(_success);
 
                 return ret;
             }
@@ -114,7 +114,7 @@ namespace RocksDbSharp
                 Marshal.Copy(value, 0, ret, value.Length);
                 newValueLength = (IntPtr)value.Length;
 
-                success = (byte)(_success ? 1 : 0);
+                success =  Native.MarshalBool(_success);
 
                 return ret;
             }

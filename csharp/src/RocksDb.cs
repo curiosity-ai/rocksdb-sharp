@@ -84,7 +84,7 @@ namespace RocksDbSharp
         {
             using (var pathSafe = new RocksSafePath(path))
             {
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, errorIfLogFileExists);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, Native.MarshalBool(errorIfLogFileExists));
                 return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
             }
         }
@@ -136,7 +136,7 @@ namespace RocksDbSharp
                 string[] cfnames = columnFamilies.Names.ToArray();
                 IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
                 IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, Native.MarshalBool(errIfLogFileExists));
                 var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
                 foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
                 {
@@ -532,6 +532,28 @@ namespace RocksDbSharp
         public void TryCatchUpWithPrimary()
         {
             Native.Instance.rocksdb_try_catch_up_with_primary(Handle);
+        }
+
+        public void DisableFileDeletions()
+        {
+            Native.Instance.rocksdb_disable_file_deletions(Handle);
+        }
+
+        public void EnableFileDeletions()
+        {
+            Native.Instance.rocksdb_enable_file_deletions(Handle);
+        }
+
+        public TransactionLogIterator GetUpdatesSince(ulong sequenceNumber)
+        {
+            // options is null for now as we don't have a wrapper and pass null to C API
+            IntPtr iteratorHandle = Native.Instance.rocksdb_get_updates_since(Handle, sequenceNumber, IntPtr.Zero);
+            return new TransactionLogIterator(iteratorHandle);
+        }
+
+        public ulong GetLatestSequenceNumber()
+        {
+            return Native.Instance.rocksdb_get_latest_sequence_number(Handle);
         }
         
         public void Flush(FlushOptions flushOptions)

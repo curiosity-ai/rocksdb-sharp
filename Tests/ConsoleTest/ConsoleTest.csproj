@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RocksDB" Version="10.4.2.63147" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.63147\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

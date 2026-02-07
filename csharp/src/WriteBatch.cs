@@ -69,7 +69,7 @@ namespace RocksDbSharp
         {
         }
 
-        private WriteBatch(IntPtr handle)
+        public WriteBatch(IntPtr handle)
         {
             this.handle = handle;
         }

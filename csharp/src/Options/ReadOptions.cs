@@ -37,19 +37,19 @@ namespace RocksDbSharp
 
         public ReadOptions SetBackgroundPurgeOnIteratorCleanup(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_background_purge_on_iterator_cleanup(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_background_purge_on_iterator_cleanup(Handle, Native.MarshalBool(value));
             return this;
         }
 
         public ReadOptions SetVerifyChecksums(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_verify_checksums(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_verify_checksums(Handle, Native.MarshalBool(value));
             return this;
         }
 
         public ReadOptions SetFillCache(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_fill_cache(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_fill_cache(Handle, Native.MarshalBool(value));
             return this;
         }
 
@@ -71,7 +71,7 @@ namespace RocksDbSharp
         /// <returns></returns>
         public ReadOptions SetPrefixSameAsStart(bool prefixSameAsStart)
         {
-            Native.Instance.rocksdb_readoptions_set_prefix_same_as_start(Handle, prefixSameAsStart);
+            Native.Instance.rocksdb_readoptions_set_prefix_same_as_start(Handle, Native.MarshalBool(prefixSameAsStart));
             return this;
         }
 
@@ -141,7 +141,7 @@ namespace RocksDbSharp
 
         public ReadOptions SetTailing(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_tailing(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_tailing(Handle, Native.MarshalBool(value));
             return this;
         }
 
@@ -153,24 +153,24 @@ namespace RocksDbSharp
         }
         public ReadOptions SetAutoReadaheadSize(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_auto_readahead_size(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_auto_readahead_size(Handle, Native.MarshalBool(value));
             return this;
         }
         public ReadOptions SetAsyncIO(bool value)
         {
-            Native.Instance.rocksdb_readoptions_set_async_io(Handle, value);
+            Native.Instance.rocksdb_readoptions_set_async_io(Handle, Native.MarshalBool(value));
             return this;
         }
 
         public ReadOptions SetPinData(bool enable)
         {
-            Native.Instance.rocksdb_readoptions_set_pin_data(Handle, enable);
+            Native.Instance.rocksdb_readoptions_set_pin_data(Handle, Native.MarshalBool(enable));
             return this;
         }
 
         public ReadOptions SetTotalOrderSeek(bool enable)
         {
-            Native.Instance.rocksdb_readoptions_set_total_order_seek(Handle, enable);
+            Native.Instance.rocksdb_readoptions_set_total_order_seek(Handle, Native.MarshalBool(enable));
             return this;
         }
     }
