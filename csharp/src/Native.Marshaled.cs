@@ -577,6 +577,26 @@ namespace RocksDbSharp
             }
         }
 
+        public void rocksdb_singledelete(
+            /*rocksdb_t**/ IntPtr db,
+            /*const rocksdb_writeoptions_t**/ IntPtr writeOptions,
+            /*const*/ string key,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf,
+            Encoding encoding = null)
+        {
+            var bkey = (encoding ?? Encoding.UTF8).GetBytes(key);
+            UIntPtr kLength = (UIntPtr)bkey.GetLongLength(0);
+            if (cf is null)
+            {
+                rocksdb_singledelete(db, writeOptions, bkey, kLength, out errptr);
+            }
+            else
+            {
+                rocksdb_singledelete_cf(db, writeOptions, cf.Handle, bkey, kLength, out errptr);
+            }
+        }
+
         public string rocksdb_options_statistics_get_string_marshaled(IntPtr opts)
         {
             return MarshalNullTermAsciiStr(rocksdb_options_statistics_get_string(opts));

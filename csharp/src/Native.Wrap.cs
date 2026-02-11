@@ -384,6 +384,72 @@ namespace RocksDbSharp
             }
         }
 
+        public void rocksdb_singledelete(
+            /*rocksdb_t**/ IntPtr db,
+            /*const rocksdb_writeoptions_t**/ IntPtr writeOptions,
+            /*const*/ string key,
+            ColumnFamilyHandle cf)
+        {
+            rocksdb_singledelete(db, writeOptions, key, out IntPtr errptr, cf);
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+        }
+
+        public void rocksdb_singledelete(
+            IntPtr db,
+            IntPtr writeOptions,
+            byte[] key,
+            long keyLength,
+            ColumnFamilyHandle cf)
+        {
+            IntPtr errptr;
+            UIntPtr sklength = (UIntPtr)keyLength;
+            if (cf is null)
+            {
+                rocksdb_singledelete(db, writeOptions, key, sklength, out errptr);
+            }
+            else
+            {
+                rocksdb_singledelete_cf(db, writeOptions, cf.Handle, key, sklength, out errptr);
+            }
+
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+        }
+
+#if !NETSTANDARD2_0
+        public unsafe void rocksdb_singledelete(
+            IntPtr db,
+            IntPtr writeOptions,
+            ReadOnlySpan<byte> key,
+            ColumnFamilyHandle cf)
+        {
+            IntPtr errptr;
+            UIntPtr sklength = (UIntPtr)key.Length;
+
+            fixed (byte* keyPtr = &MemoryMarshal.GetReference(key))
+            {
+                if (cf is null)
+                {
+                    rocksdb_singledelete(db, writeOptions, keyPtr, sklength, out errptr);
+                }
+                else
+                {
+                    rocksdb_singledelete_cf(db, writeOptions, cf.Handle, keyPtr, sklength, out errptr);
+                }
+
+                if (errptr != IntPtr.Zero)
+                {
+                    throw new RocksDbException(errptr);
+                }
+            }
+        }
+#endif
+
         [Obsolete("Use UIntPtr version instead")]
         public void rocksdb_delete(
             /*rocksdb_t**/ IntPtr db,
@@ -398,6 +464,43 @@ namespace RocksDbSharp
                 throw new RocksDbException(errptr);
             }
         }
+
+        public void rocksdb_sstfilewriter_delete_range(
+            IntPtr writer,
+            byte[] startKey,
+            ulong startKeyLen,
+            byte[] endKey,
+            ulong endKeyLen)
+        {
+            UIntPtr sklength = (UIntPtr)startKeyLen;
+            UIntPtr eklength = (UIntPtr)endKeyLen;
+            rocksdb_sstfilewriter_delete_range(writer, startKey, sklength, endKey, eklength, out IntPtr errptr);
+            if (errptr != IntPtr.Zero)
+            {
+                throw new RocksDbException(errptr);
+            }
+        }
+
+#if !NETSTANDARD2_0
+        public unsafe void rocksdb_sstfilewriter_delete_range(
+            IntPtr writer,
+            ReadOnlySpan<byte> startKey,
+            ReadOnlySpan<byte> endKey)
+        {
+            UIntPtr sklength = (UIntPtr)startKey.Length;
+            UIntPtr eklength = (UIntPtr)endKey.Length;
+
+            fixed (byte* startKeyPtr = &MemoryMarshal.GetReference(startKey))
+            fixed (byte* endKeyPtr = &MemoryMarshal.GetReference(endKey))
+            {
+                rocksdb_sstfilewriter_delete_range(writer, startKeyPtr, sklength, endKeyPtr, eklength, out IntPtr errptr);
+                if (errptr != IntPtr.Zero)
+                {
+                    throw new RocksDbException(errptr);
+                }
+            }
+        }
+#endif
 
         [Obsolete("Use UIntPtr version instead")]
         public void rocksdb_delete_cf(
