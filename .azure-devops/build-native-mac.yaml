@@ -104,5 +104,5 @@ steps:
   inputs:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7/lib/libzstd.dylib" --account-name curiosityreleases  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
+    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7_1/lib/libzstd.dylib" --account-name curiosityreleases  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
     
