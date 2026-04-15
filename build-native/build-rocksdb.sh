@@ -219,10 +219,49 @@ else
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean
-        CFLAGS="${CFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
+
+        if [ "$(uname)" == "Darwin" ]; then
+            ORIGINAL_CFLAGS="${CFLAGS}"
+            ORIGINAL_LDFLAGS="${LDFLAGS}"
+
+            CFLAGS="${ORIGINAL_CFLAGS} -arch x86_64"
+            LDFLAGS="${ORIGINAL_LDFLAGS} -arch x86_64"
+        fi
+
+        CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "64-bit build failed"
         strip librocksdb${LIBEXT}
         mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
         mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
+
+        if [ "$(uname)" == "Darwin" ]; then
+            echo "----- Build arm64 --------------------------------------------------"
+            make clean
+
+            export ZLIB_INCLUDE=$(find /tmp/arm64_deps -type d -name "include" | grep zlib | head -n 1)
+            export ZLIB_LIB_RELEASE=$(find /tmp/arm64_deps -type f -name "libz.a" | grep zlib | head -n 1)
+
+            export LZ4_INCLUDE=$(find /tmp/arm64_deps -type d -name "include" | grep lz4 | head -n 1)
+            export LZ4_LIB_RELEASE=$(find /tmp/arm64_deps -type f -name "liblz4.a" | grep lz4 | head -n 1)
+
+            export SNAPPY_INCLUDE=$(find /tmp/arm64_deps -type d -name "include" | grep snappy | head -n 1)
+            export SNAPPY_LIB_RELEASE=$(find /tmp/arm64_deps -type f -name "libsnappy.a" | grep snappy | head -n 1)
+
+            export ZSTD_INCLUDE=$(find /tmp/arm64_deps -type d -name "include" | grep zstd | head -n 1)
+            export ZSTD_LIB_RELEASE=$(find /tmp/arm64_deps -type f -name "libzstd.a" | grep zstd | head -n 1)
+
+            RUNTIME=osx-arm64
+            export EXTRA_CFLAGS="-I${ZLIB_INCLUDE} -I${LZ4_INCLUDE} -I${SNAPPY_INCLUDE} -I${ZSTD_INCLUDE} -arch arm64"
+            export EXTRA_CXXFLAGS="-I${ZLIB_INCLUDE} -I${LZ4_INCLUDE} -I${SNAPPY_INCLUDE} -I${ZSTD_INCLUDE} -arch arm64"
+            export EXTRA_LDFLAGS="-L$(dirname ${ZLIB_LIB_RELEASE}) -L$(dirname ${LZ4_LIB_RELEASE}) -L$(dirname ${SNAPPY_LIB_RELEASE}) -L$(dirname ${ZSTD_LIB_RELEASE}) -arch arm64"
+
+            CFLAGS="${ORIGINAL_CFLAGS} -arch arm64"
+            LDFLAGS="${ORIGINAL_LDFLAGS} -arch arm64"
+
+            CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" PORTABLE=1 make -j$CONCURRENCY shared_lib  || fail "arm64 build failed"
+            strip librocksdb${LIBEXT}
+            mkdir -p ../runtimes/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../runtimes/${RUNTIME}/native/librocksdb${LIBEXT}
+            mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -vL ./librocksdb${LIBEXT} ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/librocksdb${LIBEXT}
+        fi
 
     }) || fail "rocksdb build failed"
 fi

@@ -29,6 +29,47 @@ steps:
     script: 'ls -hR /usr/local/'
 
 - task: Bash@3
+  displayName: 'Download arm64 dependencies'
+  inputs:
+    targetType: 'inline'
+    script: |
+      cat << 'EOF' > test_fetch_bottle.py
+      import urllib.request
+      import json
+      import os
+      import tarfile
+
+      packages = ["snappy", "zstd", "lz4", "zlib"]
+      os.makedirs("/tmp/arm64_deps", exist_ok=True)
+
+      for pkg in packages:
+          url = f"https://formulae.brew.sh/api/formula/{pkg}.json"
+          req = urllib.request.urlopen(url)
+          data = json.loads(req.read())
+
+          bottle_key = next((k for k in data['bottle']['stable']['files'] if 'arm64_' in k), None)
+          if not bottle_key:
+              print(f"No arm64 bottle for {pkg}")
+              continue
+
+          bottle_url = data['bottle']['stable']['files'][bottle_key]['url']
+          print(f"Downloading {pkg} from {bottle_url}")
+
+          token_url = f"https://ghcr.io/token?scope=repository:homebrew/core/{pkg}:pull"
+          token_req = urllib.request.urlopen(token_url)
+          token = json.loads(token_req.read())['token']
+
+          req = urllib.request.Request(bottle_url, headers={'Authorization': f'Bearer {token}'})
+          tar_path = f"/tmp/arm64_deps/{pkg}.tar.gz"
+          with urllib.request.urlopen(req) as response, open(tar_path, 'wb') as out_file:
+              out_file.write(response.read())
+
+          with tarfile.open(tar_path, "r:gz") as tar:
+              tar.extractall(path="/tmp/arm64_deps")
+      EOF
+      python3 test_fetch_bottle.py
+
+- task: Bash@3
   inputs:
     filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
@@ -45,6 +86,28 @@ steps:
       install_name_tool -change /usr/local/opt/lz4/lib/liblz4.1.dylib "@loader_path/liblz4.dylib" librocksdb.dylib
       otool -L librocksdb.dylib
 #       install_name_tool -change /usr/lib/libbz2.1.0.dylib "@loader_path/libbz.dylib" librocksdb.dylib
+
+- task: Bash@3
+  displayName: 'Adjust dyld links for arm64'
+  inputs:
+    targetType: 'inline'
+    workingDirectory: '$(Build.SourcesDirectory)/build-native/runtimes/osx-arm64/native/'
+    script: |
+      otool -L librocksdb.dylib
+
+      SNAPPY_PATH=$(otool -L librocksdb.dylib | grep libsnappy | awk '{print $1}')
+      if [ ! -z "$SNAPPY_PATH" ]; then install_name_tool -change "$SNAPPY_PATH" "@loader_path/libsnappy.dylib" librocksdb.dylib; fi
+
+      ZSTD_PATH=$(otool -L librocksdb.dylib | grep libzstd | awk '{print $1}')
+      if [ ! -z "$ZSTD_PATH" ]; then install_name_tool -change "$ZSTD_PATH" "@loader_path/libzstd.dylib" librocksdb.dylib; fi
+
+      Z_PATH=$(otool -L librocksdb.dylib | grep libz.1 | awk '{print $1}')
+      if [ ! -z "$Z_PATH" ]; then install_name_tool -change "$Z_PATH" "@loader_path/libz.dylib" librocksdb.dylib; fi
+
+      LZ4_PATH=$(otool -L librocksdb.dylib | grep liblz4 | awk '{print $1}')
+      if [ ! -z "$LZ4_PATH" ]; then install_name_tool -change "$LZ4_PATH" "@loader_path/liblz4.dylib" librocksdb.dylib; fi
+
+      otool -L librocksdb.dylib
 
 - task: CmdLine@2
   displayName: 'list /usr/lib folder after'
@@ -73,6 +136,11 @@ steps:
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/librocksdb.dylib --account-name curiosityreleases  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-arm64/native/librocksdb.dylib --account-name curiosityreleases  -c rocksdb  -n librocksdb-arm64-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 - task: AzureCLI@1
   inputs:
@@ -105,4 +173,28 @@ steps:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
     inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7/lib/libzstd.dylib" --account-name curiosityreleases  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f `find /tmp/arm64_deps -name "libz.1.dylib" -print -quit` --account-name curiosityreleases  -c rocksdb  -n libz-arm64-v$(ROCKSDBVERSION).dylib  --overwrite true'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f `find /tmp/arm64_deps -name "liblz4.dylib" -print -quit` --account-name curiosityreleases  -c rocksdb  -n liblz4-arm64-v$(ROCKSDBVERSION).dylib  --overwrite true'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f `find /tmp/arm64_deps -name "libsnappy.dylib" -print -quit` --account-name curiosityreleases  -c rocksdb  -n libsnappy-arm64-v$(ROCKSDBVERSION).dylib  --overwrite true'
+
+- task: AzureCLI@1
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob upload -f `find /tmp/arm64_deps -name "libzstd.dylib" -print -quit` --account-name curiosityreleases  -c rocksdb  -n libzstd-arm64-v$(ROCKSDBVERSION).dylib --overwrite true'
     
