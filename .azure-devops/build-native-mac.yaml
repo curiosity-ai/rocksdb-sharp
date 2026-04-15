@@ -78,7 +78,7 @@ steps:
   inputs:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.3.1/lib/libz.1.dylib" --account-name curiosityreleases  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
+    inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.3.2/lib/libz.1.dylib" --account-name curiosityreleases  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
 
 #- task: AzureCLI@1
 #  inputs:
