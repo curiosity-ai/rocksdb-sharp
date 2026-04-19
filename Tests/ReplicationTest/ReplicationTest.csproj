@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,10 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RocksDB" Version="10.4.2.63147" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.63147\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
+    <PackageReference Include="MagicOnion.Client" Version="7.10.0" />
+    <PackageReference Include="MagicOnion.Server" Version="7.10.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.2.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.2.1" />
+    <PackageReference Include="RocksDB" Version="10.4.2.63147" />
   </ItemGroup>
 </Project>
