@@ -58,24 +58,28 @@ namespace ReplicationTest
 
                 if (currentSeq < _db.GetLatestSequenceNumber())
                 {
-                    foreach (var batch in replicator.GetWalUpdates(currentSeq))
+                    foreach (var batch in replicator.GetPooledWalUpdates(currentSeq))
                     {
                         hasUpdates = true;
+
                         await stream.WriteAsync(new ReplicationBatchData
                         {
                             SequenceNumber = batch.SequenceNumber,
-                            Data = batch.Data
+                            PooledData = batch.PooledData,
+                            Length = batch.Length,
                         });
+
+                        WriteBatch.ReturnPooledBytes(batch.PooledData);
                     }
                 }
 
                 if (hasUpdates)
                 {
-                    currentSeq = _db.GetLatestSequenceNumber() + 1;
+                    currentSeq = _db.GetLatestSequenceNumber(); // + 1;
                 }
                 else
                 {
-                    await Task.Delay(100, Context.CallContext.CancellationToken);
+                    await Task.Delay(1, Context.CallContext.CancellationToken);
                 }
             }
 

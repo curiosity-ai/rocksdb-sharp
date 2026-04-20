@@ -22,6 +22,13 @@ namespace RocksDbSharp
         public byte[] Data { get; set; }
     }
 
+    public class PooledReplicationBatch
+    {
+        public ulong SequenceNumber { get; set; }
+        public byte[] PooledData { get; set; }
+        public int Length { get; set; }
+    }
+
     public class ReplicationSession : IDisposable
     {
         private readonly string _tempPath;

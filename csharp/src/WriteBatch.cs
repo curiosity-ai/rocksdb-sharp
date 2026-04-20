@@ -1,8 +1,5 @@
 ﻿using System;
-
-#if !NETSTANDARD2_0
 using System.Buffers;
-#endif
 
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -59,15 +56,25 @@ namespace RocksDbSharp
         private IntPtr handle;
         private Encoding defaultEncoding = Encoding.UTF8;
 
-        public WriteBatch()
-            : this(Native.Instance.rocksdb_writebatch_create())
+        public WriteBatch() : this(Native.Instance.rocksdb_writebatch_create())
         {
         }
 
-        public WriteBatch(byte[] rep, long size = -1)
-            : this(Native.Instance.rocksdb_writebatch_create_from(rep, size < 0 ? (UIntPtr)rep.Length : (UIntPtr)size))
+        public WriteBatch(byte[] rep, long size = -1) : this(Native.Instance.rocksdb_writebatch_create_from(rep, size < 0 ? (UIntPtr)rep.Length : (UIntPtr)size))
         {
+        
         }
+
+#if !NETSTANDARD2_0
+        public unsafe static WriteBatch FromSpan(ReadOnlySpan<byte> data)
+        {
+            fixed (byte* dataPtr = data)
+            {
+                var handle = Native.Instance.rocksdb_writebatch_create_from(dataPtr, (UIntPtr)data.Length);
+                return new WriteBatch(handle);
+            }
+        }
+#endif
 
         public WriteBatch(IntPtr handle)
         {
@@ -511,6 +518,20 @@ namespace RocksDbSharp
             }
 
             return null;
+        }
+
+        public byte[] ToBytesPooled(out int size)
+        {
+            var resultPtr = Native.Instance.rocksdb_writebatch_data(handle, out UIntPtr sizePtr);
+            size = (int)sizePtr;
+            var pooledBuffer = ArrayPool<byte>.Shared.Rent(size);
+            Marshal.Copy(resultPtr, pooledBuffer, 0, size);
+            return pooledBuffer;
+        }
+
+        public static void ReturnPooledBytes(byte[] bytes)
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
         }
 
         public void SetSavePoint()

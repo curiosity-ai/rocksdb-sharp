@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -81,10 +82,11 @@ namespace ReplicationTest
                     CreateNoWindow = false
                 }
             };
+
             replicaProcess.Start();
 
             // Wait for both to exit or run for a set duration
-            await Task.Delay(5000);
+            await Task.Delay(60_000);
 
             Console.WriteLine("Coordinator: Test duration finished, stopping processes...");
             if (!replicaProcess.HasExited) replicaProcess.Kill();
@@ -105,6 +107,8 @@ namespace ReplicationTest
 
             using (var sourceDb = RocksDbSharp.RocksDb.Open(options, dbPath))
             {
+                sourceDb.DisableFileDeletions();
+
                 Console.WriteLine("[Primary] DB opened. Starting MagicOnion server...");
 
                 var builder = WebApplication.CreateBuilder();
@@ -126,20 +130,22 @@ namespace ReplicationTest
                 Console.WriteLine("[Primary] Server running. Adding data...");
 
                 long count = 0;
-                while (!appRunTask.IsCompleted)
+                
+                await Task.Delay(10_000);
+
+                while (!appRunTask.IsCompleted && count < 1_000_000)
                 {
-                    string key = $"key_{count}";
+                    string key = $"key_{count:0000000000}"; //Keys need to be sortable so the lag iterator in the replica code always check the last value
                     string val = DateTime.UtcNow.Ticks.ToString(); // Store timestamp to measure lag
                     sourceDb.Put(key, val);
                     count++;
                     
-                    if (count % 1000 == 0)
+                    if (count % 10_000 == 0)
                     {
-                        Console.WriteLine($"[Primary] Wrote {count} keys.");
+                        Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss:ffff}] Wrote {count} keys. Seq. No. {sourceDb.GetLatestSequenceNumber()}");
                     }
-
-                    await Task.Delay(10); // Throttle writes
                 }
+                await Task.Delay(60_000);
             }
         }
 
@@ -148,7 +154,7 @@ namespace ReplicationTest
             Console.WriteLine($"[Replica] Starting, connecting to port {primaryPort}, dbPath: {dbPath}");
 
             var channel = GrpcChannel.ForAddress($"http://localhost:{primaryPort}");
-            var client = MagicOnionClient.Create<IReplicationService>(channel);
+            var client  = MagicOnionClient.Create<IReplicationService>(channel);
 
             Console.WriteLine("[Replica] Requesting Initial State...");
             var stream = await client.SyncInitialStateAsync();
@@ -186,17 +192,14 @@ namespace ReplicationTest
                 while (await updatesStream.ResponseStream.MoveNext(CancellationToken.None))
                 {
                     var batch = updatesStream.ResponseStream.Current;
-                    consumer.IngestBatch(new ReplicationBatch
-                    {
-                        SequenceNumber = batch.SequenceNumber,
-                        Data = batch.Data
-                    });
+                    consumer.IngestBatch(batch.SequenceNumber, batch.Data);
+                    batch.ReturnToPool();
 
                     batchCount++;
 
-                    if (batchCount % 100 == 0)
+                    if (batchCount % 1000 == 0)
                     {
-                        Console.WriteLine($"[Replica] Ingested {batchCount} WAL batches. Current Sequence: {destDb.GetLatestSequenceNumber()}");
+                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches. Current Sequence: {destDb.GetLatestSequenceNumber()}");
                         
                         using (var iter = destDb.NewIterator())
                         {
@@ -208,7 +211,7 @@ namespace ReplicationTest
                                 {
                                     var writeTime = new DateTime(writeTimeTicks, DateTimeKind.Utc);
                                     var lag = DateTime.UtcNow - writeTime;
-                                    Console.WriteLine($"[Replica] Latest key lag: {lag.TotalMilliseconds} ms");
+                                    Console.WriteLine($"[Replica] Latest key lag: {lag.TotalMilliseconds:n0} ms");
                                 }
                             }
                         }
