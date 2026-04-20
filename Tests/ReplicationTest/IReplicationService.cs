@@ -14,6 +14,7 @@ namespace ReplicationTest
     {
         Task<ServerStreamingResult<ReplicationFileData>> SyncInitialStateAsync();
         Task<ServerStreamingResult<ReplicationBatchData>> SyncUpdatesAsync(ulong startSeq);
+        UnaryResult<bool> ReportLastSyncSequenceNumber(ulong seqNumber);
     }
 
     [MessagePackObject]

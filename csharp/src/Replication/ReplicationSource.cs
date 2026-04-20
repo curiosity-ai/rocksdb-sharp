@@ -27,7 +27,7 @@ namespace RocksDbSharp
 
         public IEnumerable<ReplicationBatch> GetWalUpdates(ulong sequenceNumber)
         {
-            _db.DisableFileDeletions();
+            //_db.DisableFileDeletions();
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
@@ -55,12 +55,12 @@ namespace RocksDbSharp
             }
             //TODO: Need to review the usage of EnableFileDeletions and archived log files
             //      See https://github.com/facebook/rocksdb/wiki/Replication-Helpers -> GetSortedWalFiles 
-            _db.EnableFileDeletions();
+            //_db.EnableFileDeletions();
         }
 
         public IEnumerable<PooledReplicationBatch> GetPooledWalUpdates(ulong sequenceNumber)
         {
-            _db.DisableFileDeletions();
+            //_db.DisableFileDeletions();
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
@@ -90,7 +90,7 @@ namespace RocksDbSharp
 
             //TODO: Need to review the usage of EnableFileDeletions and archived log files
             //      See https://github.com/facebook/rocksdb/wiki/Replication-Helpers -> GetSortedWalFiles 
-            _db.EnableFileDeletions();
+            //_db.EnableFileDeletions();
         }
     }
 }

@@ -86,7 +86,7 @@ namespace ReplicationTest
             replicaProcess.Start();
 
             // Wait for both to exit or run for a set duration
-            await Task.Delay(60_000);
+            await Task.Delay(6000_000);
 
             Console.WriteLine("Coordinator: Test duration finished, stopping processes...");
             if (!replicaProcess.HasExited) replicaProcess.Kill();
@@ -97,13 +97,17 @@ namespace ReplicationTest
 
         static async Task RunPrimaryAsync(string dbPath, int port)
         {
+            var walDir = Path.Combine(dbPath, "journal");
             Console.WriteLine($"[Primary] Starting on port {port}, dbPath: {dbPath}");
             var options = new DbOptions()
                 .SetCreateIfMissing(true)
-                .SetWALTtlSeconds(0) // Keep WAL
-                .SetMaxTotalWalSize(1024 * 1024 * 100)
-                .SetWriteBufferSize(4 * 1024)
-                .SetTargetFileSizeBase(4 * 1024);
+                .SetWalDir(walDir)
+                .SetWalTtlSeconds(10)
+                .SetMaxTotalWalSize(1024UL * 1024 * 10)
+                .SetWalSizeLimitMB(1024UL * 1024 * 1)
+                .SetWalCompression(Compression.Zstd); //No if using RocksDbWalInspector
+                //.SetWriteBufferSize(4 * 1024)
+                //.SetTargetFileSizeBase(4 * 1024);
 
             using (var sourceDb = RocksDbSharp.RocksDb.Open(options, dbPath))
             {
@@ -116,7 +120,7 @@ namespace ReplicationTest
                 builder.Services.AddMagicOnion();
                 builder.Services.AddSingleton(sourceDb);
                 builder.Services.AddSingleton(dbPath); // Hacky: register string as dbPath
-
+                builder.Logging.SetMinimumLevel(LogLevel.Warning);
                 builder.WebHost.ConfigureKestrel(options =>
                 {
                     options.ListenLocalhost(port, o => o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
@@ -133,10 +137,13 @@ namespace ReplicationTest
                 
                 await Task.Delay(10_000);
 
-                while (!appRunTask.IsCompleted && count < 1_000_000)
+                var flushOptions = Native.Instance.rocksdb_flushoptions_create();
+                Native.Instance.rocksdb_flushoptions_set_wait(flushOptions, Native.MarshalBool(true));
+
+                while (!appRunTask.IsCompleted && count < 1_000_000_000)
                 {
-                    string key = $"key_{count:0000000000}"; //Keys need to be sortable so the lag iterator in the replica code always check the last value
-                    string val = DateTime.UtcNow.Ticks.ToString(); // Store timestamp to measure lag
+                    string key = $"key_{count:000000000}"; //Keys need to be sortable so the lag iterator in the replica code always check the last value
+                    string val = Stopwatch.GetTimestamp().ToString(); // Store timestamp to measure lag
                     sourceDb.Put(key, val);
                     count++;
                     
@@ -144,7 +151,16 @@ namespace ReplicationTest
                     {
                         Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss:ffff}] Wrote {count} keys. Seq. No. {sourceDb.GetLatestSequenceNumber()}");
                     }
+
+                    if(count % 100_000 == 0)
+                    {
+                        Native.Instance.rocksdb_flush(sourceDb.Handle, flushOptions);
+
+                    }
                 }
+
+                Native.Instance.rocksdb_flushoptions_destroy(flushOptions);
+
                 await Task.Delay(60_000);
             }
         }
@@ -173,10 +189,12 @@ namespace ReplicationTest
 
             var options = new DbOptions()
                 .SetCreateIfMissing(true)
-                .SetWALTtlSeconds(0)
-                .SetMaxTotalWalSize(1024 * 1024 * 100)
-                .SetWriteBufferSize(4 * 1024)
-                .SetTargetFileSizeBase(4 * 1024);
+                .SetWalTtlSeconds(10)
+                .SetWalCompression(Compression.Zstd)
+                .SetMaxTotalWalSize(1024UL * 1024 * 10)
+                .SetWalSizeLimitMB(1024UL * 1024 * 1);
+                //.SetWriteBufferSize(4 * 1024)
+                //.SetTargetFileSizeBase(4 * 1024);
 
             using (var destDb = RocksDbSharp.RocksDb.Open(options, dbPath))
             {
@@ -197,24 +215,25 @@ namespace ReplicationTest
 
                     batchCount++;
 
-                    if (batchCount % 1000 == 0)
+                    if (batchCount % 10_000 == 0)
                     {
-                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches. Current Sequence: {destDb.GetLatestSequenceNumber()}");
-                        
+                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches, last sequence number: {batch.SequenceNumber}. Current Sequence: {destDb.GetLatestSequenceNumber()}");
+
                         using (var iter = destDb.NewIterator())
                         {
                             iter.SeekToLast();
                             if (iter.Valid())
                             {
                                 string val = iter.StringValue();
-                                if (long.TryParse(val, out long writeTimeTicks))
+                                if (long.TryParse(val, out long writeTime))
                                 {
-                                    var writeTime = new DateTime(writeTimeTicks, DateTimeKind.Utc);
-                                    var lag = DateTime.UtcNow - writeTime;
-                                    Console.WriteLine($"[Replica] Latest key lag: {lag.TotalMilliseconds:n0} ms");
+                                    var lag = Stopwatch.GetTimestamp() - writeTime;
+                                    Console.WriteLine($"[Replica] Latest key lag: {TimeSpan.FromTicks(lag).TotalMilliseconds:n0} ms");
                                 }
                             }
                         }
+
+                        await client.ReportLastSyncSequenceNumber(batch.SequenceNumber);
                     }
                 }
             }

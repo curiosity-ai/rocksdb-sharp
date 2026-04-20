@@ -146,6 +146,13 @@ namespace RocksDbSharp
             return (T)this;
         }
 
+        public T SetWalCompression(Compression compression)
+        {
+            Native.Instance.rocksdb_options_set_wal_compression(Handle, (int)compression);
+            return (T)this;
+        }
+
+
         /// <summary>
         /// Enables statistics so that you can call GetStatisticsString() later
         /// </summary>
@@ -349,7 +356,7 @@ namespace RocksDbSharp
         /// 4. If both are not 0, WAL files will be checked every 10 min and both
         ///    checks will be performed with ttl being first.
         /// </summary>
-        public T SetWALTtlSeconds(ulong value)
+        public T SetWalTtlSeconds(ulong value)
         {
             Native.Instance.rocksdb_options_set_WAL_ttl_seconds(Handle, value);
             return (T)this;
@@ -369,7 +376,7 @@ namespace RocksDbSharp
         /// 4. If both are not 0, WAL files will be checked every 10 min and both
         ///    checks will be performed with ttl being first.
         /// </summary>
-        public T SetWALSizeLimitMB(ulong value)
+        public T SetWalSizeLimitMB(ulong value)
         {
             Native.Instance.rocksdb_options_set_WAL_size_limit_MB(Handle, value);
             return (T)this;
