@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ZstdSharp;
-using ZstdSharp.Unsafe;
 
 namespace RocksDbSharp;
 
