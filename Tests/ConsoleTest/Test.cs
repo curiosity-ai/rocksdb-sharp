@@ -15,7 +15,7 @@ if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
 
 Directory.CreateDirectory(tempRoot);
 
-var db = RocksDbSharp.RocksDb.Open(new DbOptions().SetCreateIfMissing(true).SetDisableAutoCompactions(1), tempRoot);
+var db = RocksDb.Open(new DbOptions().SetCreateIfMissing(true).SetDisableAutoCompactions(1), tempRoot);
 
 foreach (var i in Enumerable.Range(0, 10_000_00))
 {
