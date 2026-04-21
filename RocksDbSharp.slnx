@@ -4,6 +4,7 @@
     <File Path=".azure-devops/build-native-mac.yaml" />
     <File Path=".azure-devops/build-native-win.yaml" />
     <File Path=".azure-devops/build-nuget.yaml" />
+    <File Path="build-native/build-rocksdb.sh" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/ConsoleTest/ConsoleTest.csproj" />

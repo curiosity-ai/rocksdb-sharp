@@ -87,7 +87,7 @@ namespace RocksDbPrepareCApiHeader
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
-            }
+            }""
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
@@ -105,6 +105,11 @@ namespace RocksDbPrepareCApiHeader
         {
             var version = await File.ReadAllTextAsync(@"../rocksdbversion");
             version = version.Trim(new char[] { ' ', '\r', '\n' });
+
+            if (version == "10.10.1.1") // Special tagged release
+            {
+                version = "10.10.1";
+            }
 
             Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
