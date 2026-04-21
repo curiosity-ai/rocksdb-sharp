@@ -124,10 +124,6 @@ namespace RocksDbSharp
     using rocksdb_statistics_histogram_data_t_ptr_const = System.IntPtr;
     using rocksdb_statistics_histogram_data_t_ptr = System.IntPtr;
     using rocksdb_wait_for_compact_options_t_ptr = System.IntPtr;
-    /* rocksdb_slice_t: Optimized slice type for high-performance C API operations
-     * This struct is ABI-compatible with rocksdb::Slice for zero-copy interop.
-     * Used by slice iterator functions and batched operations. */
-    using const_rocksdb_slice_t_ptr = System.IntPtr;
     using const_rocksdb_flushjobinfo_t_ptr = System.IntPtr;
     using const_rocksdb_compactionjobinfo_t_ptr = System.IntPtr;
     using const_rocksdb_subcompactionjobinfo_t_ptr = System.IntPtr;
@@ -164,6 +160,12 @@ namespace RocksDbSharp
        The data remains valid until rocksdb_pinnable_handle_destroy is called.
        Returns NULL on error or not found. Check errptr to distinguish. */
     using const_rocksdb_pinnable_handle_t_ptr = System.IntPtr;
+    using rocksdb_slice_t  = System.IntPtr;
+    using const_rocksdb_slice_t_ptr  = System.IntPtr;
+    using rocksdb_compaction_service_schedule_cb  = System.IntPtr;
+    using rocksdb_compaction_service_wait_cb  = System.IntPtr;
+    using rocksdb_compaction_service_cancel_awaiting_jobs_cb  = System.IntPtr;
+    using rocksdb_compaction_service_on_installation_cb  = System.IntPtr;
     #endregion
     #region Delegates
     public delegate void PutDelegate(void_ptr p0, const_char_ptr k, size_t klen, const_char_ptr v, size_t vlen);

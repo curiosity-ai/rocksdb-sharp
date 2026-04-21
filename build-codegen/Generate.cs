@@ -123,8 +123,10 @@ namespace RocksDbPrepareCApiHeader
 
             //Fix missing callback name 
             modified = modified.Replace("void (*)(void* priv, unsigned lev,", "void (*logger_callback)(void* priv, unsigned int lev,");
-            modified = Regex.Replace(modified, @"typedef struct rocksdb_slice_t \{.*?}", @"typedef struct rocksdb_slice_t ", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-
+            //modified = modified.Replace("typedef void (*rocksdb_compaction_service_cancel_awaiting_jobs_cb)(void* state);", "typedef void rocksdb_compaction_service_cancel_awaiting_jobs_cb rocksdb_compaction_service_cancel_awaiting_jobs_cb;");
+            //modified = Regex.Replace(modified, @"typedef struct rocksdb_slice_t \{.*?}", @"typedef struct rocksdb_slice_t ", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            //modified = Regex.Replace(modified, @"typedef rocksdb_compactionservice_scheduleresponse_t\* \(.*?\);", @"typedef rocksdb_compactionservice_scheduleresponse_t rocksdb_compactionservice_scheduleresponse_t;", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            //modified = Regex.Replace(modified, @"typedef int \(\*rocksdb_compaction_service_wait_cb\)\(.*?\);", @"typedef rocksdb_compaction_service_wait_cb rocksdb_compaction_service_wait_cb;", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
             if(modified.Contains("void (*)("))
             {
                 Console.WriteLine("Warning: There might be a missing callback type name: void (*)(...)");
@@ -163,6 +165,16 @@ namespace RocksDbPrepareCApiHeader
                 foreach (var typeVariation in typeVariations.Where(tv => tv.Contains(typeAlias.Name)))
                     nativeRawCs.AppendLine(typeAlias.Variation(typeVariation));
             }
+
+            //Temporary fix for code generation for typedefs not currently being recognized
+            nativeRawCs.AppendLine("using rocksdb_slice_t  = System.IntPtr;");
+            nativeRawCs.AppendLine("using const_rocksdb_slice_t_ptr  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_schedule_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_wait_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_cancel_awaiting_jobs_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_on_installation_cb  = System.IntPtr;");
+
+
             nativeRawCs.AppendLine("#endregion");
 
             nativeRawCs.AppendLine("#region Delegates");
@@ -212,7 +224,6 @@ namespace RocksDbPrepareCApiHeader
             nativeRawCs.AppendLine("public delegate void rocksdb_logger_logv_cb(void_ptr p0, uint32_t log_level, char_ptr_ptr val);");
             nativeRawCs.AppendLine("public delegate void on_memtable_sealed_cb(void_ptr p0, const_rocksdb_memtableinfo_t_ptr rocksdb_memtableinfo_t);");
         
-
             nativeRawCs.AppendLine("#endregion");
 
             foreach (var region in regions.Where(r => (r.NativeEnums.Length + r.NativeFunctions.Length) > 0))
