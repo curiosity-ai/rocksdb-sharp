@@ -11,13 +11,11 @@ steps:
     targetType: 'inline'
     script: |
       ROCKSDBVNUM=`cat rocksdbversion`
+      ROCKSDBVERSIONVALID="${ROCKSDBVNUM}"
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}.$(build.buildId)"
       echo "##vso[task.setvariable variable=ROCKSDBVERSIONBASE]${ROCKSDBVNUM}"
-      # Default clean version = full version
-      ROCKSDBVERSIONVALID="${ROCKSDBVERSION}"
-
       # If version matches pattern like 10.10.1.1 → trim to first 3 parts
-      if [[ "${ROCKSDBVERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
+      if [[ "${ROCKSDBVNUM}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
         ROCKSDBVERSIONVALID="${BASH_REMATCH[1]}"
       fi
 
