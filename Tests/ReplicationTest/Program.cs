@@ -109,17 +109,17 @@ namespace ReplicationTest
                 //.SetWriteBufferSize(4 * 1024)
                 //.SetTargetFileSizeBase(4 * 1024);
 
-            using (var sourceDb = RocksDbSharp.RocksDb.Open(options, dbPath))
+            using (var sourceDb = RocksDb.Open(options, dbPath))
             {
                 sourceDb.DisableFileDeletions();
-
+                var commitDelayController = new AdaptiveCommitDelayController(replicaCount: 1, delayPerLagUnitMs: 5, lagUnit: 1000); //Delays for 5ms for each 1000 seq. no. behind
                 Console.WriteLine("[Primary] DB opened. Starting MagicOnion server...");
 
                 var builder = WebApplication.CreateBuilder();
                 builder.Services.AddGrpc();
                 builder.Services.AddMagicOnion();
                 builder.Services.AddSingleton(sourceDb);
-                builder.Services.AddSingleton(dbPath); // Hacky: register string as dbPath
+                builder.Services.AddSingleton(commitDelayController);
                 builder.Logging.SetMinimumLevel(LogLevel.Warning);
                 builder.WebHost.ConfigureKestrel(options =>
                 {
@@ -135,8 +135,6 @@ namespace ReplicationTest
 
                 long count = 0;
                 
-                await Task.Delay(10_000);
-
                 var flushOptions = Native.Instance.rocksdb_flushoptions_create();
                 Native.Instance.rocksdb_flushoptions_set_wait(flushOptions, Native.MarshalBool(true));
 
@@ -149,13 +147,13 @@ namespace ReplicationTest
                     
                     if (count % 10_000 == 0)
                     {
-                        Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss:ffff}] Wrote {count} keys. Seq. No. {sourceDb.GetLatestSequenceNumber()}");
+                        Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss:ffff}] Wrote {count:n0} keys. Seq. No. {sourceDb.GetLatestSequenceNumber():n0}");
+                        await commitDelayController.DelayIfNeededAsync();
                     }
 
                     if(count % 100_000 == 0)
                     {
                         Native.Instance.rocksdb_flush(sourceDb.Handle, flushOptions);
-
                     }
                 }
 
@@ -196,10 +194,10 @@ namespace ReplicationTest
                 //.SetWriteBufferSize(4 * 1024)
                 //.SetTargetFileSizeBase(4 * 1024);
 
-            using (var destDb = RocksDbSharp.RocksDb.Open(options, dbPath))
+            using (var destDb = RocksDb.Open(options, dbPath))
             {
                 ulong startSeq = destDb.GetLatestSequenceNumber() + 1;
-                Console.WriteLine($"[Replica] Destination DB sequence number: {startSeq - 1}. Starting WAL sync...");
+                Console.WriteLine($"[Replica] Destination DB sequence number: {startSeq - 1:n0}. Starting WAL sync...");
 
                 var consumer = new ReplicationConsumer(destDb);
 
@@ -217,7 +215,7 @@ namespace ReplicationTest
 
                     if (batchCount % 10_000 == 0)
                     {
-                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches, last sequence number: {batch.SequenceNumber}. Current Sequence: {destDb.GetLatestSequenceNumber()}");
+                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches, last sequence number: {batch.SequenceNumber:n0}. Current Sequence: {destDb.GetLatestSequenceNumber():n0}");
 
                         using (var iter = destDb.NewIterator())
                         {
@@ -233,7 +231,7 @@ namespace ReplicationTest
                             }
                         }
 
-                        await client.ReportLastSyncSequenceNumber(batch.SequenceNumber);
+                        await client.ReportLastSyncSequenceNumber(0, destDb.GetLatestSequenceNumber());
                     }
                 }
             }

@@ -322,6 +322,7 @@ namespace RocksDbSharp
             {
                 Native.Instance.rocksdb_options_set_db_log_dir(Handle, safePath.Handle);
             }
+            LogPath = value;
             return (T)this;
         }
 
@@ -339,6 +340,7 @@ namespace RocksDbSharp
             {
                 Native.Instance.rocksdb_options_set_wal_dir(Handle, safePath.Handle);
             }
+            WalPath = value;
             return (T)this;
         }
 

@@ -9,21 +9,19 @@ namespace ReplicationTest
 {
     public class ReplicationService : ServiceBase<IReplicationService>, IReplicationService
     {
-        private readonly RocksDbSharp.RocksDb _db;
-        private readonly string _dbPath;
-        private readonly string _walDir;
+        private readonly RocksDb _db;
+        private readonly AdaptiveCommitDelayController _commitDelayController;
         private ulong _lastSyncedSequenceNumber = ulong.MaxValue;
         private bool _replicatingInitialState = false;
 
-        public ReplicationService(RocksDbSharp.RocksDb db, string dbPath)
+        public ReplicationService(RocksDb db, AdaptiveCommitDelayController commitDelayController)
         {
             _db = db;
             _db.DisableFileDeletions(); //Must be disabled for this to work
-            _dbPath = dbPath;
-            _walDir = Path.Combine(dbPath, "journal"); //TODO: Store elsewhere
+            _commitDelayController = commitDelayController;
         }
 
-        public UnaryResult<bool> ReportLastSyncSequenceNumber(ulong seqNumber)
+        public UnaryResult<bool> ReportLastSyncSequenceNumber(int replicaIndex, ulong seqNumber)
         {
             _lastSyncedSequenceNumber = Math.Min(_lastSyncedSequenceNumber, seqNumber);
             
@@ -31,28 +29,35 @@ namespace ReplicationTest
 
             if (_lastSyncedSequenceNumber != ulong.MaxValue && _lastSyncedSequenceNumber != 0)
             {
-                var seqNoPerWalFile = RocksDbWalInspector.GetFirstSequenceNumbers(_walDir);
-                
-                var seqNoPerWalFileId = seqNoPerWalFile.Select(kv => (id: int.Parse(kv.Key.AsSpan(0, kv.Key.Length - ".log".Length)), seqNo: (ulong)kv.Value, fileName: kv.Key))
-                                                       .OrderBy(kv => kv.id)
-                                                       .ToArray();
+                MaybeDeleteOldWalFiles();
+                _commitDelayController.ReportLag(new ReplicaLagSample(replicaIndex, (long)(_db.GetLatestSequenceNumber() - seqNumber)));
+            }
 
-                foreach (var (walID, startSeqNo, fileName) in seqNoPerWalFileId)
+            return new UnaryResult<bool>(true);
+        }
+
+        private void MaybeDeleteOldWalFiles()
+        {
+            var seqNoPerWalFile = RocksDbWalInspector.GetFirstSequenceNumbers(_db.WalPath);
+
+            var seqNoPerWalFileId = seqNoPerWalFile.Select(kv => (id: int.Parse(kv.Key.AsSpan(0, kv.Key.Length - ".log".Length)), seqNo: (ulong)kv.Value, fileName: kv.Key))
+                                                   .OrderBy(kv => kv.id)
+                                                   .ToArray();
+
+            foreach (var (walID, startSeqNo, fileName) in seqNoPerWalFileId)
+            {
+                var nextWalByID = seqNoPerWalFileId.Where(d => d.id > walID).FirstOrDefault();
+
+                if (nextWalByID.id != default)
                 {
-                    var nextWalByID = seqNoPerWalFileId.Where(d => d.id > walID).FirstOrDefault();
-
-                    if (nextWalByID.id != default)
+                    var endSeqNumber = nextWalByID.seqNo - 1;
+                    if (endSeqNumber < _lastSyncedSequenceNumber)
                     {
-                        var endSeqNumber = nextWalByID.seqNo - 1;
-                        if (endSeqNumber < _lastSyncedSequenceNumber)
-                        {
-                            Console.WriteLine($"[Primary] Deleting WAL file: {fileName} with {startSeqNo:n0}..{endSeqNumber:n0} < last sync'd {_lastSyncedSequenceNumber:n0}");
-                            File.Delete(Path.Combine(_walDir, fileName));
-                        }
+                        Console.WriteLine($"[Primary] Deleting WAL file: {fileName} with {startSeqNo:n0}..{endSeqNumber:n0} < last sync'd {_lastSyncedSequenceNumber:n0}");
+                        File.Delete(Path.Combine(_db.WalPath, fileName));
                     }
                 }
             }
-            return new UnaryResult<bool>(true);
         }
 
         public async Task<ServerStreamingResult<ReplicationFileData>> SyncInitialStateAsync()
@@ -60,9 +65,12 @@ namespace ReplicationTest
             _replicatingInitialState = true;
 
             var stream = GetServerStreamingContext<ReplicationFileData>();
-            var replicator = new ReplicationSource(_db, _dbPath);
 
-            using (var session = replicator.GetInitialState())
+            var replicator = new ReplicationSource(_db);
+
+            var tempPath = Path.Combine(Path.GetTempPath(), "rocksdb_replication_" + Guid.NewGuid().ToString());
+
+            using (var session = replicator.GetInitialState(tempPath))
             {
                 foreach (var file in session.Files)
                 {
@@ -89,7 +97,8 @@ namespace ReplicationTest
         public async Task<ServerStreamingResult<ReplicationBatchData>> SyncUpdatesAsync(ulong startSeq)
         {
             var stream = GetServerStreamingContext<ReplicationBatchData>();
-            var replicator = new ReplicationSource(_db, _dbPath);
+
+            var replicator = new ReplicationSource(_db);
 
             ulong currentSeq = startSeq;
 

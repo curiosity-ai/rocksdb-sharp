@@ -12,13 +12,11 @@ public sealed class ReplicaLagSample
 {
     public int ReplicaIndex { get; }
     public long LagVersions { get; }
-    public DateTime TimestampUtc { get; }
 
-    public ReplicaLagSample(int replicaIndex, long lagVersions, DateTime? timestampUtc = null)
+    public ReplicaLagSample(int replicaIndex, long lagVersions)
     {
         ReplicaIndex = replicaIndex;
         LagVersions = Math.Max(0, lagVersions);
-        TimestampUtc = timestampUtc ?? DateTime.UtcNow;
     }
 }
 
@@ -38,6 +36,7 @@ public sealed class AdaptiveCommitDelayController
     private readonly int _minDelayMs;
     private readonly int _maxDelayMs;
     private readonly double _delayPerLagUnitMs;
+    private readonly double _lagUnit;
     private readonly double _trendWeight;
     private readonly double _burstWeight;
 
@@ -66,6 +65,7 @@ public sealed class AdaptiveCommitDelayController
         int minDelayMs = 0,
         int maxDelayMs = 2000,
         double delayPerLagUnitMs = 5.0,
+        double lagUnit = 1.0,
         double trendWeight = 2.0,
         double burstWeight = 1.5)
     {
@@ -75,6 +75,7 @@ public sealed class AdaptiveCommitDelayController
         if (minDelayMs < 0) throw new ArgumentOutOfRangeException(nameof(minDelayMs));
         if (maxDelayMs < minDelayMs) throw new ArgumentOutOfRangeException(nameof(maxDelayMs));
         if (delayPerLagUnitMs < 0) throw new ArgumentOutOfRangeException(nameof(delayPerLagUnitMs));
+        if (lagUnit < 0) throw new ArgumentOutOfRangeException(nameof(lagUnit));
         if (trendWeight < 0) throw new ArgumentOutOfRangeException(nameof(trendWeight));
         if (burstWeight < 0) throw new ArgumentOutOfRangeException(nameof(burstWeight));
 
@@ -85,6 +86,7 @@ public sealed class AdaptiveCommitDelayController
         _minDelayMs = minDelayMs;
         _maxDelayMs = maxDelayMs;
         _delayPerLagUnitMs = delayPerLagUnitMs;
+        _lagUnit = lagUnit;
         _trendWeight = trendWeight;
         _burstWeight = burstWeight;
 
@@ -152,7 +154,7 @@ public sealed class AdaptiveCommitDelayController
             (_trendWeight * Math.Max(0, trend)) +
             (_burstWeight * burst);
 
-        int delay = (int)Math.Round(score * _delayPerLagUnitMs);
+        int delay = (int)Math.Round(score * _delayPerLagUnitMs / _lagUnit);
         return Math.Clamp(delay, _minDelayMs, _maxDelayMs);
     }
 

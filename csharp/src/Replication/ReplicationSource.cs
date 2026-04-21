@@ -4,20 +4,18 @@ using System.IO;
 
 namespace RocksDbSharp
 {
+    //Note: DisableFileDeletions() should be set for the database in order to correctly replicate data
     public class ReplicationSource
     {
         private readonly RocksDb _db;
-        private readonly string _dbPath;
 
-        public ReplicationSource(RocksDb db, string dbPath)
+        public ReplicationSource(RocksDb db)
         {
             _db = db;
-            _dbPath = dbPath;
         }
 
-        public ReplicationSession GetInitialState()
+        public ReplicationSession GetInitialState(string tempPath)
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), "rocksdb_replication_" + Guid.NewGuid().ToString());
             using (var cp = _db.Checkpoint())
             {
                 cp.Save(tempPath);
@@ -27,7 +25,6 @@ namespace RocksDbSharp
 
         public IEnumerable<ReplicationBatch> GetWalUpdates(ulong sequenceNumber)
         {
-            //_db.DisableFileDeletions();
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
@@ -53,14 +50,12 @@ namespace RocksDbSharp
                     iterator.Next();
                 }
             }
-            //TODO: Need to review the usage of EnableFileDeletions and archived log files
-            //      See https://github.com/facebook/rocksdb/wiki/Replication-Helpers -> GetSortedWalFiles 
-            //_db.EnableFileDeletions();
         }
 
+        
         public IEnumerable<PooledReplicationBatch> GetPooledWalUpdates(ulong sequenceNumber)
         {
-            //_db.DisableFileDeletions();
+            
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
@@ -87,10 +82,6 @@ namespace RocksDbSharp
                     iterator.Next();
                 }
             }
-
-            //TODO: Need to review the usage of EnableFileDeletions and archived log files
-            //      See https://github.com/facebook/rocksdb/wiki/Replication-Helpers -> GetSortedWalFiles 
-            //_db.EnableFileDeletions();
         }
     }
 }
