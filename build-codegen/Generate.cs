@@ -123,6 +123,7 @@ namespace RocksDbPrepareCApiHeader
 
             //Fix missing callback name 
             modified = modified.Replace("void (*)(void* priv, unsigned lev,", "void (*logger_callback)(void* priv, unsigned int lev,");
+            modified = Regex.Replace(modified, @"typedef struct rocksdb_slice_t \{.*?}", @"typedef struct rocksdb_slice_t ", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
             if(modified.Contains("void (*)("))
             {
