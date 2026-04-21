@@ -201,7 +201,11 @@ else
 
         #fix min macos version on build file
         sed -i '' 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' build_tools/build_detect_platform
-        echo build_tools/build_detect_platform
+
+        #Fix test scripts failing on build file, see https://github.com/facebook/rocksdb/issues/14330
+        sed -i 's/-x c++ - -o test.o/-x c++ -c - -o test.o/' ./build_tools/build_detect_platform
+        cat ./build_tools/build_detect_platform
+
         
         export CFLAGS
         export LDFLAGS
@@ -216,6 +220,8 @@ else
             grep detected~ -e '-DZSTD'   &> /dev/null || fail "failed to detect zstd, install libzstd-dev"
             grep detected~ -e '-DGFLAGS' &> /dev/null && fail "gflags detected, see https://github.com/facebook/rocksdb/issues/2310" || true
         }) || fail "dependency detection failed"
+
+
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean
