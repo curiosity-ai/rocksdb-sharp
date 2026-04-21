@@ -11,15 +11,15 @@ steps:
     targetType: 'inline'
     script: |
       ROCKSDBVNUM=`cat rocksdbversion`
-      ROCKSDBVERSIONVALID="${ROCKSDBVNUM}"
+      ROCKSDBVERSIONFORPACKAGE="${ROCKSDBVNUM}"
       echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}.$(build.buildId)"
       echo "##vso[task.setvariable variable=ROCKSDBVERSIONBASE]${ROCKSDBVNUM}"
       # If version matches pattern like 10.10.1.1 → trim to first 3 parts
       if [[ "${ROCKSDBVNUM}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
-        ROCKSDBVERSIONVALID="${BASH_REMATCH[1]}"
+        ROCKSDBVERSIONFORPACKAGE="${BASH_REMATCH[1]}"
       fi
 
-      echo "##vso[task.setvariable variable=ROCKSDBVERSIONVALID]${ROCKSDBVERSIONVALID}"
+      echo "##vso[task.setvariable variable=ROCKSDBVERSIONFORPACKAGE]${ROCKSDBVERSIONFORPACKAGE}.$(build.buildId)"
     workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: NuGetToolInstaller@1
@@ -133,7 +133,7 @@ steps:
     command: 'build'
     projects: '$(Build.SourcesDirectory)/csharp/RocksDbSharp.csproj'
     workingDirectory: '$(Build.SourcesDirectory)/csharp/'
-    arguments: '-c Release /p:Version=$(ROCKSDBVERSIONVALID) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
+    arguments: '-c Release /p:Version=$(ROCKSDBVERSIONFORPACKAGE) /p:AllowUnsafeBlocks=True /p:LangVersion=latest'
 
 - task: CmdLine@2
   inputs:
