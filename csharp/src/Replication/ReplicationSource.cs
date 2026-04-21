@@ -4,20 +4,18 @@ using System.IO;
 
 namespace RocksDbSharp
 {
+    //Note: DisableFileDeletions() should be set for the database in order to correctly replicate data
     public class ReplicationSource
     {
         private readonly RocksDb _db;
-        private readonly string _dbPath;
 
-        public ReplicationSource(RocksDb db, string dbPath)
+        public ReplicationSource(RocksDb db)
         {
             _db = db;
-            _dbPath = dbPath;
         }
 
-        public ReplicationSession GetInitialState()
+        public ReplicationSession GetInitialState(string tempPath)
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), "rocksdb_replication_" + Guid.NewGuid().ToString());
             using (var cp = _db.Checkpoint())
             {
                 cp.Save(tempPath);
@@ -27,7 +25,6 @@ namespace RocksDbSharp
 
         public IEnumerable<ReplicationBatch> GetWalUpdates(ulong sequenceNumber)
         {
-            _db.DisableFileDeletions();
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
             {
                 while (iterator.Valid())
@@ -42,7 +39,7 @@ namespace RocksDbSharp
                         yield return new ReplicationBatch
                         {
                             SequenceNumber = seq,
-                            Data = data
+                            Data = data,
                         };
                     }
                     finally
@@ -53,7 +50,38 @@ namespace RocksDbSharp
                     iterator.Next();
                 }
             }
-            _db.EnableFileDeletions();
+        }
+
+        
+        public IEnumerable<PooledReplicationBatch> GetPooledWalUpdates(ulong sequenceNumber)
+        {
+            
+            using (var iterator = _db.GetUpdatesSince(sequenceNumber))
+            {
+                while (iterator.Valid())
+                {
+                    iterator.Status(); // Check for errors
+
+                    var batch = iterator.GetBatch(out ulong seq);
+
+                    try
+                    {
+                        byte[] data = batch.ToBytesPooled(out var size);
+                        yield return new PooledReplicationBatch
+                        {
+                            SequenceNumber = seq,
+                            PooledData = data,
+                            Length = size,
+                        };
+                    }
+                    finally
+                    {
+                        batch.Dispose();
+                    }
+
+                    iterator.Next();
+                }
+            }
         }
     }
 }

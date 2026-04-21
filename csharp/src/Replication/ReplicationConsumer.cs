@@ -33,5 +33,19 @@ namespace RocksDbSharp
                 _db.Write(writeBatch);
             }
         }
+
+#if !NETSTANDARD2_0
+        public void IngestBatch(ulong sequenceNo, ReadOnlySpan<byte> batchData)
+        {
+            if (_db == null) throw new InvalidOperationException("DB is not initialized.");
+
+            using (var writeBatch = WriteBatch.FromSpan(batchData))
+            {
+                _db.Write(writeBatch);
+            }
+        }
+#endif
+
     }
+
 }

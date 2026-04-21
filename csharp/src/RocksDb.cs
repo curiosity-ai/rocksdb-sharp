@@ -23,6 +23,9 @@ namespace RocksDbSharp
         internal dynamic References { get; } = new ExpandoObject();
 
         public IntPtr Handle { get; internal set; }
+        public string Path { get; internal set; }
+        public string WalPath { get; internal set; }
+        public string LogPath { get; internal set; }
 
         private RocksDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
         {
@@ -76,7 +79,12 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_open(options.Handle, pathSafe.Handle);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -85,7 +93,12 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, Native.MarshalBool(errorIfLogFileExists));
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -95,7 +108,12 @@ namespace RocksDbSharp
             using (var secondaryPathSafe = new RocksSafePath(secondaryPath))
             {
                 IntPtr db = Native.Instance.rocksdb_open_as_secondary(options.Handle, pathSafe.Handle, secondaryPathSafe.Handle);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -104,7 +122,12 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_open_with_ttl(options.Handle, pathSafe.Handle, ttlSeconds);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -125,7 +148,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -146,7 +174,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -167,7 +200,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
         
