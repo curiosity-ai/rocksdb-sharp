@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
@@ -7,12 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.2.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.2.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MSTest.TestAdapter" Version="4.2.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="4.2.1" />
-    <PackageReference Include="RocksDB" Version="10.4.2.63147" />
+    <!--NOTE: We reference the RocksDbSharp project directly but use the package to copy the required runtime files. 
+             If the version of RocksDB is updated in the package, don't forget to update the version in the
+             None section below 
+    -->
+    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
+    <PackageReference Include="RocksDB" Version="10.4.2.64152" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
+    <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.64152\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

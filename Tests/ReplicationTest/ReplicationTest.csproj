@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <PackageReference Include="MagicOnion.Client" Version="7.10.0" />
     <PackageReference Include="MagicOnion.Server" Version="7.10.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="4.2.1" />
@@ -19,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--NOTE: We reference the RocksDbSharp project directly but use the package to copy the required runtime files. 
+             If the version of RocksDB is updated in the package, don't forget to update the version in the
+             None section below 
+    -->
+    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
     <PackageReference Include="RocksDB" Version="10.4.2.64152" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
     <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.64152\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
