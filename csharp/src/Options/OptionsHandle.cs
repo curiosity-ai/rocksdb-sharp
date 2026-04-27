@@ -19,6 +19,10 @@ namespace RocksDbSharp
         // when the garbage collector cleans up the last managed reference
         internal dynamic References { get; } = new ExpandoObject();
 
+        //Stores some path values for the RocksDb class
+        internal string WalPath { get; set; }
+        internal string LogPath { get; set; }
+
         public IntPtr Handle { get; private set; }
 
         public OptionsHandle()

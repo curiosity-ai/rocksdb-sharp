@@ -16,7 +16,8 @@ namespace RocksDbSharp
 {
     public abstract partial class Native
     {
-        private unsafe string MarshalNullTermAsciiStr(IntPtr nullTermStr)
+        public static byte MarshalBool(bool input) => input ? (byte)1 : (byte)0;
+        public static unsafe string MarshalNullTermAsciiStr(IntPtr nullTermStr)
         {
             if (nullTermStr == IntPtr.Zero) return null;
 
@@ -1107,7 +1108,7 @@ namespace RocksDbSharp
                                                    bool overwrite_keys)
         {
             UIntPtr res_bytes = (UIntPtr)reserved_bytes;
-            return rocksdb_writebatch_wi_create(res_bytes, overwrite_keys);
+            return rocksdb_writebatch_wi_create(res_bytes, overwrite_keys ? (byte)1 : (byte)0);
         }
 
         public byte[] rocksdb_writebatch_wi_data(IntPtr wbHandle)

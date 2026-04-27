@@ -13,7 +13,7 @@ namespace RocksDbSharp
 
         public FlushOptions SetWaitForFlush(bool waitForFlush)
         {
-            Native.Instance.rocksdb_flushoptions_set_wait(Handle, waitForFlush);
+            Native.Instance.rocksdb_flushoptions_set_wait(Handle, Native.MarshalBool(waitForFlush));
             return this;
         }
     }

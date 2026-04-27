@@ -5,11 +5,17 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using RocksDbSharp;
+using System.Threading;
 
 Console.WriteLine("Hello World");
-var path = "test";
-Directory.CreateDirectory(path);
-var db = RocksDb.Open(new DbOptions().SetCreateIfMissing(true).SetDisableAutoCompactions(1), "test");
+
+string tempRoot = Path.Combine(Path.GetTempPath(), "RocksDbMergeTest");
+
+if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+
+Directory.CreateDirectory(tempRoot);
+
+var db = RocksDb.Open(new DbOptions().SetCreateIfMissing(true).SetDisableAutoCompactions(1), tempRoot);
 
 foreach (var i in Enumerable.Range(0, 10_000_00))
 {
@@ -18,10 +24,12 @@ foreach (var i in Enumerable.Range(0, 10_000_00))
     if (i % 10000 == 0) db.CompactRange(null, null, null);
 }
 
-
 db.Flush(new FlushOptions().SetWaitForFlush(true));
 
-while (true)
+var cts = new CancellationTokenSource();
+cts.CancelAfter(TimeSpan.FromSeconds(15));
+
+while (!cts.IsCancellationRequested)
 {
     Console.Write('.');
     using (var it = db.NewIterator())
@@ -33,3 +41,5 @@ while (true)
         }
     }
 }
+
+Console.WriteLine("Done!");

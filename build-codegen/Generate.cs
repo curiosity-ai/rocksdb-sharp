@@ -81,24 +81,21 @@ namespace RocksDbPrepareCApiHeader
             }
             if (funcName == "rocksdb_perfcontext_metric" && arg.NativeType == "int")
             {
-                yield return ("PerfMetric", "enum");
+                yield return ("PerfMetric", "enum"); 
                 yield return ("int", "default");
-            }
-            if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "success")
-            {
-                yield return ("out unsigned_char_ptr", "default");
             }
             if (funcName == "rocksdb_mergeoperator_create_full_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
             }
-            if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "success")
-            {
-                yield return ("out unsigned_char_ptr", "default");
-            }
             if (funcName == "rocksdb_mergeoperator_create_partial_merge" && arg.Name == "new_value_length")
             {
                 yield return ("out size_t_ptr", "default");
+            }
+
+            if (arg.NativeType == "unsigned char*")
+            {
+                yield return ("out byte", "default");
             }
 
             yield break;
@@ -108,6 +105,11 @@ namespace RocksDbPrepareCApiHeader
         {
             var version = await File.ReadAllTextAsync(@"../rocksdbversion");
             version = version.Trim(new char[] { ' ', '\r', '\n' });
+
+            if (version == "10.10.1.1") // Special tagged release
+            {
+                version = "10.10.1";
+            }
 
             Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
@@ -121,7 +123,10 @@ namespace RocksDbPrepareCApiHeader
 
             //Fix missing callback name 
             modified = modified.Replace("void (*)(void* priv, unsigned lev,", "void (*logger_callback)(void* priv, unsigned int lev,");
-
+            //modified = modified.Replace("typedef void (*rocksdb_compaction_service_cancel_awaiting_jobs_cb)(void* state);", "typedef void rocksdb_compaction_service_cancel_awaiting_jobs_cb rocksdb_compaction_service_cancel_awaiting_jobs_cb;");
+            //modified = Regex.Replace(modified, @"typedef struct rocksdb_slice_t \{.*?}", @"typedef struct rocksdb_slice_t ", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            //modified = Regex.Replace(modified, @"typedef rocksdb_compactionservice_scheduleresponse_t\* \(.*?\);", @"typedef rocksdb_compactionservice_scheduleresponse_t rocksdb_compactionservice_scheduleresponse_t;", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            //modified = Regex.Replace(modified, @"typedef int \(\*rocksdb_compaction_service_wait_cb\)\(.*?\);", @"typedef rocksdb_compaction_service_wait_cb rocksdb_compaction_service_wait_cb;", RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
             if(modified.Contains("void (*)("))
             {
                 Console.WriteLine("Warning: There might be a missing callback type name: void (*)(...)");
@@ -160,6 +165,16 @@ namespace RocksDbPrepareCApiHeader
                 foreach (var typeVariation in typeVariations.Where(tv => tv.Contains(typeAlias.Name)))
                     nativeRawCs.AppendLine(typeAlias.Variation(typeVariation));
             }
+
+            //Temporary fix for code generation for typedefs not currently being recognized
+            nativeRawCs.AppendLine("using rocksdb_slice_t  = System.IntPtr;");
+            nativeRawCs.AppendLine("using const_rocksdb_slice_t_ptr  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_schedule_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_wait_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_cancel_awaiting_jobs_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_compaction_service_on_installation_cb  = System.IntPtr;");
+
+
             nativeRawCs.AppendLine("#endregion");
 
             nativeRawCs.AppendLine("#region Delegates");
@@ -195,6 +210,20 @@ namespace RocksDbPrepareCApiHeader
                     nativeRawCs.AppendLineWithoutIndent($"#error Unable to create single delegate because arguments named {nameGroup.Key} have different delegate signatures");
                 }
             }
+
+            //Temporary fix for code generation for typedefs not currently being recognized
+            nativeRawCs.AppendLine("public delegate void on_flush_begin_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_flushjobinfo_t_ptr rocksdb_flushjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_flush_completed_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_flushjobinfo_t_ptr rocksdb_flushjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_compaction_begin_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_compactionjobinfo_t_ptr rocksdb_compactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_compaction_completed_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_compactionjobinfo_t_ptr rocksdb_compactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_subcompaction_begin_cb(void_ptr p0, const_rocksdb_subcompactionjobinfo_t_ptr rocksdb_subcompactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_subcompaction_completed_cb(void_ptr p0, const_rocksdb_subcompactionjobinfo_t_ptr rocksdb_subcompactionjobinfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_external_file_ingested_cb(void_ptr p0, rocksdb_t_ptr rocksdb_t, const_rocksdb_externalfileingestioninfo_t_ptr rocksdb_externalfileingestioninfo_t);");
+            nativeRawCs.AppendLine("public delegate void on_background_error_cb(void_ptr p0, uint32_t err, rocksdb_status_ptr_t_ptr rocksdb_status_t);");
+            nativeRawCs.AppendLine("public delegate void on_stall_conditions_changed_cb(void_ptr p0, const_rocksdb_writestallinfo_t_ptr rocksdb_writestallinfo_t);");
+            nativeRawCs.AppendLine("public delegate void rocksdb_logger_logv_cb(void_ptr p0, uint32_t log_level, char_ptr_ptr val);");
+            nativeRawCs.AppendLine("public delegate void on_memtable_sealed_cb(void_ptr p0, const_rocksdb_memtableinfo_t_ptr rocksdb_memtableinfo_t);");
+        
             nativeRawCs.AppendLine("#endregion");
 
             foreach (var region in regions.Where(r => (r.NativeEnums.Length + r.NativeFunctions.Length) > 0))
@@ -327,7 +356,7 @@ namespace RocksDbPrepareCApiHeader
             return GetManagedType(nativeArg.NativeType);
         }
 
-        private static string GetManagedType(string nativeType)
+        private static string GetManagedType(string nativeType, string funcName = null)
         {
             var managedType = nativeType
                 .RegexReplace(@"\s+", "_")
@@ -339,9 +368,11 @@ namespace RocksDbPrepareCApiHeader
 
             switch (managedType)
             {
-                case "const_bool":
-                case "unsigned_char": return "bool";
-                case "uint8_t": return "byte";
+                case "unsigned char": return "byte";
+                case "const_bool":    return "byte";
+                case "bool":          return "byte";
+                case "unsigned_char": return "byte";
+                case "uint8_t":       return "byte";
                 default:return managedType;
             }
         }
@@ -581,7 +612,7 @@ namespace RocksDbPrepareCApiHeader
         private static ManagedFunction GetManagedFunction(NativeFunction nativeFunc)
         {
             return new ManagedFunction(
-                returnType: GetManagedType(nativeFunc.ReturnType),
+                returnType: GetManagedType(nativeFunc.ReturnType, nativeFunc.Name),
                 name: nativeFunc.Name,
                 comment: nativeFunc.Comments.Trim(),
                 args: MakeUniqueNames(nativeFunc.Args.Select(a => GetManagedArg(a, nativeFunc.Args.Length, nativeFunc.Name)))
@@ -676,7 +707,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using int64_t = System.Int64;",
                 @"using uint64_t = System.UInt64;",
                 @"using uint64_t_ptr = System.IntPtr;",
-                @"using unsigned_char = System.Boolean;",
+                @"using unsigned_char = System.Byte;",
                 @"using unsigned_char_ptr = System.IntPtr;",
                 @"using char_ptr = System.IntPtr;",
                 @"using const_char_ptr = System.IntPtr;",

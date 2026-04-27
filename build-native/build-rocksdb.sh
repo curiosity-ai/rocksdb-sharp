@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROCKSDBVNUM=`cat ../rocksdbversion`
+ROCKSDBVNUM=$(cut -d. -f1-3 ../rocksdbversion)
 ROCKSDBVERSION=v${ROCKSDBVNUM}
 
 ROCKSDBREMOTE=https://github.com/facebook/rocksdb
@@ -126,8 +126,8 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         echo "starting rocksdb build"
 
         (cd build && {
-            cmake -G "Visual Studio 17 2022"  -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
-            #cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 17 2022"  -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
+            #cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
@@ -149,7 +149,7 @@ else
         LIBEXT=.dylib
         RUNTIME=osx-x64
         
-        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++17 -Wmissing-exception-spec "
+        CFLAGS="-Wno-defaulted-function-deleted -Wno-shadow -std=c++20 -Wmissing-exception-spec "
         
         echo "${CMAKE_INSTALL_LIBDIR}"
         echo "${CMAKE_INSTALL_INCLUDEDIR}"
@@ -201,7 +201,11 @@ else
 
         #fix min macos version on build file
         sed -i '' 's/-mmacosx-version-min=10\.12/-mmacosx-version-min=10\.13/g' build_tools/build_detect_platform
-        echo build_tools/build_detect_platform
+
+        #Fix test scripts failing on build file, see https://github.com/facebook/rocksdb/issues/14330
+        sed -i 's/-x c++ - -o test.o/-x c++ -c - -o test.o/' ./build_tools/build_detect_platform
+        cat ./build_tools/build_detect_platform
+
         
         export CFLAGS
         export LDFLAGS
@@ -216,6 +220,8 @@ else
             grep detected~ -e '-DZSTD'   &> /dev/null || fail "failed to detect zstd, install libzstd-dev"
             grep detected~ -e '-DGFLAGS' &> /dev/null && fail "gflags detected, see https://github.com/facebook/rocksdb/issues/2310" || true
         }) || fail "dependency detection failed"
+
+
 
         echo "----- Build 64 bit --------------------------------------------------"
         make clean

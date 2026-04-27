@@ -23,6 +23,9 @@ namespace RocksDbSharp
         internal dynamic References { get; } = new ExpandoObject();
 
         public IntPtr Handle { get; internal set; }
+        public string Path { get; internal set; }
+        public string WalPath { get; internal set; }
+        public string LogPath { get; internal set; }
 
         private RocksDb(IntPtr handle, dynamic optionsReferences, dynamic cfOptionsRefs, Dictionary<string, ColumnFamilyHandleInternal> columnFamilies = null)
         {
@@ -76,7 +79,12 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_open(options.Handle, pathSafe.Handle);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -84,8 +92,13 @@ namespace RocksDbSharp
         {
             using (var pathSafe = new RocksSafePath(path))
             {
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, errorIfLogFileExists);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only(options.Handle, pathSafe.Handle, Native.MarshalBool(errorIfLogFileExists));
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -95,7 +108,12 @@ namespace RocksDbSharp
             using (var secondaryPathSafe = new RocksSafePath(secondaryPath))
             {
                 IntPtr db = Native.Instance.rocksdb_open_as_secondary(options.Handle, pathSafe.Handle, secondaryPathSafe.Handle);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -104,7 +122,12 @@ namespace RocksDbSharp
             using (var pathSafe = new RocksSafePath(path))
             {
                 IntPtr db = Native.Instance.rocksdb_open_with_ttl(options.Handle, pathSafe.Handle, ttlSeconds);
-                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null);
+                return new RocksDb(db, optionsReferences: null, cfOptionsRefs: null)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -125,7 +148,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -136,7 +164,7 @@ namespace RocksDbSharp
                 string[] cfnames = columnFamilies.Names.ToArray();
                 IntPtr[] cfoptions = columnFamilies.OptionHandles.ToArray();
                 IntPtr[] cfhandles = new IntPtr[cfnames.Length];
-                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, errIfLogFileExists);
+                IntPtr db = Native.Instance.rocksdb_open_for_read_only_column_families(options.Handle, pathSafe.Handle, cfnames.Length, cfnames, cfoptions, cfhandles, Native.MarshalBool(errIfLogFileExists));
                 var cfHandleMap = new Dictionary<string, ColumnFamilyHandleInternal>();
                 foreach (var pair in cfnames.Zip(cfhandles.Select(cfh => new ColumnFamilyHandleInternal(cfh)), (name, cfh) => new { Name = name, Handle = cfh }))
                 {
@@ -146,7 +174,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
 
@@ -167,7 +200,12 @@ namespace RocksDbSharp
                 return new RocksDb(db,
                     optionsReferences: options.References,
                     cfOptionsRefs: columnFamilies.Select(cfd => cfd.Options.References).ToArray(),
-                    columnFamilies: cfHandleMap);
+                    columnFamilies: cfHandleMap)
+                {
+                    Path = path,
+                    LogPath = options.LogPath,
+                    WalPath = options.WalPath,
+                };
             }
         }
         
@@ -537,6 +575,28 @@ namespace RocksDbSharp
         public void TryCatchUpWithPrimary()
         {
             Native.Instance.rocksdb_try_catch_up_with_primary(Handle);
+        }
+
+        public void DisableFileDeletions()
+        {
+            Native.Instance.rocksdb_disable_file_deletions(Handle);
+        }
+
+        public void EnableFileDeletions()
+        {
+            Native.Instance.rocksdb_enable_file_deletions(Handle);
+        }
+
+        public TransactionLogIterator GetUpdatesSince(ulong sequenceNumber)
+        {
+            // options is null for now as we don't have a wrapper and pass null to C API
+            IntPtr iteratorHandle = Native.Instance.rocksdb_get_updates_since(Handle, sequenceNumber, IntPtr.Zero);
+            return new TransactionLogIterator(iteratorHandle);
+        }
+
+        public ulong GetLatestSequenceNumber()
+        {
+            return Native.Instance.rocksdb_get_latest_sequence_number(Handle);
         }
         
         public void Flush(FlushOptions flushOptions)

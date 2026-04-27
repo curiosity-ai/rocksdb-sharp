@@ -27,6 +27,6 @@ steps:
   
 - task: AzureCLI@1
   inputs:
-    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
+    azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/linux-x64/native/librocksdb.so --account-name curiositydev  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).so  --overwrite true'
+    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/linux-x64/native/librocksdb.so --account-name curiosityreleases  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).so  --overwrite true'

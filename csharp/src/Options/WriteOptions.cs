@@ -24,7 +24,7 @@ namespace RocksDbSharp
 
         public WriteOptions SetSync(bool value)
         {
-            Native.Instance.rocksdb_writeoptions_set_sync(Handle, value);
+            Native.Instance.rocksdb_writeoptions_set_sync(Handle, Native.MarshalBool(value));
             return this;
         }
 

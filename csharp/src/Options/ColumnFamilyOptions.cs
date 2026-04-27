@@ -323,13 +323,13 @@ namespace RocksDbSharp
             return getMergeOperator();
         }
 
-        private unsafe static IntPtr MergeOperator_PartialMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+        private unsafe static IntPtr MergeOperator_PartialMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength)
         {
             var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             return mergeOperator.PartialMerge(key, keyLength, operandsList, operandsListLength, numOperands, out success, out newValueLength);
         }
 
-        private unsafe static IntPtr MergeOperator_FullMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out IntPtr success, out IntPtr newValueLength)
+        private unsafe static IntPtr MergeOperator_FullMerge(IntPtr state, IntPtr key, UIntPtr keyLength, IntPtr existingValue, UIntPtr existingValueLength, IntPtr operandsList, IntPtr operandsListLength, int numOperands, out byte success, out IntPtr newValueLength)
         {
             var mergeOperator = GetMergeOperatorFromPtr((*((OptionsBase.MergeOperatorState*)state)).GetMergeOperatorPtr);
             return mergeOperator.FullMerge(key, keyLength, existingValue, existingValueLength, operandsList, operandsListLength, numOperands, out success, out newValueLength);
@@ -684,7 +684,7 @@ namespace RocksDbSharp
         /// <returns></returns>
         public T SetLevelCompactionDynamicLevelBytes(bool value)
         {
-            Native.Instance.rocksdb_options_set_level_compaction_dynamic_level_bytes(Handle, value);
+            Native.Instance.rocksdb_options_set_level_compaction_dynamic_level_bytes(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
@@ -896,7 +896,7 @@ namespace RocksDbSharp
             bool full_scan_mode,
             bool store_index_in_file)
         {
-            Native.Instance.rocksdb_options_set_plain_table_factory(Handle, user_key_len, bloom_bits_per_key, hash_table_ratio, (UIntPtr)index_sparseness, (UIntPtr)huge_page_tlb_size, encoding_type, full_scan_mode, store_index_in_file);
+            Native.Instance.rocksdb_options_set_plain_table_factory(Handle, user_key_len, bloom_bits_per_key, hash_table_ratio, (UIntPtr)index_sparseness, (UIntPtr)huge_page_tlb_size, encoding_type, Native.MarshalBool(full_scan_mode), Native.MarshalBool(store_index_in_file));
             return (T)this;
         }
 
@@ -977,7 +977,7 @@ namespace RocksDbSharp
         /// </summary>
         public T SetInplaceUpdateSupport(bool value)
         {
-            Native.Instance.rocksdb_options_set_inplace_update_support(Handle, value);
+            Native.Instance.rocksdb_options_set_inplace_update_support(Handle, Native.MarshalBool(value));
             return (T)this;
         }
 
