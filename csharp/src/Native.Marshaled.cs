@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Transitional;
@@ -249,6 +250,55 @@ namespace RocksDbSharp
             return result;
         }
 
+        public unsafe bool rocksdb_get(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            Span<byte> knownFixedSizeValue,
+            out IntPtr errptr,
+            ColumnFamilyHandle cf = null)
+        {
+            UIntPtr skLength = (UIntPtr)key.Length;
+            IntPtr resultPtr;
+            UIntPtr valueLength;
+
+            fixed (byte* ptr = &MemoryMarshal.GetReference(key))
+            {
+                resultPtr = cf is null
+                                ? rocksdb_get(db, read_options, ptr, skLength, out valueLength, out errptr)
+                                : rocksdb_get_cf(db, read_options, cf.Handle, ptr, skLength, out valueLength, out errptr);
+            }
+
+            if (errptr != IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if (resultPtr == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            if ((int)valueLength != knownFixedSizeValue.Length)
+            {
+                rocksdb_free(resultPtr);
+                ThrowLengthMismatch((int)valueLength, knownFixedSizeValue.Length);
+            }
+
+            var sourceSpan = new Span<byte>((void*)resultPtr, (int)valueLength);
+            sourceSpan.CopyTo(knownFixedSizeValue);
+
+            rocksdb_free(resultPtr);
+
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowLengthMismatch(int readLength, int expectedLength)
+        {
+            throw new Exception($"Value length mismatch, expected {expectedLength}, found {readLength}");
+        }
+
         public unsafe bool rocksdb_has_key(
             IntPtr db,
             IntPtr read_options,
@@ -357,6 +407,13 @@ namespace RocksDbSharp
             }
         }
 #endif
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowRocksDbException(IntPtr intPtr)
+        {
+            throw new RocksDbException(intPtr);
+        }
+
 
         /// <summary>
         /// Executes a multi_get with automatic marshalling

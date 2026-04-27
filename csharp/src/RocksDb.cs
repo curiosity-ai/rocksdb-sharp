@@ -210,6 +210,11 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf);
         }
 
+        public bool GetFixedSizeValue(ReadOnlySpan<byte> key, Span<byte> fixedSizeValueOutput, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
+        {
+            return Native.Instance.rocksdb_get(Handle, (readOptions ?? DefaultReadOptions).Handle, key, fixedSizeValueOutput, cf);
+        }
+
         public bool HasKey(ReadOnlySpan<byte> key, ColumnFamilyHandle cf = null, ReadOptions readOptions = null)
         {
             return Native.Instance.rocksdb_has_key(Handle, (readOptions ?? DefaultReadOptions).Handle, key, cf);

@@ -25,7 +25,7 @@ namespace RocksDbSharp
             rocksdb_put(db, writeOptions, key, val, out IntPtr errptr, cf, encoding);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -52,7 +52,7 @@ namespace RocksDbSharp
 
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -82,7 +82,7 @@ namespace RocksDbSharp
 
                 if (errptr != IntPtr.Zero)
                 {
-                    throw new RocksDbException(errptr);
+                    ThrowRocksDbException(errptr);
                 }
             }
         }
@@ -111,7 +111,7 @@ namespace RocksDbSharp
 
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -141,7 +141,7 @@ namespace RocksDbSharp
 
                 if (errptr != IntPtr.Zero)
                 {
-                    throw new RocksDbException(errptr);
+                    ThrowRocksDbException(errptr);
                 }
             }
         }
@@ -157,7 +157,7 @@ namespace RocksDbSharp
             var result = rocksdb_get(db, read_options, key, out IntPtr errptr, cf, encoding);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -177,7 +177,7 @@ namespace RocksDbSharp
                 : rocksdb_get_cf(db, read_options, cf.Handle, key, sklength, out valLength, out errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); vallen = default; return default; //Won't be reached
             }
 
             vallen = (long)valLength;
@@ -194,7 +194,7 @@ namespace RocksDbSharp
             var result = rocksdb_get(db, read_options, key, keyLength == 0 ? key.Length : keyLength, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -211,7 +211,7 @@ namespace RocksDbSharp
             
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -245,7 +245,7 @@ namespace RocksDbSharp
 
                     if (errptr != IntPtr.Zero)
                     {
-                        throw new RocksDbException(errptr);
+                        ThrowRocksDbException(errptr); return default; //Won't be reached
                     }
 
                     if (resultPtr == IntPtr.Zero)
@@ -271,7 +271,23 @@ namespace RocksDbSharp
             var result = rocksdb_get(db, read_options, key, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
+            }
+
+            return result;
+        }
+
+        public bool rocksdb_get(
+            IntPtr db,
+            IntPtr read_options,
+            ReadOnlySpan<byte> key,
+            Span<byte> knownFixedSizeValue,
+            ColumnFamilyHandle cf = null)
+        {
+            var result = rocksdb_get(db, read_options, key, knownFixedSizeValue, out IntPtr errptr, cf);
+            if (errptr != IntPtr.Zero)
+            {
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -287,7 +303,7 @@ namespace RocksDbSharp
 
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -302,7 +318,7 @@ namespace RocksDbSharp
             var result = rocksdb_get(db, read_options, key, deserializer, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -318,7 +334,7 @@ namespace RocksDbSharp
             var result = rocksdb_get(db, read_options, key, deserializer, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -343,7 +359,7 @@ namespace RocksDbSharp
             {
                 if (errptr != IntPtr.Zero)
                 {
-                    throw new RocksDbException(errptr);
+                    ThrowRocksDbException(errptr); return default; //Won't be reached
                 }
             }
 
@@ -364,7 +380,7 @@ namespace RocksDbSharp
             {
                 if (errptr != IntPtr.Zero)
                 {
-                    throw new RocksDbException(errptr);
+                    ThrowRocksDbException(errptr); return default; //Won't be reached
                 }
             }
 
@@ -380,7 +396,7 @@ namespace RocksDbSharp
             rocksdb_delete(db, writeOptions, key, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -395,7 +411,7 @@ namespace RocksDbSharp
             rocksdb_delete(db, writeOptions, key, sklength, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -410,7 +426,7 @@ namespace RocksDbSharp
             rocksdb_delete_cf(db, writeOptions, cf.Handle, key, (UIntPtr)keylen, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -421,7 +437,7 @@ namespace RocksDbSharp
             rocksdb_ingest_external_file(db, file_list, llen, opt, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -432,7 +448,7 @@ namespace RocksDbSharp
             rocksdb_ingest_external_file_cf(db, handle, file_list, llen, opt, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -449,7 +465,7 @@ namespace RocksDbSharp
             rocksdb_sstfilewriter_add(writer, key, sklength, val, svlength, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -461,7 +477,7 @@ namespace RocksDbSharp
             rocksdb_sstfilewriter_add(writer, key, val, out IntPtr errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr);
             }
         }
 
@@ -475,7 +491,7 @@ namespace RocksDbSharp
             var result = rocksdb_writebatch_wi_get_from_batch(wb, options, key, out IntPtr errptr, cf, encoding);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -495,7 +511,7 @@ namespace RocksDbSharp
                 : rocksdb_writebatch_wi_get_from_batch_cf(wb, options, cf.Handle, key, sklength, out valLength, out errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); vallen = default;  return default; //Won't be reached
             }
 
             vallen = (ulong)valLength;
@@ -512,7 +528,7 @@ namespace RocksDbSharp
             var result = rocksdb_writebatch_wi_get_from_batch(wb, options, key, keyLength == 0 ? (ulong)key.Length : keyLength, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -529,7 +545,7 @@ namespace RocksDbSharp
             var result = rocksdb_writebatch_wi_get_from_batch_and_db(wb, db, read_options, key, out IntPtr errptr, cf, encoding);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
@@ -550,7 +566,7 @@ namespace RocksDbSharp
                 : rocksdb_writebatch_wi_get_from_batch_and_db_cf(wb, db, read_options, cf.Handle, key, sklength, out valLength, out errptr);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); vallen = default;  return default; //Won't be reached
             }
 
             vallen = (ulong)valLength;
@@ -568,7 +584,7 @@ namespace RocksDbSharp
             var result = rocksdb_writebatch_wi_get_from_batch_and_db(wb, db, read_options, key, keyLength == 0 ? (ulong)key.Length : keyLength, out IntPtr errptr, cf);
             if (errptr != IntPtr.Zero)
             {
-                throw new RocksDbException(errptr);
+                ThrowRocksDbException(errptr); return default; //Won't be reached
             }
 
             return result;
