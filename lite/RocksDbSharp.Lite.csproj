@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\csharp\RocksDbSharp.csproj" />
+    <PackageReference Include="RocksDB" Version="10.4.2.64152" />
   </ItemGroup>
 
 </Project>

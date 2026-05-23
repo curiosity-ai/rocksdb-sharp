@@ -13,11 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--NOTE: We reference the RocksDbSharp.Lite project directly but use the RocksDB package to copy the required runtime files.
-             If the version of RocksDB is updated in the package, don't forget to update the version below.
-    -->
     <ProjectReference Include="..\..\lite\RocksDbSharp.Lite.csproj" />
-    <PackageReference Include="RocksDB" Version="10.4.2.64152" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
-    <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.64152\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

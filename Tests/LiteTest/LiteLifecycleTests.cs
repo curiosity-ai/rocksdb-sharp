@@ -125,39 +125,22 @@ public class LiteLifecycleTests
     [TestMethod]
     public void ConfigureColumnFamily_HookIsInvoked()
     {
-        // ConfigureColumnFamily's parameter type is RocksDbSharp.ColumnFamilyOptions, which lives
-        // in an assembly this test project does not reference directly (because RocksDbSharp's
-        // PackageId collides with the RocksDB runtime NuGet). Build the delegate via Expressions
-        // so the test compiles against only the Lite API surface.
         int invocations = 0;
-        var options = new LiteDatabaseOptions();
-        var prop = typeof(LiteDatabaseOptions).GetProperty("ConfigureColumnFamily")!;
-        var paramType = prop.PropertyType.GetGenericArguments()[0];
-        prop.SetValue(options, BuildVoidAction(paramType, () => invocations++));
-
+        var options = new LiteDatabaseOptions
+        {
+            ConfigureColumnFamily = _ => invocations++,
+        };
         using var db = new LiteDatabase(_path, options);
         var col = db.GetCollection<User>("users");
         col.EnsureIndex("email", u => u.Email);
         Assert.IsTrue(invocations >= 2, $"Expected ConfigureColumnFamily invoked at least twice, got {invocations}");
     }
 
-    private static System.Delegate BuildVoidAction(Type paramType, Action onInvoke)
-    {
-        var param = System.Linq.Expressions.Expression.Parameter(paramType, "cfo");
-        var body = System.Linq.Expressions.Expression.Invoke(System.Linq.Expressions.Expression.Constant(onInvoke));
-        return System.Linq.Expressions.Expression
-            .Lambda(typeof(Action<>).MakeGenericType(paramType), body, param)
-            .Compile();
-    }
-
     [TestMethod]
     public void OpenWithCreateIfMissingFalse_FailsOnMissing()
     {
         var options = new LiteDatabaseOptions { CreateIfMissing = false };
-        bool threw = false;
-        try { _ = new LiteDatabase(_path, options); }
-        catch (Exception) { threw = true; }
-        Assert.IsTrue(threw, "Expected open to throw when CreateIfMissing=false and the database does not exist.");
+        Assert.ThrowsExactly<RocksDbSharp.RocksDbException>(() => _ = new LiteDatabase(_path, options));
     }
 
     [TestMethod]

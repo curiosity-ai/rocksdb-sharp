@@ -114,6 +114,9 @@ writers on the same id race, last-writer-wins.
 dotnet test Tests/LiteTest/LiteTests.csproj
 ```
 
-The test project pulls native RocksDB binaries via the `RocksDB` NuGet package
-(`ExcludeAssets="compile;runtime"`) and references the library by project reference,
-matching the pattern used by `Tests/MergeTest` and `Tests/ConsoleTest`.
+Both `lite/RocksDbSharp.Lite.csproj` and `Tests/LiteTest/LiteTests.csproj` consume
+RocksDB exclusively through the `RocksDB` NuGet package — no project reference to
+`csharp/RocksDbSharp.csproj`. The test project references only the Lite project and
+picks up the managed assembly and the native runtime files transitively from the
+package. (The older `Tests/MergeTest` and `Tests/ConsoleTest` use a mixed
+`ProjectReference + ExcludeAssets` pattern that pre-dates this convention.)
