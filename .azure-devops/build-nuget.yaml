@@ -76,7 +76,14 @@ steps:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-x64/native/rocksdb.dll --account-name curiosityreleases  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSIONBASE).dll'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-x64/native/rocksdb.dll --account-name curiosityreleases  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSIONBASE)-x64.dll'
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'Curiosity GmbH Azure'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: 'az storage blob download -f $(Build.SourcesDirectory)/csharp/runtimes/win-arm64/native/rocksdb.dll --account-name curiosityreleases  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSIONBASE)-arm64.dll'
 
 - task: AzureCLI@2
   inputs:

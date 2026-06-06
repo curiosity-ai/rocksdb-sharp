@@ -22,6 +22,8 @@ This is now buildable on Windows thanks to the Bing team at Microsoft who are ac
 
 This will create a rocksdb.dll and copy it to the where the .sln file is expecting it to be.  (If you only need to run this in Windows, you can remove the references to the other two platform binaries from the .sln)
 
+Set `WINDOWS_TARGET_ARCH=arm64` before running the script to cross-build the Windows ARM64 runtime.
+
 ### Linux Native Build Instructions
 
 1. ```./build-rocksdb.sh```
