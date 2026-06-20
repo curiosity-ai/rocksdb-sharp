@@ -1,11 +1,19 @@
 trigger:
 - master
 
-variables:
-  vsdir: 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\'
-
 pool:
   vmImage: 'windows-latest'
+
+strategy:
+  matrix:
+    x64:
+      windowsTargetArch: 'x64'
+      windowsRuntimeId: 'win-x64'
+      vsDevCmdArch: 'amd64'
+    arm64:
+      windowsTargetArch: 'arm64'
+      windowsRuntimeId: 'win-arm64'
+      vsDevCmdArch: 'arm64'
 
 steps:
 
@@ -24,7 +32,7 @@ steps:
   inputs:
     script: |
       echo here1
-      call "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\Tools\\vsdevcmd" -arch=x64 && bash build-rocksdb.sh
+      call "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\Tools\\vsdevcmd" -host_arch=amd64 -arch=$(vsDevCmdArch) && set WINDOWS_TARGET_ARCH=$(windowsTargetArch) && bash build-rocksdb.sh
       echo here2
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
@@ -36,4 +44,4 @@ steps:
   inputs:
     azureSubscription: 'Curiosity GmbH Azure'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/win-x64/native/rocksdb.dll --account-name curiosityreleases  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSION).dll  --overwrite true'
+    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/$(windowsRuntimeId)/native/rocksdb.dll --account-name curiosityreleases  -c rocksdb  -n rocksdb-v$(ROCKSDBVERSION)-$(windowsTargetArch).dll  --overwrite true'

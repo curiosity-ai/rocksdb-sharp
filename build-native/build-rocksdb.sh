@@ -65,12 +65,35 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
     BASEDIRWIN=$(cd "${BASEDIR}" && pwd -W)
     
-    export VCPKG_C_FLAGS=/arch:SSE2
-    export VCPKG_CXX_FLAGS=/arch:SSE2
-    export CMAKE_C_FLAGS=/arch:SSE2
-    export CMAKE_CXX_FLAGS=/arch:SSE2
+    WINDOWS_TARGET_ARCH="${WINDOWS_TARGET_ARCH:-x64}"
+    case "${WINDOWS_TARGET_ARCH}" in
+        x64)
+            VCPKG_TRIPLET="x64-windows-static"
+            CMAKE_ARCH="x64"
+            MSBUILD_PLATFORM="x64"
+            RUNTIME="win-x64"
+            WINDOWS_ARCH_FLAGS="/arch:SSE2"
+            ;;
+        arm64)
+            VCPKG_TRIPLET="arm64-windows-static"
+            CMAKE_ARCH="ARM64"
+            MSBUILD_PLATFORM="ARM64"
+            RUNTIME="win-arm64"
+            WINDOWS_ARCH_FLAGS=""
+            ;;
+        *)
+            fail "Unsupported WINDOWS_TARGET_ARCH: ${WINDOWS_TARGET_ARCH}"
+            ;;
+    esac
+
+    echo "Building RocksDB for Windows target architecture ${WINDOWS_TARGET_ARCH}"
+
+    export VCPKG_C_FLAGS="${WINDOWS_ARCH_FLAGS}"
+    export VCPKG_CXX_FLAGS="${WINDOWS_ARCH_FLAGS}"
+    export CMAKE_C_FLAGS="${WINDOWS_ARCH_FLAGS}"
+    export CMAKE_CXX_FLAGS="${WINDOWS_ARCH_FLAGS}"
     
-    # mkdir -p vcpkg-curiosity || fail "unable to make vcpkg-curiosity directory"
+    # mkdir -p vcpkg-curiosity || fail "unable to make vcpkg directory"
     # (cd vcpkg-curiosity && {
     #     checkout "vcpkg" "https://github.com/curiosity-ai/vcpkg-registry" "main" "main"
     #     ls
@@ -87,7 +110,7 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
 
         # Newer DevOps images have vcpkg pre-installed
         echo "vcpkg installing packages"
-        vcpkg.exe install zlib:x64-windows-static snappy:x64-windows-static lz4:x64-windows-static zstd:x64-windows-static || fail "unable to install libraries with vcpkg.exe"
+        vcpkg.exe install zlib:${VCPKG_TRIPLET} snappy:${VCPKG_TRIPLET} lz4:${VCPKG_TRIPLET} zstd:${VCPKG_TRIPLET} || fail "unable to install libraries with vcpkg.exe"
         echo "vcpkg packages installed"
         ls -R "C:/vcpkg/packages/"
     })
@@ -107,38 +130,38 @@ if [[ $OSINFO == *"MSYS"* || $OSINFO == *"MINGW"* ]]; then
         
         export
         
-        export ZLIB_INCLUDE="${VCPKG_HOME}/zlib_x64-windows-static/include"
-        export ZLIB_LIB_DEBUG="${VCPKG_HOME}/zlib_x64-windows-static/debug/lib/zlib.lib"
-        export ZLIB_LIB_RELEASE="${VCPKG_HOME}/zlib_x64-windows-static/lib/zlib.lib"
+        export ZLIB_INCLUDE="${VCPKG_HOME}/zlib_${VCPKG_TRIPLET}/include"
+        export ZLIB_LIB_DEBUG="${VCPKG_HOME}/zlib_${VCPKG_TRIPLET}/debug/lib/zlib.lib"
+        export ZLIB_LIB_RELEASE="${VCPKG_HOME}/zlib_${VCPKG_TRIPLET}/lib/zlib.lib"
         
-        export LZ4_INCLUDE="${VCPKG_HOME}/lz4_x64-windows-static/include"
-        export LZ4_LIB_DEBUG="${VCPKG_HOME}/lz4_x64-windows-static/debug/lib/lz4.lib"
-        export LZ4_LIB_RELEASE="${VCPKG_HOME}/lz4_x64-windows-static/lib/lz4.lib"
+        export LZ4_INCLUDE="${VCPKG_HOME}/lz4_${VCPKG_TRIPLET}/include"
+        export LZ4_LIB_DEBUG="${VCPKG_HOME}/lz4_${VCPKG_TRIPLET}/debug/lib/lz4.lib"
+        export LZ4_LIB_RELEASE="${VCPKG_HOME}/lz4_${VCPKG_TRIPLET}/lib/lz4.lib"
 
-        export SNAPPY_INCLUDE="${VCPKG_HOME}/snappy_x64-windows-static/include"
-        export SNAPPY_LIB_DEBUG="${VCPKG_HOME}/snappy_x64-windows-static/debug/lib/snappy.lib"
-        export SNAPPY_LIB_RELEASE="${VCPKG_HOME}/snappy_x64-windows-static/lib/snappy.lib"
+        export SNAPPY_INCLUDE="${VCPKG_HOME}/snappy_${VCPKG_TRIPLET}/include"
+        export SNAPPY_LIB_DEBUG="${VCPKG_HOME}/snappy_${VCPKG_TRIPLET}/debug/lib/snappy.lib"
+        export SNAPPY_LIB_RELEASE="${VCPKG_HOME}/snappy_${VCPKG_TRIPLET}/lib/snappy.lib"
 
-        export ZSTD_INCLUDE="${VCPKG_HOME}/zstd_x64-windows-static/include"
-        export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_x64-windows-static/debug/lib/zstd_d.lib"
-        export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_x64-windows-static/lib/zstd.lib"
+        export ZSTD_INCLUDE="${VCPKG_HOME}/zstd_${VCPKG_TRIPLET}/include"
+        export ZSTD_LIB_DEBUG="${VCPKG_HOME}/zstd_${VCPKG_TRIPLET}/debug/lib/zstd_d.lib"
+        export ZSTD_LIB_RELEASE="${VCPKG_HOME}/zstd_${VCPKG_TRIPLET}/lib/zstd.lib"
                 
         echo "starting rocksdb build"
 
         (cd build && {
-            cmake -G "Visual Studio 17 2022"  -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
+            cmake -G "Visual Studio 17 2022"  -A ${CMAKE_ARCH} -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="${WINDOWS_ARCH_FLAGS} /wd4267" -DCMAKE_C_FLAGS="${WINDOWS_ARCH_FLAGS}" -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
             #cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_CXX_COMPILER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/clang-cl.exe" -DCMAKE_LINKER="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/bin/lld-link.exe" -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="/arch:SSE2 /wd4267" -DCMAKE_C_FLAGS=/arch:SSE2 -DWITH_WINDOWS_UTF8_FILENAMES=1 -DROCKSDB_WINDOWS_UTF8_FILENAMES=1 -DWITH_TESTS=0 -DWITH_MD_LIBRARY=0 -DOPTDBG=1 -DGFLAGS=0 -DSNAPPY=1 -DWITH_ZLIB=1 -DWITH_LZ4=1 -DWITH_ZSTD=1 -DPORTABLE=1 -DSNAPPY_REQUIRE_AVX=0 -DSNAPPY_REQUIRE_AVX2=0 -DSNAPPY_HAVE_BMI2=0 -DSTATIC_BMI2=0 -DWITH_TOOLS=0 -DWITH_BENCHMARK_TOOLS=0 -DWITH_TESTS=0 -DWITH_FOLLY_DISTRIBUTED_MUTEX=0 -DUSE_RTTI=1  .. || fail "Running cmake failed"
             update_vcxproj || warn "failed to patch vcxproj files for static vc runtime"
         }) || fail "cmake build generation failed"
 
-        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /m:$CONCURRENCY /p:VCBuildAdditionalOptions=/arch:SSE2" || fail "Rocksdb release build failed"
+        cmd //c "msbuild build/rocksdb.sln /p:Configuration=Release /p:Platform=${MSBUILD_PLATFORM} /m:$CONCURRENCY /p:VCBuildAdditionalOptions=${WINDOWS_ARCH_FLAGS}" || fail "Rocksdb release build failed"
 
         echo "finished rocksdb build"
 
         ls -R ./build/Release/
 
-        mkdir -p ../runtimes/win-x64/native && cp -v ./build/Release/rocksdb-shared.dll ../runtimes/win-x64/native/rocksdb.dll
-        mkdir -p ../rocksdb-${ROCKSDBVERSION}/win-x64/native && cp -v ./build/Release/rocksdb-shared.dll ../rocksdb-${ROCKSDBVERSION}/win-x64/native/rocksdb.dll
+        mkdir -p ../runtimes/${RUNTIME}/native && cp -v ./build/Release/rocksdb-shared.dll ../runtimes/${RUNTIME}/native/rocksdb.dll
+        mkdir -p ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native && cp -v ./build/Release/rocksdb-shared.dll ../rocksdb-${ROCKSDBVERSION}/${RUNTIME}/native/rocksdb.dll
     }) || fail "rocksdb build failed"
 else
     
