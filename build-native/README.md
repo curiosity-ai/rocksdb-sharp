@@ -42,8 +42,8 @@ match what upstream links into its own release artifacts.
 ```
 
 Defaults to the architecture and libc of the machine it runs on. Requires
-`make`, a C++ toolchain, `git`, `curl` and — for the jemalloc flavour —
-`libjemalloc-dev`.
+`make`, `cmake`, a C++ toolchain, `git`, `curl`, and `libjemalloc-dev` for the
+jemalloc flavour.
 
 For `linux-x64`/glibc it produces two libraries:
 
@@ -51,6 +51,26 @@ For `linux-x64`/glibc it produces two libraries:
 * `librocksdb-jemalloc.so`, the same build with jemalloc statically linked in.
   RocksDbSharp probes for this one first on Linux, so it is what most
   applications end up loading.
+
+The jemalloc library is the one exception to the self-contained rule: it links
+jemalloc dynamically and therefore only loads in a process that already has
+jemalloc mapped, such as one started under `LD_PRELOAD=libjemalloc.so.2`.
+
+That is deliberate. RocksDB's `-DROCKSDB_JEMALLOC` support assumes jemalloc *is*
+the process allocator — it calls `malloc_usable_size` on ordinary
+`new`-allocated objects throughout the codebase, while the nodump allocator
+hands that same function pointers from `mallocx`, and the two only agree when a
+single jemalloc serves both. Embedding a private copy satisfies neither half:
+it cannot take over `malloc` for the process (memory allocated inside libc by
+e.g. `strdup` would then be freed by jemalloc, which crashes), and if it does
+not take over `malloc`, glibc's `malloc_usable_size` ends up reading the header
+of a jemalloc allocation. A statically linked jemalloc could not be loaded here
+anyway: distribution builds use the initial-exec thread-local storage model,
+which cannot be satisfied by a library `dlopen`ed after startup.
+
+Where jemalloc is absent, the library simply does not load and RocksDbSharp
+falls through to `librocksdb.so` — which is why the plain library must never
+depend on jemalloc itself.
 
 Cross compiling to `arm64` needs `g++-aarch64-linux-gnu` on `PATH`.
 

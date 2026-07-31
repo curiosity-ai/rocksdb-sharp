@@ -5,8 +5,9 @@
 #     . "$(dirname "$0")/common.sh"
 #
 # It provides logging helpers, the rocksdb version/remote to build, a source
-# checkout helper and the routine that builds the compression libraries as
-# static PIC archives so that the resulting rocksdb library is self contained.
+# checkout helper, the routine that builds the compression libraries as static
+# PIC archives so that the resulting rocksdb library is self contained, and the
+# checks each build script runs over what it produced.
 
 # shellcheck shell=bash
 
@@ -62,7 +63,9 @@ checkout() {
     info "fetching ${fetchref} from ${remote}"
     git fetch --depth 1 "$remote" "$fetchref" || fail "Unable to fetch ${fetchref} from ${remote}"
     git checkout --force FETCH_HEAD || fail "Unable to checkout $name ${fetchref}"
-    git clean -xdf -e '*.tar.gz' -e 'zlib-*' -e 'bzip2-*' -e 'snappy-*' -e 'lz4-*' -e 'zstd-*' -e '*.a' > /dev/null
+    # Keep the downloaded dependency sources, they are expensive to fetch again.
+    git clean -xdf -e '*.tar.gz' -e '*.a' \
+        -e 'zlib-*' -e 'bzip2-*' -e 'snappy-*' -e 'lz4-*' -e 'zstd-*' > /dev/null
 }
 
 # Check out the rocksdb release matching ../rocksdbversion.
@@ -166,9 +169,9 @@ verify_library() {
     info "verified $(basename "$lib") ($(du -hL "$lib" | cut -f1))"
 }
 
-# Fail if the library links against anything outside the given list of allowed
+# Fail if the library links against anything outside the given list of expected
 # runtime dependencies. Everything else is supposed to be linked in statically.
-verify_no_foreign_dependencies() {
+verify_dependencies() {
     local lib="$1"
     local readelf="$2"
     shift 2

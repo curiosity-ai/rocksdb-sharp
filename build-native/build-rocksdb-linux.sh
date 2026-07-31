@@ -7,12 +7,12 @@
 #
 # Outputs, under build-native/runtimes/linux-<arch>/native/:
 #
-#   glibc: librocksdb.so            plain build
-#          librocksdb-jemalloc.so   same, with jemalloc statically linked in
+#   glibc: librocksdb.so            plain build, self contained
+#          librocksdb-jemalloc.so   same, linked against jemalloc
 #   musl:  librocksdb-musl.so
 #
-# --no-jemalloc skips the jemalloc flavour, for targets where no jemalloc build
-# for the target architecture is available.
+# --no-jemalloc skips the jemalloc flavour, for targets where no jemalloc for
+# the target architecture is available to link against.
 #
 # zlib, bzip2, snappy, lz4 and zstd are compiled from source and linked in
 # statically, so the published library only depends on the system C/C++
@@ -125,11 +125,11 @@ checkout_rocksdb
 # CPU of the target architecture.
 export PORTABLE=1
 
-# build_detect_platform links jemalloc dynamically whenever it finds it on the
-# build machine, which would leave every library here needing libjemalloc.so.2
-# at runtime — including the plain one that exists to be the fallback when
-# jemalloc is unavailable. The jemalloc flavour below opts back in explicitly,
-# and links it in statically.
+# build_detect_platform links jemalloc whenever it finds it on the build
+# machine, which would leave every library here needing libjemalloc.so.2 at
+# runtime -- including the plain one, whose whole job is to be the fallback for
+# when jemalloc is unavailable. The jemalloc flavour below opts back in
+# explicitly.
 export ROCKSDB_DISABLE_JEMALLOC=1
 
 build_static_compression_libs "$CONCURRENCY"
@@ -178,6 +178,13 @@ build_shared_lib() {
     }) || fail "${label} build failed"
 }
 
+# The C runtime, and nothing else. A compression library or libstdc++ turning
+# up here would have to be installed on the machine running the package for the
+# library to load at all.
+BASE_DEPENDENCIES="libc.so.6 libm.so.6 libdl.so.2 librt.so.1 libpthread.so.0 libgcc_s.so.1
+                   ld-linux-x86-64.so.2 ld-linux-aarch64.so.1
+                   libc.musl-x86_64.so.1 libc.musl-aarch64.so.1"
+
 # Checks the library just built, before it is published under its final name.
 check_library() {
     local label="$1"
@@ -186,13 +193,8 @@ check_library() {
     info "checking ${label}"
 
     verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS "$@"
-
-    # Nothing but the C runtime is allowed here. Anything else -- a compression
-    # library, libstdc++, libjemalloc -- would have to be installed on the
-    # machine running the package for the library to load at all.
-    verify_no_foreign_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
-        libc.so.6 libm.so.6 libdl.so.2 librt.so.1 libpthread.so.0 libgcc_s.so.1 \
-        ld-linux-x86-64.so.2 ld-linux-aarch64.so.1 libc.musl-x86_64.so.1 libc.musl-aarch64.so.1
+    verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
+        $BASE_DEPENDENCIES
 }
 
 if [ "$TARGET_LIBC" = "musl" ]; then
@@ -211,37 +213,47 @@ fi
 if [ "$TARGET_LIBC" = "glibc" ] && [ "$WITH_JEMALLOC" = "yes" ]; then
     # --- jemalloc flavour -------------------------------------------------
     #
-    # RocksDbSharp prefers librocksdb-jemalloc.so over librocksdb.so on Linux,
-    # so this is the library most users end up running. jemalloc is linked in
-    # from its static PIC archive rather than as -ljemalloc, so the target
-    # machine does not need jemalloc installed.
-    JEMALLOC_STATIC_LIB="${JEMALLOC_STATIC_LIB:-$("${CC:-gcc}" -print-file-name=libjemalloc_pic.a)}"
-
-    test -f "$JEMALLOC_STATIC_LIB" \
-        || fail "libjemalloc_pic.a not found (install libjemalloc-dev, or set JEMALLOC_STATIC_LIB)"
-
-    info "linking jemalloc from ${JEMALLOC_STATIC_LIB}"
-
-    # --whole-archive is required, not an optimisation: rocksdb declares the
-    # jemalloc entry points as weak symbols (see port/jemalloc_helper.h) so that
-    # it can null-check them at runtime, and weak undefined references do not
-    # pull members out of a static archive. Without this the archive would
-    # contribute nothing, HasJemalloc() would return false and the jemalloc
-    # library would behave exactly like the plain one.
+    # This one is deliberately *not* self contained: it links jemalloc
+    # dynamically, and so only loads in a process that already has jemalloc
+    # mapped -- one that was started under LD_PRELOAD=libjemalloc.so.2, or whose
+    # executable links it.
     #
-    # RocksDbSharp dlopens with RTLD_LOCAL, so jemalloc's malloc/free stay
-    # private to librocksdb-jemalloc.so and do not replace the allocator of the
-    # host process.
-    JEMALLOC_LINK="-Wl,--whole-archive ${JEMALLOC_STATIC_LIB} -Wl,--no-whole-archive"
+    # That is not a shortcut, it is the only arrangement that is correct.
+    # rocksdb's -DROCKSDB_JEMALLOC support assumes jemalloc *is* the process
+    # allocator: it calls malloc_usable_size on ordinary new-allocated objects
+    # all over the codebase while the nodump allocator hands it pointers from
+    # mallocx, and the two only agree when a single jemalloc serves both.
+    # Embedding a private copy in this library instead satisfies neither. It
+    # cannot take over malloc for the process -- memory that libc functions such
+    # as strdup allocated would then be freed by jemalloc, which segfaults -- and
+    # if it does not take over malloc, glibc's malloc_usable_size ends up reading
+    # the header of a jemalloc allocation, which is worse than useless.
+    #
+    # A statically linked jemalloc could not load here anyway: distribution
+    # builds use the initial-exec TLS model, which cannot be satisfied by a
+    # library dlopened after startup ("cannot allocate memory in static TLS
+    # block").
+    #
+    # When jemalloc is absent, this library simply fails to load and
+    # RocksDbSharp falls through to librocksdb.so, which is why the plain
+    # library above must never depend on jemalloc itself.
+    info "linking jemalloc dynamically"
 
     # JEMALLOC=1 turns on -DROCKSDB_JEMALLOC/-DJEMALLOC_NO_DEMANGLE in rocksdb's
-    # Makefile; ROCKSDB_DISABLE_JEMALLOC stays exported so that the dynamic
-    # -ljemalloc never comes back.
-    build_shared_lib "librocksdb-jemalloc.so" "$JEMALLOC_LINK" "JEMALLOC=1"
+    # Makefile. ROCKSDB_DISABLE_JEMALLOC stays exported so that the -ljemalloc
+    # below is the only place jemalloc enters the link.
+    build_shared_lib "librocksdb-jemalloc.so" "-ljemalloc" "JEMALLOC=1"
 
-    # mallocx and mallctl are jemalloc's own entry points, so finding them proves
-    # the archive was pulled in rather than quietly dropped.
-    check_library "librocksdb-jemalloc.so" mallocx mallctl
+    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS \
+        rocksdb_jemalloc_nodump_allocator_create
+
+    # Unlike the plain library, this one is expected to need libjemalloc.
+    verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
+        libjemalloc.so.2 $BASE_DEPENDENCIES
+
+    "${CROSS_PREFIX}readelf" -d "${ROCKSDB_SRC_DIR}/librocksdb.so" \
+        | grep -q "libjemalloc" \
+        || fail "the jemalloc library does not actually link against jemalloc"
 
     publish_library "$RID" "${ROCKSDB_SRC_DIR}/librocksdb.so" "librocksdb-jemalloc.so"
 fi
