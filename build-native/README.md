@@ -54,6 +54,13 @@ Defaults to the architecture and libc of the machine it runs on. Requires
 `make`, `cmake`, a C++ toolchain, `git`, `curl`, and `libjemalloc-dev` for the
 jemalloc flavour.
 
+RocksDB has been a C++20 codebase since version 10 and does not build with
+anything older than GCC 11 or Clang 13 — `db.h` uses `using enum` and the
+block-based table builder includes `<semaphore>`. The script compiles a small
+probe with those two features before it starts, so an old compiler is reported
+as such instead of burying the build in template errors several hundred files
+in.
+
 For `linux-x64`/glibc it produces two libraries:
 
 * `librocksdb.so`
@@ -83,8 +90,8 @@ depend on jemalloc itself.
 Cross compiling to `arm64` needs `g++-aarch64-linux-gnu` on `PATH`.
 
 CI does not call the script directly, it goes through the container wrapper, so
-that the glibc and musl versions the artifacts are built against are pinned here
-instead of being inherited from the agent image:
+that the toolchain and the glibc and musl versions the artifacts are built
+against are pinned here instead of being inherited from the agent image:
 
 ```
 ./build-rocksdb-linux-docker.sh --arch x64   --libc glibc
@@ -95,6 +102,38 @@ instead of being inherited from the agent image:
 
 The last of those runs emulated under qemu, because no musl cross toolchain is
 packaged for Alpine, and takes considerably longer than the others.
+
+### How old a glibc the libraries load on
+
+The glibc builds happen in `ubuntu:22.04`, and the published libraries load on
+**glibc 2.34 and newer** — RHEL/Alma/Rocky 9, Amazon Linux 2023, Ubuntu 22.04,
+Debian 12, SLES 15 SP6 and everything released since.
+
+Those two versions being different is the point. What a library requires is the
+highest symbol version it references, not the glibc it was compiled against:
+glibc only stamps a new version onto a symbol when that symbol's behaviour
+changes, so the great majority of any build still resolves against far older
+releases. 2.34 is where it stops here, because that is where `libpthread` and
+`libdl` were folded into `libc` and everything they exported was reversioned.
+
+Jammy is the oldest image that gets there:
+
+* Bullseye, which these builds used until RocksDB moved to C++20, stops at GCC
+  10 and can no longer compile RocksDB at all.
+* Bookworm can, but its libstdc++ calls `arc4random` for `std::random_device`.
+  That symbol was added in glibc 2.36, and `-static-libstdc++` links that code
+  into the library, so building there would quietly cost us RHEL 9 and Amazon
+  Linux 2023. Jammy's glibc has no `arc4random` for its libstdc++ to find, so
+  the same code reads `/dev/urandom` instead.
+
+`verify_glibc_floor` in `common.sh` checks this after every glibc build and
+fails with the offending symbols listed. The floor is therefore a property the
+build enforces rather than one inferred from the base image, and moving it is a
+deliberate edit of `GLIBC_FLOOR` in `build-rocksdb-linux.sh` rather than a side
+effect of bumping a container tag.
+
+musl versions no symbols and ships one library per release, so there is no
+equivalent check for the musl flavour.
 
 ## macOS
 

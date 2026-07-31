@@ -47,6 +47,8 @@ HOST_ARCH="$(uname -m)"
 command -v clang++ > /dev/null 2>&1 || fail "Build requires the Xcode command line tools"
 command -v lipo > /dev/null 2>&1 || fail "Build requires lipo (Xcode command line tools)"
 
+require_cxx20 clang++
+
 info "building rocksdb ${ROCKSDBVERSION} for [${ARCHES}] on ${HOST_ARCH} with ${CONCURRENCY} jobs"
 
 checkout_rocksdb
