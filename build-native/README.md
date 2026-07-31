@@ -57,9 +57,8 @@ jemalloc flavour.
 For `linux-x64`/glibc it produces two libraries:
 
 * `librocksdb.so`
-* `librocksdb-jemalloc.so`, the same build with jemalloc statically linked in.
-  RocksDbSharp probes for this one first on Linux, so it is what most
-  applications end up loading.
+* `librocksdb-jemalloc.so`, the same build linked against jemalloc.
+  RocksDbSharp probes for this one first on Linux.
 
 The jemalloc library is the one exception to the self-contained rule: it links
 jemalloc dynamically and therefore only loads in a process that already has
