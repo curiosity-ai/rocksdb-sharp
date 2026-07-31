@@ -1,108 +1,36 @@
 trigger:
 - master
 
-variables:
-  HOMEBREW_CELLAR: /usr/local/Cellar/
+# Builds both macOS slices from a single agent. build-rocksdb-macos.sh compiles
+# zlib/bzip2/snappy/lz4/zstd from source for each architecture and links them in
+# statically, so there is nothing to install with Homebrew here and no
+# install_name_tool fixups afterwards.
+#
+# arm64 is built first, so a failure there stops the run before the x64 slice
+# is attempted.
 
 pool:
   vmImage: 'macOS-latest'
 
 steps:
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: |
-      ROCKSDBVNUM=`cat rocksdbversion`
-      echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
-    workingDirectory: '$(Build.SourcesDirectory)'
-
-
-- task: CmdLine@2
-  displayName: 'list /usr/lib folder'
-  inputs:
-    script: 'ls -hR /usr/lib/'
-
-- task: CmdLine@2
-  displayName: 'list /usr/local folder'
-  inputs:
-    script: 'ls -hR /usr/local/'
+- template: templates/set-rocksdb-version.yaml
 
 - task: Bash@3
+  displayName: 'Build librocksdb.dylib for arm64 and x64'
   inputs:
-    filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
+    filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb-macos.sh'
+    arguments: '--arch all'
     workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    workingDirectory: '$(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/'
-    script: |
-      otool -L librocksdb.dylib
-      install_name_tool -change /usr/local/opt/snappy/lib/libsnappy.1.dylib "@loader_path/libsnappy.dylib" librocksdb.dylib
-      install_name_tool -change /usr/local/opt/zstd/lib/libzstd.1.dylib "@loader_path/libzstd.dylib" librocksdb.dylib
-      install_name_tool -change /usr/lib/libz.1.dylib "@loader_path/libz.dylib" librocksdb.dylib
-      install_name_tool -change /usr/local/opt/lz4/lib/liblz4.1.dylib "@loader_path/liblz4.dylib" librocksdb.dylib
-      otool -L librocksdb.dylib
-#       install_name_tool -change /usr/lib/libbz2.1.0.dylib "@loader_path/libbz.dylib" librocksdb.dylib
+- template: templates/publish-native.yaml
+  parameters:
+    rid: osx-arm64
+    files:
+    - librocksdb.dylib
 
-- task: CmdLine@2
-  displayName: 'list /usr/lib folder after'
-  inputs:
-    script: 'ls -hR /usr/lib/'
-
-- task: CmdLine@2
-  displayName: 'list /usr/local folder after'
-  inputs:
-    script: 'ls -hR /usr/local/'
-
-- task: CmdLine@2
-  displayName: 'list build folder'
-  inputs:
-    script: 'ls $(Build.SourcesDirectory)'
-    
-- task: CmdLine@2
-  displayName: 'list brew folder after'
-  inputs:
-    script: 'ls -hR $(HOMEBREW_CELLAR)'
-
-
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/osx-x64/native/librocksdb.dylib --account-name curiosityreleases  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).dylib  --overwrite true'
-
-
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "/usr/local/Cellar/zlib/1.3.2/lib/libz.1.dylib" --account-name curiosityreleases  -c rocksdb  -n libz-v$(ROCKSDBVERSION).dylib  --overwrite true'
-
-#- task: AzureCLI@1
-#  inputs:
-#    azureSubscription: 'Curiosity Pay As You Go(df68d6af-9145-400b-9276-6a84ca4dec2b)'
-#    scriptLocation: 'inlineScript'
-#    inlineScript: 'az storage blob upload -f "/usr/lib/libbz2.1.0.dylib" --account-name curiosityreleases  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
-# for some reason macOS12 doesn't have /usr/lib/libbz2.1.0.dylib anymore, but there's a copy under /usr/local/miniconda/lib/
-# inlineScript: 'az storage blob upload -f "/usr/local/miniconda/lib/libbz2.dylib" --account-name curiosityreleases  -c rocksdb  -n libbz-v$(ROCKSDBVERSION).dylib  --overwrite true'
-
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/lz4/1.10.0/lib/liblz4.dylib" --account-name curiosityreleases  -c rocksdb  -n liblz4-v$(ROCKSDBVERSION).dylib  --overwrite true'
-    
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/snappy/1.2.2/lib/libsnappy.dylib" --account-name curiosityreleases  -c rocksdb  -n libsnappy-v$(ROCKSDBVERSION).dylib  --overwrite true'
-    
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f "$(HOMEBREW_CELLAR)/zstd/1.5.7_1/lib/libzstd.dylib" --account-name curiosityreleases  -c rocksdb  -n libzstd-v$(ROCKSDBVERSION).dylib --overwrite true'
-    
+- template: templates/publish-native.yaml
+  parameters:
+    rid: osx-x64
+    files:
+    - librocksdb.dylib

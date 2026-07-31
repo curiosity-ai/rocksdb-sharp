@@ -1,0 +1,23 @@
+# Uploads native libraries built by build-native/ to blob storage, under
+# v<version>/<rid>/<file>, where build-nuget.yaml picks them up again.
+parameters:
+- name: rid
+  type: string
+- name: files
+  type: object
+
+steps:
+- ${{ each file in parameters.files }}:
+  - task: AzureCLI@2
+    displayName: 'Publish ${{ parameters.rid }}/${{ file }}'
+    inputs:
+      azureSubscription: 'Curiosity GmbH Azure'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: >
+        az storage blob upload
+        -f $(Build.SourcesDirectory)/build-native/runtimes/${{ parameters.rid }}/native/${{ file }}
+        --account-name curiosityreleases
+        -c rocksdb
+        -n v$(ROCKSDBVERSION)/${{ parameters.rid }}/${{ file }}
+        --overwrite true

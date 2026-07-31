@@ -1,0 +1,11 @@
+# Exposes the contents of ./rocksdbversion as $(ROCKSDBVERSION).
+steps:
+- task: Bash@3
+  displayName: 'Read rocksdbversion'
+  inputs:
+    targetType: 'inline'
+    script: |
+      ROCKSDBVNUM=$(cat rocksdbversion)
+      echo "rocksdb version: ${ROCKSDBVNUM}"
+      echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
+    workingDirectory: '$(Build.SourcesDirectory)'
