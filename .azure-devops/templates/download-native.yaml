@@ -1,0 +1,22 @@
+# Downloads native libraries published by the build-native-* pipelines into
+# csharp/runtimes/<rid>/native/, replacing the placeholders checked into git.
+parameters:
+- name: rid
+  type: string
+- name: files
+  type: object
+
+steps:
+- ${{ each file in parameters.files }}:
+  - task: AzureCLI@2
+    displayName: 'Fetch ${{ parameters.rid }}/${{ file }}'
+    inputs:
+      azureSubscription: 'Curiosity GmbH Azure'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: >
+        az storage blob download
+        -f $(Build.SourcesDirectory)/csharp/runtimes/${{ parameters.rid }}/native/${{ file }}
+        --account-name curiosityreleases
+        -c rocksdb
+        -n v$(ROCKSDBVERSIONBASE)/${{ parameters.rid }}/${{ file }}

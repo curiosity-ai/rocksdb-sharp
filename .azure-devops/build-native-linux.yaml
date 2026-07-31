@@ -1,32 +1,113 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-22.04'
+# Builds every Linux flavour the NuGet package ships:
+#
+#   linux-x64   / glibc  librocksdb.so, librocksdb-jemalloc.so
+#   linux-x64   / musl   librocksdb-musl.so
+#   linux-arm64 / glibc  librocksdb.so
+#   linux-arm64 / musl   librocksdb-musl.so
+#
+# Everything except linux-arm64/musl is compiled natively or cross compiled, so
+# it runs at full speed; the musl arm64 job is emulated through qemu and is by
+# far the slowest of the four.
+#
+# Every job builds inside a container described by
+# build-native/build-rocksdb-linux-docker.sh, so the glibc and musl versions the
+# artifacts are built against are pinned in this repository rather than
+# inherited from whatever the agent image happens to ship.
 
-container: curiosityai/rocksdb-build-linux:latest
+jobs:
 
-steps:
+- job: linux_x64_glibc
+  displayName: 'linux-x64 (glibc)'
+  timeoutInMinutes: 120
+  pool:
+    vmImage: 'ubuntu-22.04'
+  steps:
+  - template: templates/set-rocksdb-version.yaml
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: |
-      ROCKSDBVNUM=`cat rocksdbversion`
-      echo "##vso[task.setvariable variable=ROCKSDBVERSION]${ROCKSDBVNUM}"
-    workingDirectory: '$(Build.SourcesDirectory)'
+  - task: Bash@3
+    displayName: 'Build librocksdb.so and librocksdb-jemalloc.so'
+    inputs:
+      filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb-linux-docker.sh'
+      arguments: '--arch x64 --libc glibc'
+      workingDirectory: '$(Build.SourcesDirectory)/build-native/'
 
-- task: Bash@3
-  inputs:
-    filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb.sh'
-    workingDirectory: '$(Build.SourcesDirectory)/build-native/'
+  - template: templates/publish-native.yaml
+    parameters:
+      rid: linux-x64
+      files:
+      - librocksdb.so
+      - librocksdb-jemalloc.so
 
-- task: CmdLine@2
-  inputs:
-    script: 'ls $(Build.SourcesDirectory) -hR'
-  
-- task: AzureCLI@1
-  inputs:
-    azureSubscription: 'Curiosity GmbH Azure'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload -f $(Build.SourcesDirectory)/build-native/runtimes/linux-x64/native/librocksdb.so --account-name curiosityreleases  -c rocksdb  -n librocksdb-v$(ROCKSDBVERSION).so  --overwrite true'
+- job: linux_x64_musl
+  displayName: 'linux-x64 (musl)'
+  timeoutInMinutes: 120
+  pool:
+    vmImage: 'ubuntu-22.04'
+  steps:
+  - template: templates/set-rocksdb-version.yaml
+
+  - task: Bash@3
+    displayName: 'Build librocksdb-musl.so'
+    inputs:
+      filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb-linux-docker.sh'
+      arguments: '--arch x64 --libc musl'
+      workingDirectory: '$(Build.SourcesDirectory)/build-native/'
+
+  - template: templates/publish-native.yaml
+    parameters:
+      rid: linux-x64
+      files:
+      - librocksdb-musl.so
+
+- job: linux_arm64_glibc
+  displayName: 'linux-arm64 (glibc)'
+  timeoutInMinutes: 120
+  pool:
+    vmImage: 'ubuntu-22.04'
+  steps:
+  - template: templates/set-rocksdb-version.yaml
+
+  - task: Bash@3
+    displayName: 'Cross compile librocksdb.so'
+    inputs:
+      filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb-linux-docker.sh'
+      arguments: '--arch arm64 --libc glibc'
+      workingDirectory: '$(Build.SourcesDirectory)/build-native/'
+
+  - template: templates/publish-native.yaml
+    parameters:
+      rid: linux-arm64
+      files:
+      - librocksdb.so
+
+- job: linux_arm64_musl
+  displayName: 'linux-arm64 (musl, emulated)'
+  # Alpine packages no musl cross toolchain, so this build runs under qemu and
+  # takes several times as long as the native ones.
+  timeoutInMinutes: 360
+  pool:
+    vmImage: 'ubuntu-22.04'
+  steps:
+  - template: templates/set-rocksdb-version.yaml
+
+  - task: Bash@3
+    displayName: 'Register qemu handlers for arm64'
+    inputs:
+      targetType: 'inline'
+      script: docker run --rm --privileged tonistiigi/binfmt --install arm64
+
+  - task: Bash@3
+    displayName: 'Build librocksdb-musl.so'
+    inputs:
+      filePath: '$(Build.SourcesDirectory)/build-native/build-rocksdb-linux-docker.sh'
+      arguments: '--arch arm64 --libc musl'
+      workingDirectory: '$(Build.SourcesDirectory)/build-native/'
+
+  - template: templates/publish-native.yaml
+    parameters:
+      rid: linux-arm64
+      files:
+      - librocksdb-musl.so

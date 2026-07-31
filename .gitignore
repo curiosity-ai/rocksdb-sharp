@@ -288,3 +288,8 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 .DS_Store
+
+# rocksdb native build working directories
+/build-native/rocksdb/
+/build-native/runtimes/
+/build-native/deps/
