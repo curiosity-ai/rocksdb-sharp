@@ -10,8 +10,6 @@
 
 # shellcheck shell=bash
 
-set -o pipefail
-
 ROCKSDBREMOTE="${ROCKSDBREMOTE:-https://github.com/facebook/rocksdb}"
 
 # Directory holding the build scripts (build-native/).
@@ -125,6 +123,11 @@ build_static_compression_libs() {
 
     COMPRESSION_LDFLAGS="${ROCKSDB_SRC_DIR}/libsnappy.a ${ROCKSDB_SRC_DIR}/libz.a ${ROCKSDB_SRC_DIR}/libbz2.a ${ROCKSDB_SRC_DIR}/liblz4.a ${ROCKSDB_SRC_DIR}/libzstd.a"
 
+    # One entry point per codec, to check afterwards that each archive really
+    # made it into the library. rocksdb uses snappy through its C++ API, so that
+    # one is matched through its mangled name.
+    COMPRESSION_SYMBOLS="zlibVersion BZ2_bzCompress snappy11RawCompress LZ4_compress_default ZSTD_compress"
+
     # The compression libraries are linked in statically above, so stop
     # build_detect_platform from also picking up the system shared ones.
     export ROCKSDB_DISABLE_ZLIB=1
@@ -134,8 +137,9 @@ build_static_compression_libs() {
     export ROCKSDB_DISABLE_ZSTD=1
 }
 
-# Fail unless the given library exports the rocksdb C API and the compression
-# entry points we just linked in. Any extra symbol names are checked too.
+# Fail unless the given library exports the rocksdb C API plus everything else
+# named. Names are matched as regular expressions against the exported symbols,
+# so C++ entry points can be named through their mangled form.
 verify_library() {
     local lib="$1"
     shift
@@ -149,14 +153,38 @@ verify_library() {
         || symbols="$(nm -gU "$lib" 2>/dev/null)" \
         || fail "unable to list symbols of ${lib}"
 
-    local symbol
-    for symbol in rocksdb_open rocksdb_options_set_compression "$@"; do
-        # macOS prefixes exported C symbols with an underscore.
-        echo "$symbols" | grep -q -e "[[:space:]]_\{0,1\}${symbol}\$" \
-            || fail "${lib} does not export ${symbol}"
+    local pattern
+    for pattern in rocksdb_open rocksdb_options_set_compression "$@"; do
+        # Matched from a here-string rather than a pipe: grep -q stops at the
+        # first hit, and the resulting SIGPIPE on the writing end of a pipeline
+        # is indistinguishable from a real failure.
+        grep -qE "$pattern" <<< "$symbols" \
+            || fail "${lib} does not export ${pattern}"
     done
 
-    info "verified $(basename "$lib") ($(du -h "$lib" | cut -f1)): $* ok"
+    info "verified $(basename "$lib") ($(du -h "$lib" | cut -f1))"
+}
+
+# Fail if the library links against anything outside the given list of allowed
+# runtime dependencies. Everything else is supposed to be linked in statically.
+verify_no_foreign_dependencies() {
+    local lib="$1"
+    local readelf="$2"
+    shift 2
+
+    local needed foreign="" entry
+    needed="$("$readelf" -d "$lib" | sed -n 's/.*NEEDED.*\[\(.*\)\]/\1/p')"
+
+    for entry in $needed; do
+        case " $* " in
+            *" $entry "*) ;;
+            *) foreign="${foreign} ${entry}" ;;
+        esac
+    done
+
+    test -z "$foreign" || fail "${lib} depends on${foreign}, which will not be present on every machine"
+
+    info "$(basename "$lib") only needs:$(echo "$needed" | tr '\n' ' ')"
 }
 
 # Copy a built library into build-native/runtimes/<rid>/native/<name>.

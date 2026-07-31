@@ -60,7 +60,7 @@ esac
 
 if [ -z "$TARGET_LIBC" ]; then
     # ldd prints its banner on stderr for glibc and musl alike.
-    if ldd --version 2>&1 | head -1 | grep -qi musl; then
+    if grep -qi musl <<< "$(ldd --version 2>&1)"; then
         TARGET_LIBC=musl
     else
         TARGET_LIBC=glibc
@@ -109,8 +109,11 @@ fi
 
 STRIP="${CROSS_PREFIX}strip"
 
-command -v make > /dev/null 2>&1 || fail "Build requires make"
-command -v "${CXX:-g++}" > /dev/null 2>&1 || fail "Build requires a C++ compiler"
+# cmake and curl are for the compression libraries: they are downloaded with
+# curl and snappy is a cmake project.
+for tool in make git curl cmake "${CXX:-g++}"; do
+    command -v "$tool" > /dev/null 2>&1 || fail "Build requires ${tool}"
+done
 
 # ---------------------------------------------------------------------------
 # Sources and dependencies
@@ -121,6 +124,13 @@ checkout_rocksdb
 # PORTABLE=1 keeps -march=native out of the build so the artifact runs on any
 # CPU of the target architecture.
 export PORTABLE=1
+
+# build_detect_platform links jemalloc dynamically whenever it finds it on the
+# build machine, which would leave every library here needing libjemalloc.so.2
+# at runtime — including the plain one that exists to be the fallback when
+# jemalloc is unavailable. The jemalloc flavour below opts back in explicitly,
+# and links it in statically.
+export ROCKSDB_DISABLE_JEMALLOC=1
 
 build_static_compression_libs "$CONCURRENCY"
 
@@ -168,16 +178,33 @@ build_shared_lib() {
     }) || fail "${label} build failed"
 }
 
+# Checks the library just built, before it is published under its final name.
+check_library() {
+    local label="$1"
+    shift
+
+    info "checking ${label}"
+
+    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS "$@"
+
+    # Nothing but the C runtime is allowed here. Anything else -- a compression
+    # library, libstdc++, libjemalloc -- would have to be installed on the
+    # machine running the package for the library to load at all.
+    verify_no_foreign_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
+        libc.so.6 libm.so.6 libdl.so.2 librt.so.1 libpthread.so.0 libgcc_s.so.1 \
+        ld-linux-x86-64.so.2 ld-linux-aarch64.so.1 libc.musl-x86_64.so.1 libc.musl-aarch64.so.1
+}
+
 if [ "$TARGET_LIBC" = "musl" ]; then
     # The musl flavour ships as a single library: RocksDbSharp probes for the
     # -jemalloc suffix before the -musl one, so a musl+jemalloc library would
     # never be picked up under its own name.
     build_shared_lib "librocksdb-musl.so" "" ""
-    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" ZSTD_compress LZ4_compress_default
+    check_library "librocksdb-musl.so"
     publish_library "$RID" "${ROCKSDB_SRC_DIR}/librocksdb.so" "librocksdb-musl.so"
 else
     build_shared_lib "librocksdb.so" "" ""
-    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" ZSTD_compress LZ4_compress_default
+    check_library "librocksdb.so"
     publish_library "$RID" "${ROCKSDB_SRC_DIR}/librocksdb.so" "librocksdb.so"
 fi
 
@@ -208,28 +235,16 @@ if [ "$TARGET_LIBC" = "glibc" ] && [ "$WITH_JEMALLOC" = "yes" ]; then
     JEMALLOC_LINK="-Wl,--whole-archive ${JEMALLOC_STATIC_LIB} -Wl,--no-whole-archive"
 
     # JEMALLOC=1 turns on -DROCKSDB_JEMALLOC/-DJEMALLOC_NO_DEMANGLE in rocksdb's
-    # Makefile. ROCKSDB_DISABLE_JEMALLOC=1 stops build_detect_platform from
-    # *also* putting a dynamic -ljemalloc on the link line, which would make the
-    # library refuse to load on machines without jemalloc installed.
-    export ROCKSDB_DISABLE_JEMALLOC=1
+    # Makefile; ROCKSDB_DISABLE_JEMALLOC stays exported so that the dynamic
+    # -ljemalloc never comes back.
     build_shared_lib "librocksdb-jemalloc.so" "$JEMALLOC_LINK" "JEMALLOC=1"
-    unset ROCKSDB_DISABLE_JEMALLOC
 
-    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" \
-        ZSTD_compress LZ4_compress_default \
-        rocksdb_jemalloc_nodump_allocator_create mallocx mallctl
+    # mallocx and mallctl are jemalloc's own entry points, so finding them proves
+    # the archive was pulled in rather than quietly dropped.
+    check_library "librocksdb-jemalloc.so" mallocx mallctl
 
     publish_library "$RID" "${ROCKSDB_SRC_DIR}/librocksdb.so" "librocksdb-jemalloc.so"
 fi
 
-# ---------------------------------------------------------------------------
-# Report
-# ---------------------------------------------------------------------------
-
-info "shared library dependencies:"
-for lib in "${RUNTIMES_DIR}/${RID}/native/"librocksdb*.so; do
-    echo "  $(basename "$lib"):"
-    "${CROSS_PREFIX}readelf" -d "$lib" | sed -n 's/.*NEEDED.*\[\(.*\)\]/    \1/p'
-done
-
-info "done"
+info "published to ${RUNTIMES_DIR}/${RID}/native:"
+ls -la "${RUNTIMES_DIR}/${RID}/native/"

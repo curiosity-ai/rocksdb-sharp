@@ -145,10 +145,10 @@ build_arch() {
 
     local lib="${ROCKSDB_SRC_DIR}/librocksdb.dylib"
 
-    lipo -info "$lib" | grep -q "${arch}\$" \
+    grep -q "${arch}\$" <<< "$(lipo -info "$lib")" \
         || fail "librocksdb.dylib is not a ${arch} binary: $(lipo -info "$lib")"
 
-    verify_library "$lib" ZSTD_compress LZ4_compress_default
+    verify_library "$lib" $COMPRESSION_SYMBOLS
 
     # Everything but the system libraries has to be linked in statically; a
     # /opt/homebrew or /usr/local entry here means the artifact would only load
