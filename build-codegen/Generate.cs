@@ -106,9 +106,14 @@ namespace RocksDbPrepareCApiHeader
             var version = await File.ReadAllTextAsync(@"../rocksdbversion");
             version = version.Trim(new char[] { ' ', '\r', '\n' });
 
-            if (version == "10.10.1.1") // Special tagged release
+            // ../rocksdbversion is "<rocksdb version>.<our build revision>" when we
+            // ship more than one build of the same upstream release. Only the first
+            // three components name a rocksdb tag, which is what build-native/
+            // checks out and what the header below has to be read from.
+            var parts = version.Split('.');
+            if (parts.Length == 4)
             {
-                version = "10.10.1";
+                version = string.Join(".", parts.Take(3));
             }
 
             Console.WriteLine($"Building version  {version}");
