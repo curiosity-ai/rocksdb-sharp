@@ -19,6 +19,9 @@
 # runtime. Build the musl flavour by running this script inside an Alpine
 # container; build linux-arm64 either on an arm64 machine or on x64 with the
 # aarch64-linux-gnu cross toolchain installed.
+#
+# rocksdb is C++20 and needs gcc 11 or newer, so the compiler has to be at least
+# as new as the one in Ubuntu 22.04 or Alpine 3.16.
 
 set -u
 
@@ -33,7 +36,7 @@ while [ $# -gt 0 ]; do
         --arch) TARGET_ARCH="${2:-}"; shift 2 ;;
         --libc) TARGET_LIBC="${2:-}"; shift 2 ;;
         --no-jemalloc) WITH_JEMALLOC=no; shift ;;
-        -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
         *) fail "unknown argument: $1" ;;
     esac
 done
@@ -115,6 +118,8 @@ for tool in make git curl cmake "${CXX:-g++}"; do
     command -v "$tool" > /dev/null 2>&1 || fail "Build requires ${tool}"
 done
 
+require_cxx20 "${CXX:-g++}"
+
 # ---------------------------------------------------------------------------
 # Sources and dependencies
 # ---------------------------------------------------------------------------
@@ -131,6 +136,12 @@ export PORTABLE=1
 # when jemalloc is unavailable. The jemalloc flavour below opts back in
 # explicitly.
 export ROCKSDB_DISABLE_JEMALLOC=1
+
+# rocksdb builds with -Werror by default, and which warnings a compiler emits
+# for its sources is a property of that compiler rather than of this repository.
+# The macOS build already does this for the same reason; the Linux builds need
+# it too now that they follow rocksdb onto newer compilers.
+export DISABLE_WARNING_AS_ERROR=1
 
 build_static_compression_libs "$CONCURRENCY"
 
@@ -175,7 +186,7 @@ build_shared_lib() {
             ${extra_make_vars} || fail "${label} build failed"
 
         "$STRIP" librocksdb.so || warn "unable to strip ${label}"
-    }) || fail "${label} build failed"
+    }) || exit 1
 }
 
 # The C runtime, and nothing else. A compression library or libstdc++ turning
@@ -184,6 +195,19 @@ build_shared_lib() {
 BASE_DEPENDENCIES="libc.so.6 libm.so.6 libdl.so.2 librt.so.1 libpthread.so.0 libgcc_s.so.1
                    ld-linux-x86-64.so.2 ld-linux-aarch64.so.1
                    libc.musl-x86_64.so.1 libc.musl-aarch64.so.1"
+
+# The oldest glibc the published libraries are meant to load on, which is what
+# decides the distributions this package supports. 2.34 is where glibc folded
+# libpthread and libdl into libc and reversioned everything they exported, and
+# rocksdb uses enough of both that no build against a glibc that new can come
+# out below it. It covers RHEL/Alma/Rocky 9, Amazon Linux 2023, Ubuntu 22.04,
+# Debian 12 and everything since.
+#
+# The build image is newer than that (see build-rocksdb-linux-docker.sh),
+# because rocksdb needs a C++20 compiler and the distributions that still have a
+# 2.31-era glibc do not have one. verify_glibc_floor is what keeps the gap
+# between the two honest.
+GLIBC_FLOOR="2.34"
 
 # Checks the library just built, before it is published under its final name.
 check_library() {
@@ -195,6 +219,13 @@ check_library() {
     verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS "$@"
     verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
         $BASE_DEPENDENCIES
+
+    # musl does not version its symbols, and ships one library for every
+    # release, so there is no equivalent floor to check there.
+    if [ "$TARGET_LIBC" = "glibc" ]; then
+        verify_glibc_floor "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
+            "$GLIBC_FLOOR"
+    fi
 }
 
 if [ "$TARGET_LIBC" = "musl" ]; then
@@ -250,6 +281,9 @@ if [ "$TARGET_LIBC" = "glibc" ] && [ "$WITH_JEMALLOC" = "yes" ]; then
     # Unlike the plain library, this one is expected to need libjemalloc.
     verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
         libjemalloc.so.2 $BASE_DEPENDENCIES
+
+    verify_glibc_floor "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
+        "$GLIBC_FLOOR"
 
     "${CROSS_PREFIX}readelf" -d "${ROCKSDB_SRC_DIR}/librocksdb.so" \
         | grep -q "libjemalloc" \

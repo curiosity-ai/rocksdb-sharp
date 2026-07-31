@@ -53,6 +53,35 @@ detect_concurrency() {
     fi
 }
 
+# Fail unless the given C++ compiler can build the language and library features
+# rocksdb relies on.
+#
+# rocksdb has been a C++20 codebase since version 10: db.h reaches for `using
+# enum` and block_based_table_builder.cc includes <semaphore>, so anything older
+# than gcc 11 or clang 13 stops a few hundred files into the build with pages of
+# errors that say nothing about the actual problem. Upstream states the same
+# requirement in INSTALL.md ("GCC >= 11, Clang >= 10").
+require_cxx20() {
+    local cxx="$1"
+
+    if ! "$cxx" -std=c++20 -x c++ -fsyntax-only - > /dev/null 2>&1 <<'EOF'
+#include <semaphore>
+enum class Flags { None };
+int probe() {
+    using enum Flags;
+    std::counting_semaphore<1> gate{1};
+    gate.acquire();
+    return static_cast<int>(None);
+}
+EOF
+    then
+        fail "${cxx} cannot compile rocksdb ${ROCKSDBVERSION}, which is C++20 and needs at least gcc 11 or clang 13:
+    $("$cxx" --version 2>&1 | head -1)"
+    fi
+
+    info "$("$cxx" --version 2>&1 | head -1) builds C++20"
+}
+
 # Shallow-fetch a single ref into the current directory.
 checkout() {
     local name="$1"
@@ -284,6 +313,47 @@ verify_dependencies() {
     test -z "$foreign" || fail "${lib} depends on${foreign}, which will not be present on every machine"
 
     info "$(basename "$lib") only needs $(echo $needed)"
+}
+
+# True when the first version number is newer than the second.
+newer_version() {
+    test "$1" != "$2" && test "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" = "$2"
+}
+
+# Fail if the library would need a newer glibc than the given floor.
+#
+# Which glibc an artifact requires is decided by the highest symbol version it
+# ended up referencing, not by the glibc it happened to be built against: glibc
+# only stamps a new version onto a symbol when that symbol's behaviour changes,
+# so the great majority of any build still resolves against far older releases.
+# The build image can therefore be much newer than the oldest distribution the
+# result loads on -- but only as long as somebody checks, which is what this is
+# for.
+verify_glibc_floor() {
+    local lib="$1"
+    local readelf="$2"
+    local floor="$3"
+
+    # Every glibc symbol carries its version as "name@GLIBC_x.y", or
+    # "name@@GLIBC_x.y" where it is the default version of a defined one.
+    local tagged
+    tagged="$("$readelf" --dyn-syms --wide "$lib" \
+        | awk 'index($8, "@GLIBC_") { print $8 }' | sed 's/@@/@/' | sort -u)"
+
+    test -n "$tagged" || fail "${lib} references no versioned glibc symbol at all, which cannot be right"
+
+    local sym version highest="0" offenders=""
+
+    while IFS= read -r sym; do
+        version="${sym##*@GLIBC_}"
+        newer_version "$version" "$highest" && highest="$version"
+        newer_version "$version" "$floor" && offenders="${offenders}    ${sym}"$'\n'
+    done <<< "$tagged"
+
+    test -z "$offenders" || fail "$(basename "$lib") needs glibc ${highest}, past the ${floor} floor this package promises:
+${offenders%$'\n'}"
+
+    info "$(basename "$lib") loads on glibc ${highest} and newer"
 }
 
 # Copy a built library into build-native/runtimes/<rid>/native/<name>.
