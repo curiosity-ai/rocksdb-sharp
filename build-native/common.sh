@@ -85,6 +85,93 @@ dep_version() {
     echo "$version"
 }
 
+# Read a dependency checksum out of rocksdb's Makefile, alongside dep_version.
+dep_sha256() {
+    local name="$1"
+    local sha
+    sha="$(sed -n "s/^${name}_SHA256 ?= *//p" "${ROCKSDB_SRC_DIR}/Makefile" | head -1)"
+    test -n "$sha" || fail "unable to read ${name}_SHA256 from rocksdb's Makefile"
+    echo "$sha"
+}
+
+sha256_of() {
+    if command -v sha256sum > /dev/null 2>&1; then
+        sha256sum "$1" | cut -d' ' -f1
+    elif command -v shasum > /dev/null 2>&1; then
+        shasum -a 256 "$1" | cut -d' ' -f1
+    else
+        openssl dgst -sha256 "$1" | sed 's/.*= *//'
+    fi
+}
+
+# Download $1 (a file name under the rocksdb source directory) from the first of
+# the remaining arguments that works, then check it against $2. A file that is
+# already present and matches is left alone.
+fetch_dependency() {
+    local name="$1"
+    local expected="$2"
+    shift 2
+
+    local target="${ROCKSDB_SRC_DIR}/${name}"
+
+    if [ -f "$target" ]; then
+        if [ "$(sha256_of "$target")" = "$expected" ]; then
+            return 0
+        fi
+        warn "${name} does not match its expected checksum, downloading it again"
+        rm -f "$target"
+    fi
+
+    local url
+    for url in "$@"; do
+        info "fetching ${name} from ${url}"
+        if curl --fail --location --silent --show-error --output "${target}.part" "$url"; then
+            local actual
+            actual="$(sha256_of "${target}.part")"
+            if [ "$actual" = "$expected" ]; then
+                mv -f "${target}.part" "$target"
+                return 0
+            fi
+            warn "${url} returned a file with checksum ${actual}, expected ${expected}"
+        fi
+        rm -f "${target}.part"
+    done
+
+    fail "unable to download ${name} from any known location"
+}
+
+# Fetch the compression library sources before rocksdb's own targets go looking
+# for them; they skip the download when the tarball is already there.
+#
+# This exists because rocksdb hardcodes one URL per dependency and some of those
+# do not keep old releases. zlib.net serves only the current release from its
+# root and moves everything else to /fossils, so rocksdb's pinned URL starts
+# returning 404 for everyone the day zlib publishes a new version, which is
+# exactly what happened to zlib 1.3.1. Trying several locations also means a
+# single mirror being down no longer breaks the build.
+#
+# rocksdb verifies these checksums when it does the downloading itself, so we
+# have to verify them here, or pre-placing the files would quietly drop that
+# check.
+prefetch_dependency_sources() {
+    fetch_dependency "zlib-${ZLIB_VER}.tar.gz" "$(dep_sha256 ZLIB)" \
+        "https://zlib.net/fossils/zlib-${ZLIB_VER}.tar.gz" \
+        "https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.gz" \
+        "https://zlib.net/zlib-${ZLIB_VER}.tar.gz"
+
+    fetch_dependency "bzip2-${BZIP2_VER}.tar.gz" "$(dep_sha256 BZIP2)" \
+        "https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VER}.tar.gz"
+
+    fetch_dependency "snappy-${SNAPPY_VER}.tar.gz" "$(dep_sha256 SNAPPY)" \
+        "https://github.com/google/snappy/archive/${SNAPPY_VER}.tar.gz"
+
+    fetch_dependency "lz4-${LZ4_VER}.tar.gz" "$(dep_sha256 LZ4)" \
+        "https://github.com/lz4/lz4/archive/v${LZ4_VER}.tar.gz"
+
+    fetch_dependency "zstd-${ZSTD_VER}.tar.gz" "$(dep_sha256 ZSTD)" \
+        "https://github.com/facebook/zstd/archive/v${ZSTD_VER}.tar.gz"
+}
+
 # Build zlib/bzip2/snappy/lz4/zstd as static PIC archives using rocksdb's own
 # makefile targets. These are the exact same targets upstream uses to produce
 # the self-contained artifacts published to Maven, so the resulting library
@@ -103,14 +190,22 @@ build_static_compression_libs() {
 
     info "building static compression libraries (zlib ${ZLIB_VER}, bzip2 ${BZIP2_VER}, snappy ${SNAPPY_VER}, lz4 ${LZ4_VER}, zstd ${ZSTD_VER})"
 
+    prefetch_dependency_sources
+
     # Built one at a time: the individual targets unpack tarballs and shell out
     # to nested makes, which do not compose safely under a parallel outer make.
+    #
+    # DEBUG_LEVEL=0 only quiets rocksdb's "Compiling in debug mode" warning,
+    # which it prints for any goal other than shared_lib and which has nothing to
+    # do with how these libraries get compiled -- each recipe below passes its
+    # own -O2 CFLAGS. Without it the warning shows up in the log of every build
+    # and reads like the artifact is a debug build, which it is not.
     (cd "${ROCKSDB_SRC_DIR}" && {
-        make -j"${concurrency}" libz.a      || fail "zlib build failed"
-        make -j"${concurrency}" libbz2.a    || fail "bzip2 build failed"
-        make -j"${concurrency}" libsnappy.a || fail "snappy build failed"
-        make -j"${concurrency}" liblz4.a    || fail "lz4 build failed"
-        make -j"${concurrency}" libzstd.a   || fail "zstd build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 libz.a      || fail "zlib build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 libbz2.a    || fail "bzip2 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 libsnappy.a || fail "snappy build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 liblz4.a    || fail "lz4 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 libzstd.a   || fail "zstd build failed"
     }) || fail "compression library build failed"
 
     # Flags describing those archives to the rocksdb build. Mirrors upstream's
