@@ -162,7 +162,8 @@ verify_library() {
             || fail "${lib} does not export ${pattern}"
     done
 
-    info "verified $(basename "$lib") ($(du -h "$lib" | cut -f1))"
+    # -L because make leaves the plain name as a symlink to the versioned file.
+    info "verified $(basename "$lib") ($(du -hL "$lib" | cut -f1))"
 }
 
 # Fail if the library links against anything outside the given list of allowed
@@ -184,7 +185,7 @@ verify_no_foreign_dependencies() {
 
     test -z "$foreign" || fail "${lib} depends on${foreign}, which will not be present on every machine"
 
-    info "$(basename "$lib") only needs:$(echo "$needed" | tr '\n' ' ')"
+    info "$(basename "$lib") only needs $(echo $needed)"
 }
 
 # Copy a built library into build-native/runtimes/<rid>/native/<name>.
