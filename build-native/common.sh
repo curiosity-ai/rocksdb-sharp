@@ -27,17 +27,20 @@ RUNTIMES_DIR="${BUILD_NATIVE_DIR}/runtimes"
 ROCKSDBVNUM="$(cut -d. -f1-3 "${BUILD_NATIVE_DIR}/../rocksdbversion")"
 ROCKSDBVERSION="v${ROCKSDBVNUM}"
 
+# printf rather than `echo -e`, which would also expand any backslash escape
+# that happens to be in the message. Windows paths are full of them: a message
+# mentioning C:\vcpkg came out as "C:" followed by a vertical tab.
 fail() {
-    >&2 echo -e "\033[1;31m$1\033[0m"
+    >&2 printf '\033[1;31m%s\033[0m\n' "$1"
     exit 1
 }
 
 warn() {
-    >&2 echo -e "\033[1;33m$1\033[0m"
+    >&2 printf '\033[1;33m%s\033[0m\n' "$1"
 }
 
 info() {
-    echo -e "\033[1;34m==> $1\033[0m"
+    printf '\033[1;34m==> %s\033[0m\n' "$1"
 }
 
 # Number of parallel compile jobs, derived from the machine we are running on.
@@ -221,6 +224,18 @@ build_static_compression_libs() {
 
     prefetch_dependency_sources
 
+    # bzip2's own makefile assigns CC=gcc, and a makefile assignment beats the
+    # environment, so exporting CC is not enough to cross compile it: a build for
+    # arm64 quietly filled libbz2.a with host objects and only fell over much
+    # later, when the linker refused the archive. Naming CC on make's command
+    # line instead makes it an override, which the nested makes inherit through
+    # MAKEFLAGS and which does win over their own assignments.
+    #
+    # Left empty where CC is unset, which is every native build plus macOS, where
+    # the architecture travels in ARCHFLAG/CFLAGS instead.
+    local toolchain=""
+    test -z "${CC:-}" || toolchain="CC=${CC}"
+
     # Built one at a time: the individual targets unpack tarballs and shell out
     # to nested makes, which do not compose safely under a parallel outer make.
     #
@@ -230,11 +245,11 @@ build_static_compression_libs() {
     # own -O2 CFLAGS. Without it the warning shows up in the log of every build
     # and reads like the artifact is a debug build, which it is not.
     (cd "${ROCKSDB_SRC_DIR}" && {
-        make -j"${concurrency}" DEBUG_LEVEL=0 libz.a      || fail "zlib build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 libbz2.a    || fail "bzip2 build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 libsnappy.a || fail "snappy build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 liblz4.a    || fail "lz4 build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 libzstd.a   || fail "zstd build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libz.a      || fail "zlib build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libbz2.a    || fail "bzip2 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libsnappy.a || fail "snappy build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain liblz4.a    || fail "lz4 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libzstd.a   || fail "zstd build failed"
     }) || fail "compression library build failed"
 
     # Flags describing those archives to the rocksdb build. Mirrors upstream's
@@ -313,6 +328,43 @@ verify_dependencies() {
     test -z "$foreign" || fail "${lib} depends on${foreign}, which will not be present on every machine"
 
     info "$(basename "$lib") only needs $(echo $needed)"
+}
+
+# The architectures of the ELF objects in a file, one per line. An archive holds
+# a header per member, so anything but a single line means a mixed archive.
+elf_machines() {
+    readelf -h "$1" 2>/dev/null | sed -n 's/^ *Machine: *//p' | sort -u
+}
+
+# Fail unless every archive named holds objects for the architecture the given
+# compiler builds for. ELF only, so Linux; macOS checks the finished dylib with
+# lipo instead.
+#
+# A dependency that ignores the cross compiler and builds for the host produces
+# an archive that is perfectly valid and simply wrong, and nothing notices until
+# the link at the very end of the build reports "file in wrong format" without
+# naming an architecture. Comparing here costs a compile of one line.
+verify_archives_match_compiler() {
+    local cxx="$1"
+    shift
+
+    local probe expected archive machines
+    probe="$(mktemp -d)" || fail "unable to create a temporary directory"
+
+    echo 'int rocksdb_sharp_architecture_probe;' \
+        | "$cxx" -x c++ -c - -o "${probe}/probe.o" \
+        || fail "unable to compile an architecture probe with ${cxx}"
+
+    expected="$(elf_machines "${probe}/probe.o")"
+    rm -rf "$probe"
+
+    for archive in "$@"; do
+        machines="$(elf_machines "$archive")"
+        test "$machines" = "$expected" \
+            || fail "$(basename "$archive") holds ${machines:-unreadable} objects, but ${cxx} builds for ${expected}"
+    done
+
+    info "the static archives are ${expected}"
 }
 
 # True when the first version number is newer than the second.
