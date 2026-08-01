@@ -145,6 +145,8 @@ export DISABLE_WARNING_AS_ERROR=1
 
 build_static_compression_libs "$CONCURRENCY"
 
+verify_archives_match_compiler "${CXX:-g++}" $COMPRESSION_LDFLAGS
+
 # Keep the archives out of reach of `make clean`, which deletes every *.a in
 # the tree, so the two library variants below can share one dependency build.
 DEPS_DIR="${BUILD_NATIVE_DIR}/deps/${RID}${LIBC_SUFFIX}"

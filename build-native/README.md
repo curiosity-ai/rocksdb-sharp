@@ -87,7 +87,15 @@ Where jemalloc is absent, the library simply does not load and RocksDbSharp
 falls through to `librocksdb.so` — which is why the plain library must never
 depend on jemalloc itself.
 
-Cross compiling to `arm64` needs `g++-aarch64-linux-gnu` on `PATH`.
+Cross compiling to `arm64` needs `g++-aarch64-linux-gnu` on `PATH`. Exporting
+`CC` is not enough to carry that through to every dependency — bzip2's makefile
+assigns `CC=gcc` itself, and a makefile assignment beats the environment — so
+the compression libraries are built with `CC` named on `make`'s command line,
+where it becomes an override the nested makes inherit. `verify_archives_match_compiler`
+then checks each archive against the architecture the compiler actually targets,
+because otherwise a dependency that quietly built for the host is only noticed
+by the linker at the very end of the build, in a message that names neither the
+library nor the architecture.
 
 CI does not call the script directly, it goes through the container wrapper, so
 that the toolchain and the glibc and musl versions the artifacts are built

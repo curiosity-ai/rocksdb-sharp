@@ -25,9 +25,16 @@ test -n "${WindowsSdkDir:-}" \
     || fail "This must be run from a build environment such as the Developer Command Prompt"
 
 # The hosted Windows images ship vcpkg pre-installed and point
-# VCPKG_INSTALLATION_ROOT at it.
+# VCPKG_INSTALLATION_ROOT at it, spelled with backslashes. Everything below
+# builds paths out of it that end up in CMake variables and in log lines, both
+# of which are happier with forward slashes; Windows itself accepts either.
 VCPKG_ROOT="${VCPKG_INSTALLATION_ROOT:-C:/vcpkg}"
-VCPKG_PACKAGES="${VCPKG_ROOT}/packages"
+VCPKG_ROOT="${VCPKG_ROOT//\\//}"
+
+# Where vcpkg puts the finished libraries. Not "packages/<port>_<triplet>",
+# which is scratch space vcpkg is free to clean out once it has installed from
+# it -- and does, which is why this build stopped finding zlib.lib there.
+VCPKG_INSTALLED="${VCPKG_ROOT}/installed/x64-windows-static"
 
 info "building rocksdb ${ROCKSDBVERSION} for win-x64 with ${CONCURRENCY} jobs"
 info "using vcpkg at ${VCPKG_ROOT}"
@@ -45,26 +52,41 @@ vcpkg.exe install \
     zstd:x64-windows-static \
     || fail "unable to install libraries with vcpkg.exe"
 
+# The debug counterpart of a release library, where vcpkg built one. Only
+# Release is ever built here, but rocksdb's thirdparty.inc wants both paths, and
+# the debug file names differ from port to port (zlibd.lib against snappy.lib),
+# so look rather than guess and fall back to the release library.
+debug_counterpart() {
+    local candidate="${VCPKG_INSTALLED}/debug/lib/$(basename "$1")"
+
+    if [ -f "$candidate" ]; then
+        echo "$candidate"
+    else
+        echo "$1"
+    fi
+}
+
 # rocksdb's thirdparty.inc reads these out of the environment; without them it
 # falls back to the long dead THIRDPARTY_HOME/*.Library layout.
-export ZLIB_INCLUDE="${VCPKG_PACKAGES}/zlib_x64-windows-static/include"
-export ZLIB_LIB_DEBUG="${VCPKG_PACKAGES}/zlib_x64-windows-static/debug/lib/zlib.lib"
-export ZLIB_LIB_RELEASE="${VCPKG_PACKAGES}/zlib_x64-windows-static/lib/zlib.lib"
+export ZLIB_INCLUDE="${VCPKG_INSTALLED}/include"
+export ZLIB_LIB_RELEASE="${VCPKG_INSTALLED}/lib/zlib.lib"
+export ZLIB_LIB_DEBUG="$(debug_counterpart "$ZLIB_LIB_RELEASE")"
 
-export LZ4_INCLUDE="${VCPKG_PACKAGES}/lz4_x64-windows-static/include"
-export LZ4_LIB_DEBUG="${VCPKG_PACKAGES}/lz4_x64-windows-static/debug/lib/lz4.lib"
-export LZ4_LIB_RELEASE="${VCPKG_PACKAGES}/lz4_x64-windows-static/lib/lz4.lib"
+export LZ4_INCLUDE="${VCPKG_INSTALLED}/include"
+export LZ4_LIB_RELEASE="${VCPKG_INSTALLED}/lib/lz4.lib"
+export LZ4_LIB_DEBUG="$(debug_counterpart "$LZ4_LIB_RELEASE")"
 
-export SNAPPY_INCLUDE="${VCPKG_PACKAGES}/snappy_x64-windows-static/include"
-export SNAPPY_LIB_DEBUG="${VCPKG_PACKAGES}/snappy_x64-windows-static/debug/lib/snappy.lib"
-export SNAPPY_LIB_RELEASE="${VCPKG_PACKAGES}/snappy_x64-windows-static/lib/snappy.lib"
+export SNAPPY_INCLUDE="${VCPKG_INSTALLED}/include"
+export SNAPPY_LIB_RELEASE="${VCPKG_INSTALLED}/lib/snappy.lib"
+export SNAPPY_LIB_DEBUG="$(debug_counterpart "$SNAPPY_LIB_RELEASE")"
 
-export ZSTD_INCLUDE="${VCPKG_PACKAGES}/zstd_x64-windows-static/include"
-export ZSTD_LIB_DEBUG="${VCPKG_PACKAGES}/zstd_x64-windows-static/debug/lib/zstd_d.lib"
-export ZSTD_LIB_RELEASE="${VCPKG_PACKAGES}/zstd_x64-windows-static/lib/zstd.lib"
+export ZSTD_INCLUDE="${VCPKG_INSTALLED}/include"
+export ZSTD_LIB_RELEASE="${VCPKG_INSTALLED}/lib/zstd.lib"
+export ZSTD_LIB_DEBUG="$(debug_counterpart "$ZSTD_LIB_RELEASE")"
 
 for lib in "$ZLIB_LIB_RELEASE" "$LZ4_LIB_RELEASE" "$SNAPPY_LIB_RELEASE" "$ZSTD_LIB_RELEASE"; do
-    test -f "$lib" || fail "vcpkg did not produce ${lib}"
+    test -f "$lib" || fail "vcpkg did not produce ${lib}, only:
+$(ls "${VCPKG_INSTALLED}/lib" 2>/dev/null | sed 's/^/    /')"
 done
 
 # ---------------------------------------------------------------------------
