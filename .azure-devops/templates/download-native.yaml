@@ -1,5 +1,9 @@
 # Downloads native libraries published by the build-native-* pipelines into
 # csharp/runtimes/<rid>/native/, replacing the placeholders checked into git.
+#
+# The paths are quoted for the same reason as in publish-native.yaml: bash eats
+# the backslashes in a Windows $(Build.SourcesDirectory) otherwise. This one only
+# ever runs on the Linux packing agent, but the two should not differ over that.
 parameters:
 - name: rid
   type: string
@@ -16,7 +20,7 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: >
         az storage blob download
-        -f $(Build.SourcesDirectory)/csharp/runtimes/${{ parameters.rid }}/native/${{ file }}
+        -f "$(Build.SourcesDirectory)/csharp/runtimes/${{ parameters.rid }}/native/${{ file }}"
         --account-name curiosityreleases
         -c rocksdb
-        -n v$(ROCKSDBVERSIONBASE)/${{ parameters.rid }}/${{ file }}
+        -n "v$(ROCKSDBVERSIONBASE)/${{ parameters.rid }}/${{ file }}"

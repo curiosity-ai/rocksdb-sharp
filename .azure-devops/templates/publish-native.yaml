@@ -1,5 +1,10 @@
 # Uploads native libraries built by build-native/ to blob storage, under
 # v<version>/<rid>/<file>, where build-nuget.yaml picks them up again.
+#
+# The paths are quoted because these scripts run under bash on every agent,
+# including the Windows one, where $(Build.SourcesDirectory) expands to
+# D:\a\1\s. Unquoted, bash reads each backslash as escaping the character after
+# it and az is handed D:a1s/build-native/... instead.
 parameters:
 - name: rid
   type: string
@@ -16,8 +21,8 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: >
         az storage blob upload
-        -f $(Build.SourcesDirectory)/build-native/runtimes/${{ parameters.rid }}/native/${{ file }}
+        -f "$(Build.SourcesDirectory)/build-native/runtimes/${{ parameters.rid }}/native/${{ file }}"
         --account-name curiosityreleases
         -c rocksdb
-        -n v$(ROCKSDBVERSION)/${{ parameters.rid }}/${{ file }}
+        -n "v$(ROCKSDBVERSION)/${{ parameters.rid }}/${{ file }}"
         --overwrite true
