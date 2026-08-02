@@ -168,3 +168,11 @@ and Visual Studio 2022.
 vcpkg is expected to be present; the hosted build images ship it and point
 `VCPKG_INSTALLATION_ROOT` at it. Set that variable yourself if your vcpkg lives
 somewhere other than `C:\vcpkg`.
+
+The libraries are read out of `installed/x64-windows-static`, vcpkg's finished
+tree, rather than out of `packages/<port>_<triplet>`, which is scratch space
+vcpkg is free to clean out once it has installed from it. Their file names are
+not stable either — vcpkg calls a library whatever the upstream project's own
+build calls it, and zlib 1.3.2 renamed its static Windows library from
+`zlib.lib` to `zs.lib` — so the script tries the names each port is known to
+have used and fails with the directory listed if none of them is there.

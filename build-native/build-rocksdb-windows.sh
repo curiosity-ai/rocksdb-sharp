@@ -52,42 +52,70 @@ vcpkg.exe install \
     zstd:x64-windows-static \
     || fail "unable to install libraries with vcpkg.exe"
 
-# The debug counterpart of a release library, where vcpkg built one. Only
-# Release is ever built here, but rocksdb's thirdparty.inc wants both paths, and
-# the debug file names differ from port to port (zlibd.lib against snappy.lib),
-# so look rather than guess and fall back to the release library.
-debug_counterpart() {
-    local candidate="${VCPKG_INSTALLED}/debug/lib/$(basename "$1")"
+# The release library a port installed, given the names it is known to use.
+#
+# These are not stable. vcpkg names the library whatever the upstream project's
+# own build names it, and zlib 1.3.2 renamed its static Windows library from
+# zlib.lib to zs.lib -- which is why this build started failing to find a file
+# it had been finding for years. Trying a list beats hardcoding today's answer,
+# and an unknown name fails here with the directory listed rather than as a
+# missing symbol at link time.
+vcpkg_lib() {
+    local name candidate
 
-    if [ -f "$candidate" ]; then
-        echo "$candidate"
-    else
-        echo "$1"
-    fi
+    for name in "$@"; do
+        candidate="${VCPKG_INSTALLED}/lib/${name}"
+        test -f "$candidate" && { echo "$candidate"; return 0; }
+    done
+
+    fail "vcpkg installed none of [$*], only:
+$(ls "${VCPKG_INSTALLED}/lib" 2>/dev/null | sed 's/^/    /')"
+}
+
+# The debug counterpart of a release library. Only Release is ever built here,
+# but rocksdb's thirdparty.inc wants both paths set; vcpkg's debug libraries
+# either carry a "d" suffix or keep the release name, so try both and fall back
+# to the release library where the port ships no debug build at all.
+debug_counterpart() {
+    local base name
+
+    base="$(basename "$1")"
+
+    for name in "${base%.lib}d.lib" "$base"; do
+        test -f "${VCPKG_INSTALLED}/debug/lib/${name}" \
+            && { echo "${VCPKG_INSTALLED}/debug/lib/${name}"; return 0; }
+    done
+
+    echo "$1"
 }
 
 # rocksdb's thirdparty.inc reads these out of the environment; without them it
 # falls back to the long dead THIRDPARTY_HOME/*.Library layout.
+#
+# Assigned before being exported, because the exit status of `export VAR=$(...)`
+# is export's own and would swallow a failure inside the substitution.
+ZLIB_LIB_RELEASE="$(vcpkg_lib zs.lib zlib.lib zlibstatic.lib)" || exit 1
+LZ4_LIB_RELEASE="$(vcpkg_lib lz4.lib liblz4.lib)" || exit 1
+SNAPPY_LIB_RELEASE="$(vcpkg_lib snappy.lib libsnappy.lib)" || exit 1
+ZSTD_LIB_RELEASE="$(vcpkg_lib zstd.lib libzstd.lib zstd_static.lib)" || exit 1
+
 export ZLIB_INCLUDE="${VCPKG_INSTALLED}/include"
-export ZLIB_LIB_RELEASE="${VCPKG_INSTALLED}/lib/zlib.lib"
+export ZLIB_LIB_RELEASE
 export ZLIB_LIB_DEBUG="$(debug_counterpart "$ZLIB_LIB_RELEASE")"
 
 export LZ4_INCLUDE="${VCPKG_INSTALLED}/include"
-export LZ4_LIB_RELEASE="${VCPKG_INSTALLED}/lib/lz4.lib"
+export LZ4_LIB_RELEASE
 export LZ4_LIB_DEBUG="$(debug_counterpart "$LZ4_LIB_RELEASE")"
 
 export SNAPPY_INCLUDE="${VCPKG_INSTALLED}/include"
-export SNAPPY_LIB_RELEASE="${VCPKG_INSTALLED}/lib/snappy.lib"
+export SNAPPY_LIB_RELEASE
 export SNAPPY_LIB_DEBUG="$(debug_counterpart "$SNAPPY_LIB_RELEASE")"
 
 export ZSTD_INCLUDE="${VCPKG_INSTALLED}/include"
-export ZSTD_LIB_RELEASE="${VCPKG_INSTALLED}/lib/zstd.lib"
+export ZSTD_LIB_RELEASE
 export ZSTD_LIB_DEBUG="$(debug_counterpart "$ZSTD_LIB_RELEASE")"
 
-for lib in "$ZLIB_LIB_RELEASE" "$LZ4_LIB_RELEASE" "$SNAPPY_LIB_RELEASE" "$ZSTD_LIB_RELEASE"; do
-    test -f "$lib" || fail "vcpkg did not produce ${lib}, only:
-$(ls "${VCPKG_INSTALLED}/lib" 2>/dev/null | sed 's/^/    /')"
-done
+info "linking against $(basename "$ZLIB_LIB_RELEASE"), $(basename "$LZ4_LIB_RELEASE"), $(basename "$SNAPPY_LIB_RELEASE") and $(basename "$ZSTD_LIB_RELEASE")"
 
 # ---------------------------------------------------------------------------
 # Sources
