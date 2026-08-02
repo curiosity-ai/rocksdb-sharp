@@ -151,12 +151,32 @@ update_vcxproj() {
         #  USE_RTTI=1                   RTTI is off in MSVC release builds by
         #                               default; rocksdb's options machinery
         #                               uses dynamic_cast
+        #  FAIL_ON_WARNINGS=0           rocksdb defaults this on, which puts
+        #                               /W4 /WX on its own sources; which
+        #                               warnings a compiler emits for them is a
+        #                               property of the compiler, not of this
+        #                               repository. The Linux and macOS builds
+        #                               opt out the same way.
+        #  -wd4267                      size_t truncation warnings from
+        #                               rocksdb's sources, silenced to keep the
+        #                               build log readable rather than to keep
+        #                               it running
         # Tools, tests and benchmarks are all switched off: only rocksdb-shared
         # is built below.
+        #
+        # Compiler options are spelled with a leading dash, not the slash cl.exe
+        # is usually given (it accepts either), and argument conversion is off
+        # for this command. git bash rewrites any argument that looks like an
+        # absolute POSIX path into a Windows one: "/wd4267" reached cl.exe as
+        # "C:/Program Files/Git/wd4267", which it dutifully tried to compile.
+        # Nothing here needs converting -- the vcpkg paths are already in
+        # Windows form and everything else is relative.
+        MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 \
         cmake -G "Visual Studio 17 2022" -A x64 \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_STANDARD=20 \
-            -DCMAKE_CXX_FLAGS="/wd4267" \
+            -DCMAKE_CXX_FLAGS="-wd4267" \
+            -DFAIL_ON_WARNINGS=0 \
             -DWITH_WINDOWS_UTF8_FILENAMES=1 \
             -DWITH_MD_LIBRARY=0 \
             -DPORTABLE=1 \
