@@ -169,6 +169,13 @@ vcpkg is expected to be present; the hosted build images ship it and point
 `VCPKG_INSTALLATION_ROOT` at it. Set that variable yourself if your vcpkg lives
 somewhere other than `C:\vcpkg`.
 
+Compiler options are passed to CMake in their `-wd4267` form rather than the
+`/wd4267` one MSVC is usually given, because git bash rewrites any argument
+that looks like an absolute POSIX path into a Windows one — `/wd4267` arrived
+at `cl.exe` as `C:/Program Files/Git/wd4267`, which it tried to compile.
+Argument conversion is switched off for the CMake call as well; nothing in it
+needs converting.
+
 The libraries are read out of `installed/x64-windows-static`, vcpkg's finished
 tree, rather than out of `packages/<port>_<triplet>`, which is scratch space
 vcpkg is free to clean out once it has installed from it. Their file names are
