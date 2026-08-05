@@ -35,20 +35,17 @@ using (var db = RocksDb.Open(options, path))
 
 ### Asynchronous reads
 
+RocksDB 11.8.0 added `DB::GetAsync()` and `DB::MultiGetAsync()`, but only to
+`include/rocksdb/db.h` — nothing in `include/rocksdb/c.h` reaches them, and this library is a
+wrapper over the C API. There is therefore no `GetAsync` here yet; it is waiting on a C API for
+those methods upstream.
+
+What RocksDB does expose through the C API is `ReadOptions.SetAsyncIO(true)`, which lets it issue
+the file reads of a single `MultiGet` in parallel:
+
 ```csharp
-byte[] value = await db.GetAsync(key);
-var values = await db.MultiGetAsync(keys, readOptions: new ReadOptions().SetAsyncIO(true));
+var values = db.MultiGet(keys, readOptions: new ReadOptions().SetAsyncIO(true));
 ```
-
-`GetAsync`, `MultiGetAsync` and `HasKeyAsync` release the calling thread while the read is in
-flight. They are not bound to RocksDB 11.8.0's `DB::GetAsync()`/`DB::MultiGetAsync()`: those are
-declared in `include/rocksdb/db.h` only, and nothing in the C API this binding wraps reaches them.
-The reads therefore run on the thread pool, so prefer one `MultiGetAsync` over many concurrent
-`GetAsync` calls — that is a single read request and a single pool thread rather than one of each
-per key.
-
-What does carry real asynchronous file IO through the C API is `ReadOptions.SetAsyncIO(true)`,
-which lets RocksDB issue the reads of one MultiGet in parallel.
 
 ### Usage
 

@@ -2,18 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RocksDbSharp;
 
 namespace Tests;
 
 /// <summary>
-/// Covers the API this binding gained for RocksDB 11.8.0, plus the asynchronous read
-/// methods added alongside it. Every option here is read back through its getter, which
-/// is what proves the native library actually carries the new C API entry points rather
-/// than an older one that happened to be on the search path.
+/// Covers the API this binding gained for RocksDB 11.8.0. Every option here is read back
+/// through its getter, which is what proves the native library actually carries the new C
+/// API entry points rather than an older one that happened to be on the search path.
 /// </summary>
 [TestClass]
 public class RocksDb1180ApiTests
@@ -178,175 +175,6 @@ public class RocksDb1180ApiTests
             var retried = db.MultiGetWithStatus(aborted.Select(r => r.Key).ToArray());
             Assert.IsTrue(retried.All(r => r.Succeeded));
             Assert.IsTrue(retried.All(r => r.Value == value));
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task GetAsyncReadsWhatWasWritten()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            db.Put("present", "value");
-
-            Assert.AreEqual("value", await db.GetAsync("present"));
-            Assert.IsNull(await db.GetAsync("absent"));
-
-            CollectionAssert.AreEqual("value"u8.ToArray(), await db.GetAsync("present"u8.ToArray()));
-            Assert.IsNull(await db.GetAsync("absent"u8.ToArray()));
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task GetAsyncWithAsyncIoReadOptionReadsFromDisk()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            for (var i = 0; i < 2000; i++)
-                db.Put($"key{i:D5}", $"value{i:D5}");
-
-            // Flush so the reads below have to go to an SST rather than the memtable,
-            // which is where ReadOptions::async_io has anything to do.
-            db.Flush(new FlushOptions().SetWaitForFlush(true));
-
-            var readOptions = new ReadOptions().SetAsyncIO(true);
-
-            for (var i = 0; i < 2000; i += 100)
-                Assert.AreEqual($"value{i:D5}", await db.GetAsync($"key{i:D5}", readOptions: readOptions));
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task MultiGetAsyncReturnsEveryKeyInOrder()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            for (var i = 0; i < 100; i++)
-                db.Put($"key{i:D3}", $"value{i:D3}");
-            db.Flush(new FlushOptions().SetWaitForFlush(true));
-
-            var keys = Enumerable.Range(0, 100).Select(i => $"key{i:D3}").Concat(new[] { "missing" }).ToArray();
-
-            var results = await db.MultiGetAsync(keys, readOptions: new ReadOptions().SetAsyncIO(true));
-
-            Assert.AreEqual(101, results.Length);
-            for (var i = 0; i < 100; i++)
-            {
-                Assert.AreEqual($"key{i:D3}", results[i].Key);
-                Assert.AreEqual($"value{i:D3}", results[i].Value);
-            }
-            Assert.AreEqual("missing", results[100].Key);
-            Assert.IsNull(results[100].Value);
-
-            var byteResults = await db.MultiGetAsync(new[] { "key000"u8.ToArray(), "key099"u8.ToArray() });
-            Assert.AreEqual(2, byteResults.Length);
-            CollectionAssert.AreEqual("value000"u8.ToArray(), byteResults[0].Value);
-            CollectionAssert.AreEqual("value099"u8.ToArray(), byteResults[1].Value);
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task HasKeyAsyncFindsOnlyWhatIsThere()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            db.Put("present", "value");
-
-            Assert.IsTrue(await db.HasKeyAsync("present"u8.ToArray()));
-            Assert.IsFalse(await db.HasKeyAsync("absent"u8.ToArray()));
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task ManyAsyncReadsRunConcurrently()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            for (var i = 0; i < 500; i++)
-                db.Put($"key{i:D3}", $"value{i:D3}");
-            db.Flush(new FlushOptions().SetWaitForFlush(true));
-
-            var reads = Enumerable.Range(0, 500).Select(i => db.GetAsync($"key{i:D3}")).ToArray();
-
-            var values = await Task.WhenAll(reads);
-
-            for (var i = 0; i < 500; i++)
-                Assert.AreEqual($"value{i:D3}", values[i]);
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task AsyncReadsObserveCancellationBeforeTheyStart()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            db.Put("key", "value");
-
-            using var cancelled = new CancellationTokenSource();
-            cancelled.Cancel();
-
-            await Assert.ThrowsAsync<TaskCanceledException>(
-                () => db.GetAsync("key", cancellationToken: cancelled.Token));
-
-            await Assert.ThrowsAsync<TaskCanceledException>(
-                () => db.MultiGetAsync(new[] { "key" }, cancellationToken: cancelled.Token));
-
-            // An uncancelled read on the same database still works afterwards.
-            Assert.AreEqual("value", await db.GetAsync("key"));
-        }
-        finally
-        {
-            db.Dispose();
-            DeleteQuietly(dbPath);
-        }
-    }
-
-    [TestMethod]
-    public async Task GetAsyncRejectsNullKeys()
-    {
-        using var db = OpenTempDb(out var dbPath);
-        try
-        {
-            Assert.Throws<ArgumentNullException>(() => db.GetAsync((byte[])null));
-            Assert.Throws<ArgumentNullException>(() => db.GetAsync((string)null));
-            Assert.Throws<ArgumentNullException>(() => db.MultiGetAsync((string[])null));
-
-            Assert.AreEqual(null, await db.GetAsync("anything"));
         }
         finally
         {

@@ -10,7 +10,7 @@ using Transitional;
 namespace RocksDbSharp
 {
 
-    public sealed partial class RocksDb : IDisposable
+    public sealed class RocksDb : IDisposable
     {
         private bool _disposed;
         internal static ReadOptions DefaultReadOptions { get; } = new ReadOptions();
