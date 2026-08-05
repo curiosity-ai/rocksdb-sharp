@@ -387,6 +387,59 @@ namespace RocksDbSharp
             return result;
         }
 
+        /*
+        The two below report each key's status rather than throwing on the first one that has
+        any, which is what a caller needs when a status is an expected outcome and not a
+        failure -- ReadOptions::value_size_soft_limit aborts the keys past its limit, and those
+        are meant to be read again rather than to end the operation.
+        */
+
+        public MultiGetResult<byte[], byte[]>[] rocksdb_multi_get_with_status(
+            IntPtr db,
+            IntPtr read_options,
+            byte[][] keys,
+            ulong[] keyLengths = null,
+            ColumnFamilyHandle[] cf = null)
+        {
+            IntPtr[] errptrs = new IntPtr[keys.Length];
+            var result = rocksdb_multi_get(db, read_options, keys, keyLengths: keyLengths, cf: cf, errptrs: errptrs);
+            return WithStatus(result, errptrs);
+        }
+
+        public MultiGetResult<string, string>[] rocksdb_multi_get_with_status(
+            IntPtr db,
+            IntPtr read_options,
+            string[] keys,
+            ColumnFamilyHandle[] cf = null,
+            System.Text.Encoding encoding = null)
+        {
+            IntPtr[] errptrs = new IntPtr[keys.Length];
+            var result = rocksdb_multi_get(db, read_options, keys, cf: cf, errptrs: errptrs, encoding: encoding ?? System.Text.Encoding.UTF8);
+            return WithStatus(result, errptrs);
+        }
+
+        private MultiGetResult<TKey, TValue>[] WithStatus<TKey, TValue>(
+            System.Collections.Generic.KeyValuePair<TKey, TValue>[] values,
+            IntPtr[] errptrs)
+        {
+            var results = new MultiGetResult<TKey, TValue>[values.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                string error = null;
+                if (errptrs[i] != IntPtr.Zero)
+                {
+                    // Nothing else frees these: the throwing wrappers above hand them to
+                    // RocksDbException, which frees the one it was given.
+                    error = Marshal.PtrToStringAnsi(errptrs[i]);
+                    rocksdb_free(errptrs[i]);
+                }
+
+                results[i] = new MultiGetResult<TKey, TValue>(values[i].Key, values[i].Value, error);
+            }
+
+            return results;
+        }
+
         public void rocksdb_delete(
             /*rocksdb_t**/ IntPtr db,
             /*const rocksdb_writeoptions_t**/ IntPtr writeOptions,

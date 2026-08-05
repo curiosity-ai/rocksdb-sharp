@@ -191,8 +191,14 @@ prefetch_dependency_sources() {
         "https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.gz" \
         "https://zlib.net/zlib-${ZLIB_VER}.tar.gz"
 
+    # sourceware.org is the only place upstream publishes bzip2, and it is down
+    # often enough to be worth a second location. Debian and Ubuntu ship the
+    # unmodified upstream tarball as their .orig.tar.gz, so it satisfies the
+    # checksum below as it stands.
     fetch_dependency "bzip2-${BZIP2_VER}.tar.gz" "$(dep_sha256 BZIP2)" \
-        "https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VER}.tar.gz"
+        "https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VER}.tar.gz" \
+        "https://archive.ubuntu.com/ubuntu/pool/main/b/bzip2/bzip2_${BZIP2_VER}.orig.tar.gz" \
+        "https://deb.debian.org/debian/pool/main/b/bzip2/bzip2_${BZIP2_VER}.orig.tar.gz"
 
     fetch_dependency "snappy-${SNAPPY_VER}.tar.gz" "$(dep_sha256 SNAPPY)" \
         "https://github.com/google/snappy/archive/${SNAPPY_VER}.tar.gz"

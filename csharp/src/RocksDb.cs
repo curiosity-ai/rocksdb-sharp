@@ -341,6 +341,30 @@ namespace RocksDbSharp
             return Native.Instance.rocksdb_multi_get(Handle, (readOptions ?? DefaultReadOptions).Handle, keys, cf);
         }
 
+        /// <summary>
+        /// Reads <paramref name="keys"/> like <see cref="MultiGet(byte[][], ColumnFamilyHandle[], ReadOptions)"/>,
+        /// reporting each key's status instead of throwing on the first key that has one.
+        /// </summary>
+        /// <remarks>
+        /// Use this rather than <c>MultiGet</c> together with
+        /// <see cref="ReadOptions.SetValueSizeSoftLimit(ulong)"/>: the keys past the limit come
+        /// back as <see cref="MultiGetResult{TKey,TValue}.WasAborted"/> for the caller to read
+        /// again, where <c>MultiGet</c> would throw and lose the values that were read.
+        /// </remarks>
+        public MultiGetResult<byte[], byte[]>[] MultiGetWithStatus(byte[][] keys, ColumnFamilyHandle[] cf = null, ReadOptions readOptions = null)
+        {
+            return Native.Instance.rocksdb_multi_get_with_status(Handle, (readOptions ?? DefaultReadOptions).Handle, keys, null, cf);
+        }
+
+        /// <summary>
+        /// Reads <paramref name="keys"/> like <see cref="MultiGet(string[], ColumnFamilyHandle[], ReadOptions)"/>,
+        /// reporting each key's status instead of throwing on the first key that has one.
+        /// </summary>
+        public MultiGetResult<string, string>[] MultiGetWithStatus(string[] keys, ColumnFamilyHandle[] cf = null, ReadOptions readOptions = null, Encoding encoding = null)
+        {
+            return Native.Instance.rocksdb_multi_get_with_status(Handle, (readOptions ?? DefaultReadOptions).Handle, keys, cf, encoding ?? DefaultEncoding);
+        }
+
         public void Write(WriteBatch writeBatch, WriteOptions writeOptions = null)
         {
             Native.Instance.rocksdb_write(Handle, (writeOptions ?? DefaultWriteOptions).Handle, writeBatch.Handle);

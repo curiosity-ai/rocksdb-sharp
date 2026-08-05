@@ -121,6 +121,49 @@ namespace RocksDbSharp
         }
 
         /// <summary>
+        /// Size of the pool of threads RocksDB reserves for asynchronous read requests, which is
+        /// what runs its coroutine read path where that is available. Has to be set before the
+        /// database is opened.
+        /// Default: 1
+        /// </summary>
+        public T SetReadIoExecutorThreads(int value)
+        {
+            Native.Instance.rocksdb_options_set_read_io_executor_threads(Handle, value);
+            return (T)this;
+        }
+
+        public int GetReadIoExecutorThreads()
+            => Native.Instance.rocksdb_options_get_read_io_executor_threads(Handle);
+
+        /// <summary>
+        /// Open the database's files on background threads rather than on the thread
+        /// calling Open, so that opening a database with many files returns sooner.
+        /// Default: false
+        /// </summary>
+        public T SetOpenFilesAsync(bool value)
+        {
+            Native.Instance.rocksdb_options_set_open_files_async(Handle, Native.MarshalBool(value));
+            return (T)this;
+        }
+
+        public bool GetOpenFilesAsync()
+            => Native.Instance.rocksdb_options_get_open_files_async(Handle) != 0;
+
+        /// <summary>
+        /// Create the next write-ahead log file in the background, ahead of the write
+        /// that needs it, so that a WAL switch does not stall that write.
+        /// Default: false
+        /// </summary>
+        public T SetAsyncWalPrecreate(bool value)
+        {
+            Native.Instance.rocksdb_options_set_async_wal_precreate(Handle, Native.MarshalBool(value));
+            return (T)this;
+        }
+
+        public bool GetAsyncWalPrecreate()
+            => Native.Instance.rocksdb_options_get_async_wal_precreate(Handle) != 0;
+
+        /// <summary>
         /// Once write-ahead logs exceed this size, we will start forcing the flush of
         /// column families whose memtables are backed by the oldest live WAL file
         /// (i.e. the ones that are causing all the space amplification). If set to 0

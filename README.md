@@ -32,6 +32,21 @@ using (var db = RocksDb.Open(options, path))
     db.Remove("key");
 }
 ```
+
+### Asynchronous reads
+
+RocksDB 11.8.0 added `DB::GetAsync()` and `DB::MultiGetAsync()`, but only to
+`include/rocksdb/db.h` — nothing in `include/rocksdb/c.h` reaches them, and this library is a
+wrapper over the C API. There is therefore no `GetAsync` here yet; it is waiting on a C API for
+those methods upstream.
+
+What RocksDB does expose through the C API is `ReadOptions.SetAsyncIO(true)`, which lets it issue
+the file reads of a single `MultiGet` in parallel:
+
+```csharp
+var values = db.MultiGet(keys, readOptions: new ReadOptions().SetAsyncIO(true));
+```
+
 ### Usage
 
 #### Using NuGet:
