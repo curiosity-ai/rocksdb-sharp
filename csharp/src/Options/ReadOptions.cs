@@ -162,6 +162,27 @@ namespace RocksDbSharp
             return this;
         }
 
+        /// <summary>
+        /// Soft limit on the total size of the values a single MultiGet reads. Keys are read in
+        /// order and at least one is always read, however large its value; once the returned size
+        /// has passed this limit the remaining keys come back as aborted instead of being read, so
+        /// a caller retrying them cannot loop forever on one oversized value.
+        /// Defaults to <see cref="ulong.MaxValue"/>, which is effectively no limit.
+        /// </summary>
+        /// <remarks>
+        /// From RocksDB 11.8.0 on, wide-column entities count towards this limit by the size of
+        /// their column names and values rather than by the size of their serialized form, so the
+        /// same limit admits slightly more of an entity than it used to.
+        /// </remarks>
+        public ReadOptions SetValueSizeSoftLimit(ulong value)
+        {
+            Native.Instance.rocksdb_readoptions_set_value_size_soft_limit(Handle, value);
+            return this;
+        }
+
+        public ulong GetValueSizeSoftLimit()
+            => Native.Instance.rocksdb_readoptions_get_value_size_soft_limit(Handle);
+
         public ReadOptions SetPinData(bool enable)
         {
             Native.Instance.rocksdb_readoptions_set_pin_data(Handle, Native.MarshalBool(enable));

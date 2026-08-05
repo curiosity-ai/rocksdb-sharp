@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -137,7 +138,12 @@ namespace RocksDbPrepareCApiHeader
                 Console.WriteLine("Warning: There might be a missing callback type name: void (*)(...)");
             }
             
-            var regions = ParseRocksHeaderFileRegion(modified).ToList();
+            // Everything below is keyed on a region's title, and c.h does not guarantee
+            // those are unique: 11.8.0 has one "BackupEngineOptions" comment above the
+            // backup engine functions and a second above the options setters at the end
+            // of the header. Fold repeats into their first occurrence so a title still
+            // names exactly one region.
+            var regions = MergeRegionsByTitle(ParseRocksHeaderFileRegion(modified)).ToList();
 
             var managedFunctions = regions.ToDictionary(r => r.Title, r => GetManagedFunctions(r).ToArray());
 
@@ -178,6 +184,11 @@ namespace RocksDbPrepareCApiHeader
             nativeRawCs.AppendLine("using rocksdb_compaction_service_wait_cb  = System.IntPtr;");
             nativeRawCs.AppendLine("using rocksdb_compaction_service_cancel_awaiting_jobs_cb  = System.IntPtr;");
             nativeRawCs.AppendLine("using rocksdb_compaction_service_on_installation_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_create_backup_options_progress_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_create_backup_options_exclude_files_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_readoptions_table_filter_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_walfilter_column_family_log_number_map_cb  = System.IntPtr;");
+            nativeRawCs.AppendLine("using rocksdb_walfilter_log_record_found_cb  = System.IntPtr;");
 
 
             nativeRawCs.AppendLine("#endregion");
@@ -328,11 +339,20 @@ namespace RocksDbPrepareCApiHeader
             var commonSuffix = GetCommonSuffix(nativeEnum.Values.Select(e => e.Name).ToArray()).If(p => p.StartsWith("_"));
             var prefixLength = commonPrefix?.Length ?? 0;
             var suffixLength = commonSuffix?.Length ?? 0;
+            // Neither guess works when the values share no whole underscore-separated
+            // prefix or suffix, which used to leave commonPrefix null and throw here.
+            // Fall through to ManualEnumName instead, and if that has nothing either,
+            // say so in a way that names the enum.
             var guessedEnumName =
-                (prefixLength >= suffixLength) ? Regex.Replace(SnakeCaseToPascalCase(commonPrefix.TrimEnd('_')), "^Rocksdb", "", RegexOptions.IgnoreCase) :
+                (prefixLength > 0 && prefixLength >= suffixLength) ? Regex.Replace(SnakeCaseToPascalCase(commonPrefix.TrimEnd('_')), "^Rocksdb", "", RegexOptions.IgnoreCase) :
                 (suffixLength > 0) ? SnakeCaseToPascalCase(commonSuffix.TrimStart('_')) :
-                "(Unable To Guess Name)";
+                "";
             var enumName = nativeEnum.Name.OrElse(guessedEnumName).OrElse(ManualEnumName(nativeEnum));
+            if (string.IsNullOrEmpty(enumName))
+            {
+                Console.WriteLine($"Warning: unable to name the anonymous enum with values {string.Join(", ", nativeEnum.Values.Select(v => v.Name))}; add it to ManualEnumName");
+                return $"\n#error Unable to guess a name for the anonymous enum containing {nativeEnum.Values.First().Name}, add it to ManualEnumName in build-codegen/Generate.cs\n";
+            }
             var values = nativeEnum.Values
                 .Select(v => $"    {SnakeCaseToPascalCase(v.Name.Substring(prefixLength, v.Name.Length - prefixLength - suffixLength))} = {v.Value},\n");
             return $"\npublic enum {enumName}\n{{\n{string.Join("", values)}}}\n";
@@ -676,7 +696,11 @@ namespace RocksDbPrepareCApiHeader
                 var first = strings.First();
                 (var prefix, var rest) = first.SplitAt(i);
                 if (strings.All(s => s.Left(i) == prefix))
-                    return prefix;
+                    // The caller wants a whole prefix of underscore-separated words, and
+                    // the longest common one rarely ends on that boundary: the two WAL
+                    // file types agree as far as rocksdb_wal_file_type_a, which names no
+                    // enum. Back up to the last underscore so it does.
+                    return prefix.EndsWith("_") ? prefix : prefix.Substring(0, prefix.LastIndexOf('_') + 1);
             }
             return "";
         }
@@ -711,6 +735,7 @@ namespace RocksDbPrepareCApiHeader
                 @"using int32_t = System.Int32;",
                 @"using int64_t = System.Int64;",
                 @"using uint64_t = System.UInt64;",
+                @"using uint32_t_ptr = System.IntPtr;",
                 @"using uint64_t_ptr = System.IntPtr;",
                 @"using unsigned_char = System.Byte;",
                 @"using unsigned_char_ptr = System.IntPtr;",
@@ -733,6 +758,19 @@ namespace RocksDbPrepareCApiHeader
         // This is a bit tricky because it tries to accommodate some inconsistencies in rocksdb's c.h region commenting
         // We'll assume it's a region only if the text is on one line and capitalized and either has a blank line underneath it, or is only one word long
         static Regex RegionSeparatorPattern { get; } = new Regex(@"(?:\n\n\/\* ([A-Z][\S]+?) \*\/\n|\n\n\/\* ([A-Z].+?) \*\/\n\n)|#ifdef __cplusplus\n\}", RegexOptions.Compiled | RegexOptions.Multiline);
+        // GroupBy keeps the groups in the order their first member appeared, so the
+        // regions come out in header order with the duplicates collapsed.
+        static IEnumerable<RocksDbHeaderFileRegion> MergeRegionsByTitle(IEnumerable<RocksDbHeaderFileRegion> regions)
+            => regions
+                .GroupBy(r => r.Title)
+                .Select(g => g.Count() == 1
+                    ? g.First()
+                    : new RocksDbHeaderFileRegion(
+                        title: g.Key,
+                        nativeFunctions: g.SelectMany(r => r.NativeFunctions),
+                        nativeEnums: g.SelectMany(r => r.NativeEnums),
+                        nativeTypeDefs: g.SelectMany(r => r.NativeTypeDefs)));
+
         static IEnumerable<RocksDbHeaderFileRegion> ParseRocksHeaderFileRegion(string source)
         {
             var m = RegionSeparatorPattern.Match(source, 0);
@@ -824,6 +862,37 @@ namespace RocksDbPrepareCApiHeader
         }
 
         static Regex NativeEnumPattern { get; } = new Regex(CommentPrologPattern + @"enum ([a-zA-Z0-9_]+)?{(.*?)};", RegexOptions.Compiled | RegexOptions.Singleline);
+
+        // One "<name>" or "<name> = <expression>" entry of an enum body. Everything up to
+        // the next comma is the expression, so ParseEnumValueExpression below rather than
+        // this pattern is what has to understand how the value is written.
+        static Regex EnumValuePattern { get; } = new Regex(@"([A-Za-z_][0-9A-Za-z_]*)\s*(?:=\s*([^,}]+?))?\s*(?:,|$)", RegexOptions.Compiled);
+
+        // The C integer expressions rocksdb writes its enum values as: decimal and
+        // hexadecimal literals, left shifts, and bitwise ors of those. Flag enums are
+        // written both ways -- the size approximation flags use "1 << 0" and the trace
+        // filters use "0x1 << 0" -- so both spellings have to evaluate.
+        private static int ParseEnumValueExpression(string expression)
+        {
+            var value = 0;
+            foreach (var term in expression.Split('|'))
+            {
+                var shifted = term.Split(new[] { "<<" }, StringSplitOptions.None);
+                var literal = ParseCIntegerLiteral(shifted[0]);
+                foreach (var shift in shifted.Skip(1))
+                    literal <<= ParseCIntegerLiteral(shift);
+                value |= literal;
+            }
+            return value;
+        }
+
+        private static int ParseCIntegerLiteral(string literal)
+        {
+            literal = literal.Trim().TrimEnd('u', 'U', 'l', 'L');
+            return literal.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                ? int.Parse(literal.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                : int.Parse(literal, CultureInfo.InvariantCulture);
+        }
         static IEnumerable<NativeEnum> ParseNativeEnumerations(string source)
         {
             var matches = NativeEnumPattern.Matches(source);
@@ -832,26 +901,19 @@ namespace RocksDbPrepareCApiHeader
                 var comment = match.Groups[1].Value.Trim();
                 var name = match.Groups[2].Success ? match.Groups[2].Value : null;
                 var body = match.Groups[3].Value;
-                var v = 1;
-                
+                // A value written without "= something" continues from the one before it,
+                // and the first such value in an enum is 0.
+                var v = -1;
+
                 body = Regex.Replace(body, @" =\n +", " = ");
                 body = body.Replace("= rocksdb_statistics_level_disable_all", "= 0"); //Fix bug in https://github.com/facebook/rocksdb/blob/9202db1867e412e51e72fc04062ca3664deb097b/include/rocksdb/c.h#L1268
 
-                if(body.Contains("<<"))
-                {
-                    for(int i = 255; i >=0; i-- )
-                    {
-                        body = body.Replace($"1 << {i}", (1 << i).ToString());
-                        body = body.Replace($"2 << {i}", (2 << i).ToString());
-                    }
-                }
-
-                var values = Regex.Matches(body, @"([0-9a-zA-Z_]+)\s*(?:=\s*([0-9]+))?,?")
+                var values = EnumValuePattern.Matches(body)
                     .AsEnumerable()
-                    .Select(e => 
+                    .Select(e =>
                     {
                         var n = e.Groups[1].Value;
-                        var val = e.Groups[2].Success ? (v = int.Parse(e.Groups[2].Value)) : ++v;
+                        var val = e.Groups[2].Success ? (v = ParseEnumValueExpression(e.Groups[2].Value)) : ++v;
                         return new NativeEnumValue(name: n, value: val);
                     })
                     .ToList();
