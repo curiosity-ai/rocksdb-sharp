@@ -1009,17 +1009,16 @@ namespace RocksDbSharp
         /// Compress blocks using the specified compression algorithm.  This
         /// parameter can be changed dynamically.
         ///
-        /// Default: kSnappyCompression, if it's supported. If snappy is not linked
-        /// with the library, the default is kNoCompression.
+        /// Default: kLZ4Compression as of rocksdb 11.5.0, kSnappyCompression before
+        /// that. Where the library is built without the default codec, it falls back
+        /// to LZ4, then Snappy, then kNoCompression. Only newly written SST files are
+        /// affected; existing data stays readable either way, because the decompressor
+        /// is selected per block.
         ///
-        /// Typical speeds of kSnappyCompression on an Intel(R) Core(TM)2 2.4GHz:
-        ///    ~200-500MB/s compression
-        ///    ~400-800MB/s decompression
-        /// Note that these speeds are significantly faster than most
-        /// persistent storage speeds, and therefore it is typically never
-        /// worth switching to kNoCompression.  Even if the input data is
-        /// incompressible, the kSnappyCompression implementation will
-        /// efficiently detect that and will switch to uncompressed mode.
+        /// These are fast enough that they are typically never worth switching off:
+        /// compression runs at several hundred MB/s and decompression faster still,
+        /// well beyond most persistent storage speeds. Even for incompressible input
+        /// the implementation detects that and switches to uncompressed mode.
         /// </summary>
         public T SetCompression(Compression value)
         {

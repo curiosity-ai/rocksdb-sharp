@@ -1,14 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 
 namespace RocksDbSharp
 {
-    public class FlushOptions : OptionsHandle
+    public class FlushOptions
     {
         public FlushOptions()
         {
-            Native.Instance.rocksdb_flushoptions_create();
+            Handle = Native.Instance.rocksdb_flushoptions_create();
+        }
+
+        public IntPtr Handle { get; protected set; }
+
+        ~FlushOptions()
+        {
+            if (Handle != IntPtr.Zero)
+            {
+#if !NODESTROY
+                Native.Instance.rocksdb_flushoptions_destroy(Handle);
+#endif
+                Handle = IntPtr.Zero;
+            }
         }
 
         public FlushOptions SetWaitForFlush(bool waitForFlush)
