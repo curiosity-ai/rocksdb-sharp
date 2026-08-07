@@ -89,6 +89,21 @@ namespace RocksDbSharp
 #endif
 
         public void rocksdb_merge(
+            /*rocksdb_t**/ IntPtr db,
+            /*const rocksdb_writeoptions_t**/ IntPtr writeOptions,
+            string key,
+            string val,
+            ColumnFamilyHandle cf = null,
+            System.Text.Encoding encoding = null)
+        {
+            rocksdb_merge(db, writeOptions, key, val, out IntPtr errptr, cf, encoding);
+            if (errptr != IntPtr.Zero)
+            {
+                ThrowRocksDbException(errptr);
+            }
+        }
+
+        public void rocksdb_merge(
             IntPtr db,
             IntPtr writeOptions,
             byte[] key,

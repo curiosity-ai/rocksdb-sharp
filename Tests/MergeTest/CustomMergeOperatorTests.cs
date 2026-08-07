@@ -53,6 +53,13 @@ public class CustomMergeOperatorTests
 
             Assert.IsNotNull(value);
             Assert.AreEqual("helloworld", Encoding.UTF8.GetString(value));
+
+            // The string overload used to write through rocksdb_put, so the merge
+            // operator never ran and the last value simply replaced the earlier ones.
+            db.Merge("string key", "hello");
+            db.Merge("string key", "world");
+
+            Assert.AreEqual("helloworld", db.Get("string key"));
         }
         finally
         {
