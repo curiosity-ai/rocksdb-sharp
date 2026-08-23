@@ -236,6 +236,9 @@ build_static_compression_libs() {
     local toolchain=""
     test -z "${CC:-}" || toolchain="CC=${CC}"
 
+    # See the comment on the make calls below.
+    local nosig="ALLOW_BUILD_PARAMETER_CHANGE=1"
+
     # Built one at a time: the individual targets unpack tarballs and shell out
     # to nested makes, which do not compose safely under a parallel outer make.
     #
@@ -244,12 +247,37 @@ build_static_compression_libs() {
     # do with how these libraries get compiled -- each recipe below passes its
     # own -O2 CFLAGS. Without it the warning shows up in the log of every build
     # and reads like the artifact is a debug build, which it is not.
+    #
+    # ALLOW_BUILD_PARAMETER_CHANGE=1 stops these five goals from recording a
+    # build signature. rocksdb 11.8 hashes CC/CXX/CFLAGS/CXXFLAGS/LDFLAGS into
+    # $OBJ_DIR/.build_signature on every goal it considers a build, and refuses
+    # to start the next one if the hash moved, on the grounds that the object
+    # files lying around were compiled with different flags. These goals unpack
+    # a tarball and run a nested make per library; they compile no rocksdb
+    # object at all, so the signature they leave behind describes nothing, and
+    # it never matches the shared_lib build that follows -- that one adds
+    # EXTRA_CXXFLAGS, EXTRA_CFLAGS and EXTRA_LDFLAGS on top.
+    #
+    # Whether that mattered came down to the order each platform happened to
+    # use. build-rocksdb-linux.sh runs clean-rocks immediately before
+    # shared_lib, and clean-rocks deletes the signature, so the stale one never
+    # survived to be compared against. build-rocksdb-macos.sh cleans at the top
+    # of each architecture instead -- it has to, since that is what forces the
+    # compression archives to be rebuilt for the architecture being started --
+    # so the signature written here was still in place when shared_lib ran and
+    # every macOS build failed at parse time with "Build parameters changed
+    # since the last build".
+    #
+    # Not recording a signature for these goals is what keeps the check honest
+    # rather than defeating it: shared_lib still writes and compares its own,
+    # so a genuine flag change between two rocksdb builds in one tree is caught
+    # exactly as upstream intended.
     (cd "${ROCKSDB_SRC_DIR}" && {
-        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libz.a      || fail "zlib build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libbz2.a    || fail "bzip2 build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libsnappy.a || fail "snappy build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain liblz4.a    || fail "lz4 build failed"
-        make -j"${concurrency}" DEBUG_LEVEL=0 $toolchain libzstd.a   || fail "zstd build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $nosig $toolchain libz.a      || fail "zlib build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $nosig $toolchain libbz2.a    || fail "bzip2 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $nosig $toolchain libsnappy.a || fail "snappy build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $nosig $toolchain liblz4.a    || fail "lz4 build failed"
+        make -j"${concurrency}" DEBUG_LEVEL=0 $nosig $toolchain libzstd.a   || fail "zstd build failed"
     }) || fail "compression library build failed"
 
     # Flags describing those archives to the rocksdb build. Mirrors upstream's
