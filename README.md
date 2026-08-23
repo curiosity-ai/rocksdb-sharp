@@ -46,4 +46,34 @@ The version of the NuGet package is set to follow the official RocksDB version, 
 
 This will install the managed library and the correct version of the unmanaged library depending on your operating system. The native64-bit library is automatically built for each official RocksDB release, for Windows, Linux and MacOS, and is included in the package by default.
 
+#### The jemalloc build (linux-x64 only)
+
+The package ships a second Linux x64 library, `librocksdb-jemalloc.so`, built
+with RocksDB's `-DROCKSDB_JEMALLOC` support. It is tried first on Linux and
+falls back to the ordinary `librocksdb.so`, so you get it automatically or not
+at all — there is no setting to turn it on.
+
+**It only loads in a process that already has jemalloc mapped**, which in
+practice means starting your application with:
+
+```
+LD_PRELOAD=libjemalloc.so.2 dotnet YourApp.dll
+```
+
+Anywhere else it is skipped and you transparently get the ordinary library
+instead. Nothing breaks, you simply do not get the jemalloc build — so if you
+are running it for the allocator behaviour, the `LD_PRELOAD` is not optional.
+
+This is deliberate rather than a packaging oversight. `-DROCKSDB_JEMALLOC`
+assumes jemalloc *is* the process allocator, so the library links jemalloc
+dynamically instead of embedding a private copy, and distribution builds of
+jemalloc use the initial-exec TLS model, which cannot be satisfied by a library
+loaded after startup. Without the preload the loader refuses it with
+`cannot allocate memory in static TLS block`, which is exactly what makes the
+fallback to `librocksdb.so` kick in. `build-native/README.md` explains the
+reasoning in full.
+
+Only `linux-x64` on glibc gets this flavour: linux-arm64 and the musl builds
+ship the ordinary library alone.
+
 
