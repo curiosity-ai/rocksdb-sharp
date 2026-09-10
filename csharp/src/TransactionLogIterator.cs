@@ -5,6 +5,8 @@ namespace RocksDbSharp
 {
     public class TransactionLogIterator : IDisposable
     {
+        private bool m_batchTaken;
+
         public IntPtr Handle { get; private set; }
 
         internal TransactionLogIterator(IntPtr handle)
@@ -19,6 +21,7 @@ namespace RocksDbSharp
 
         public void Next()
         {
+            m_batchTaken = false;
             Native.Instance.rocksdb_wal_iter_next(Handle);
         }
 
@@ -27,8 +30,19 @@ namespace RocksDbSharp
             Native.Instance.rocksdb_wal_iter_status(Handle);
         }
 
+        /// <summary>
+        /// Takes the batch at the current position. The batch is moved out of the iterator rather than
+        /// lent, so it can only be taken once per position - the caller owns what it gets back and has
+        /// to <see cref="Next"/> before asking again.
+        /// </summary>
         public unsafe WriteBatch GetBatch(out ulong sequenceNumber)
         {
+            //Without this the second call dereferences the null the iterator was left holding, which
+            //crashes the process instead of raising anything a caller could act on.
+            if (m_batchTaken) throw new InvalidOperationException("The batch at this position has already been taken; call Next() before taking another.");
+
+            m_batchTaken = true;
+
             ulong seq;
             IntPtr writeBatchHandle = Native.Instance.rocksdb_wal_iter_get_batch(Handle, (IntPtr)(&seq));
             sequenceNumber = seq;

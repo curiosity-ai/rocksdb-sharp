@@ -203,33 +203,38 @@ namespace ReplicationTest
 
                 var updatesStream = await client.SyncUpdatesAsync(startSeq);
 
-                int batchCount = 0;
+                long chunkCount  = 0;
+                long ingestTicks = 0;
+                var  report      = Stopwatch.StartNew();
 
                 while (await updatesStream.ResponseStream.MoveNext(CancellationToken.None))
                 {
-                    var batch = updatesStream.ResponseStream.Current;
-                    consumer.IngestBatch(batch.SequenceNumber, batch.Data);
-                    batch.ReturnToPool();
+                    var chunk        = updatesStream.ResponseStream.Current;
+                    var beforeIngest = Stopwatch.GetTimestamp();
 
-                    batchCount++;
+                    consumer.IngestChunk(chunk.Data);
+                    chunk.ReturnToPool();
 
-                    if (batchCount % 10_000 == 0)
+                    ingestTicks += Stopwatch.GetTimestamp() - beforeIngest;
+                    chunkCount++;
+
+                    if (report.ElapsedMilliseconds >= 2000)
                     {
-                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss:ffff}]] Ingested {batchCount} WAL batches, last sequence number: {batch.SequenceNumber:n0}. Current Sequence: {destDb.GetLatestSequenceNumber():n0}");
+                        double lagMs = -1;
 
                         using (var iter = destDb.NewIterator())
                         {
                             iter.SeekToLast();
-                            if (iter.Valid())
+                            if (iter.Valid() && long.TryParse(iter.StringValue(), out long writeTime))
                             {
-                                string val = iter.StringValue();
-                                if (long.TryParse(val, out long writeTime))
-                                {
-                                    var lag = Stopwatch.GetTimestamp() - writeTime;
-                                    Console.WriteLine($"[Replica] Latest key lag: {TimeSpan.FromTicks(lag).TotalMilliseconds:n0} ms");
-                                }
+                                lagMs = (Stopwatch.GetTimestamp() - writeTime) * 1000.0 / Stopwatch.Frequency;
                             }
                         }
+
+                        Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss.fff}] chunks={chunkCount:n0} chunkSeq={chunk.SequenceNumber:n0} localSeq={destDb.GetLatestSequenceNumber():n0} ingest={ingestTicks * 1000.0 / Stopwatch.Frequency:n0}ms LAG={lagMs:n1}ms");
+
+                        ingestTicks = 0;
+                        report.Restart();
 
                         await client.ReportLastSyncSequenceNumber(0, destDb.GetLatestSequenceNumber());
                     }

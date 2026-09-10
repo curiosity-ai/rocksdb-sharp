@@ -35,6 +35,21 @@ namespace RocksDbSharp
         }
 
 #if !NETSTANDARD2_0
+        /// <summary>
+        /// Applies a chunk produced by <see cref="WalTailer"/> - a run of the primary's write batches
+        /// already merged into one - as a single write, which is what keeps the replica's per-record
+        /// cost off the database's write path.
+        /// </summary>
+        public void IngestChunk(ReadOnlySpan<byte> chunk)
+        {
+            if (_db == null) throw new InvalidOperationException("DB is not initialized.");
+
+            using (var writeBatch = WriteBatch.FromSpan(chunk))
+            {
+                _db.Write(writeBatch);
+            }
+        }
+
         public void IngestBatch(ulong sequenceNo, ReadOnlySpan<byte> batchData)
         {
             if (_db == null) throw new InvalidOperationException("DB is not initialized.");

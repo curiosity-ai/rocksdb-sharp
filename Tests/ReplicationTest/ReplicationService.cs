@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using MagicOnion;
@@ -97,41 +98,57 @@ namespace ReplicationTest
         public async Task<ServerStreamingResult<ReplicationBatchData>> SyncUpdatesAsync(ulong startSeq)
         {
             var stream = GetServerStreamingContext<ReplicationBatchData>();
+            var token  = Context.CallContext.CancellationToken;
 
             var replicator = new ReplicationSource(_db);
 
-            ulong currentSeq = startSeq;
+            long chunkCount = 0, entryCount = 0, byteCount = 0, waitCount = 0;
+            long readTicks  = 0, writeTicks = 0;
+            var  report     = Stopwatch.StartNew();
 
-            while (!Context.CallContext.CancellationToken.IsCancellationRequested)
+            //One long-lived tailer for the whole stream: a chunk is a run of the primary's write batches
+            //merged into one, so the replica applies it with a single write and stays on the primary's
+            //sequence numbers.
+            using (var tailer = replicator.TailWal(startSeq))
             {
-                bool hasUpdates = false;
-                ulong lastSequenceNumberSeen = _db.GetLatestSequenceNumber();
-                if (currentSeq < lastSequenceNumberSeen)
+                while (!token.IsCancellationRequested)
                 {
-                    foreach (var batch in replicator.GetPooledWalUpdates(currentSeq))
-                    {
-                        hasUpdates = true;
+                    var  beforeRead = Stopwatch.GetTimestamp();
+                    bool hasChunk   = tailer.TryReadChunk(out var chunk);
+                    var  afterRead  = Stopwatch.GetTimestamp();
 
+                    readTicks += afterRead - beforeRead;
+
+                    if (hasChunk)
+                    {
                         await stream.WriteAsync(new ReplicationBatchData
                         {
-                            SequenceNumber = batch.SequenceNumber,
-                            PooledData = batch.PooledData,
-                            Length = batch.Length,
+                            SequenceNumber = chunk.FirstSequenceNumber,
+                            PooledData     = chunk.Buffer,
+                            Length         = chunk.Length,
                         });
 
-                        lastSequenceNumberSeen = Math.Max(lastSequenceNumberSeen, batch.SequenceNumber);
+                        writeTicks += Stopwatch.GetTimestamp() - afterRead;
 
-                        WriteBatch.ReturnPooledBytes(batch.PooledData);
+                        chunkCount++;
+                        entryCount += chunk.EntryCount;
+                        byteCount  += chunk.Length;
                     }
-                }
+                    else
+                    {
+                        waitCount++;
+                        await tailer.WaitForUpdatesAsync(token);
+                    }
 
-                if (hasUpdates)
-                {
-                    currentSeq = lastSequenceNumberSeen; // + 1;
-                }
-                else
-                {
-                    await Task.Delay(1, Context.CallContext.CancellationToken);
+                    if (report.ElapsedMilliseconds >= 2000)
+                    {
+                        double ticksPerMs = Stopwatch.Frequency / 1000.0;
+
+                        Console.WriteLine($"[Src] chunks={chunkCount:n0} entries={entryCount:n0} bytes={byteCount:n0} waits={waitCount:n0} | read={readTicks / ticksPerMs:n0}ms write={writeTicks / ticksPerMs:n0}ms | entriesPerChunk={(chunkCount == 0 ? 0 : (double)entryCount / chunkCount):n0} reopens={tailer.Reopens:n0} lagSeq={tailer.LagInSequenceNumbers:n0}");
+
+                        chunkCount = entryCount = byteCount = waitCount = readTicks = writeTicks = 0;
+                        report.Restart();
+                    }
                 }
             }
 

@@ -23,6 +23,24 @@ namespace RocksDbSharp
             return new ReplicationSession(tempPath);
         }
 
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Opens a long-lived tail on the write-ahead log, starting at <paramref name="sequenceNumber"/>.
+        /// This is what a replication stream should use: unlike <see cref="GetWalUpdates"/> /
+        /// <see cref="GetPooledWalUpdates"/>, which open a fresh log iterator per call and so pay a scan of
+        /// the current WAL file every time they are asked for updates, the tailer keeps its iterator and
+        /// hands back whole runs of batches merged into one write batch.
+        /// </summary>
+        public WalTailer TailWal(ulong sequenceNumber, int maxChunkBytes = WalTailer.DEFAULT_MAX_CHUNK_BYTES)
+        {
+            return new WalTailer(_db, sequenceNumber, maxChunkBytes);
+        }
+#endif
+
+        /// <summary>
+        /// Reads every batch the log holds from <paramref name="sequenceNumber"/> on, opening a log
+        /// iterator for the call. Prefer <see cref="TailWal"/> for a continuous replication stream.
+        /// </summary>
         public IEnumerable<ReplicationBatch> GetWalUpdates(ulong sequenceNumber)
         {
             using (var iterator = _db.GetUpdatesSince(sequenceNumber))
