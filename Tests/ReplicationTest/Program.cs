@@ -124,7 +124,10 @@ namespace ReplicationTest
 
             using (var sourceDb = RocksDb.Open(options, dbPath))
             {
-                sourceDb.DisableFileDeletions();
+                //File deletions are NOT disabled here: the replication service turns them off only while a
+                //checkpoint is being copied. Holding them off for the life of the process stops RocksDB
+                //archiving obsolete WALs and deleting obsolete SSTs, and it grows the primary's disk for as
+                //long as it runs.
                 var commitDelayController = new AdaptiveCommitDelayController(replicaCount: 1, delayPerLagUnitMs: 5, lagUnit: 1000); //Delays for 5ms for each 1000 seq. no. behind
                 Console.WriteLine("[Primary] DB opened. Starting MagicOnion server...");
 
@@ -206,8 +209,15 @@ namespace ReplicationTest
                 .SetCreateIfMissing(true)
                 .SetWalDir(walDir)
                 .SetWalTtlSeconds(10)
-                .SetMaxTotalWalSize(1024UL * 1024 * 10)
                 .SetWalSizeLimitMB(1024UL * 1024 * 1);
+
+            //A reopen of the log iterator scans the WAL file from its first record, so how large a file
+            //is allowed to get is also how expensive the worst reopen is - and that is the pair's lag tail.
+            ulong maxTotalWalMb = ulong.TryParse(Environment.GetEnvironmentVariable("REPLICATION_MAX_WAL_MB"), out var mb) ? mb : 10;
+
+            options.SetMaxTotalWalSize(1024UL * 1024 * maxTotalWalMb);
+
+            Console.WriteLine($"[Primary] max_total_wal_size: {maxTotalWalMb}MB");
 
             //Off by default, because it costs this pair an order of magnitude at the p90 - a compressed WAL
             //gathers records into a block before it emits any of them, so a reader tailing the log cannot
@@ -222,8 +232,8 @@ namespace ReplicationTest
 
             using (var sourceDb = RocksDb.Open(options, dbPath))
             {
-                sourceDb.DisableFileDeletions();
-
+                //See the note in RunPrimaryAsync: file deletions stay enabled, so RocksDB can archive
+                //obsolete WALs and delete obsolete SSTs.
                 var commitDelayController = new AdaptiveCommitDelayController(replicaCount: 1, delayPerLagUnitMs: 5, lagUnit: 1000);
 
                 var builder = WebApplication.CreateBuilder();
@@ -406,6 +416,34 @@ namespace ReplicationTest
             }
         }
 
+        /// <summary>
+        /// Collections, total pause time and bytes allocated since the last sample. A replication stall
+        /// that is really a garbage collection shows up here as pause time on the order of the stall.
+        /// </summary>
+        internal sealed class GcCounters
+        {
+            private int[]    _collections = new int[3];
+            private TimeSpan _pause;
+            private long     _allocated;
+
+            public GcCounters() => Sample();
+
+            public string Sample()
+            {
+                var pause     = GC.GetTotalPauseDuration();
+                var allocated = GC.GetTotalAllocatedBytes();
+
+                var text = $"gc0={GC.CollectionCount(0) - _collections[0]} gc1={GC.CollectionCount(1) - _collections[1]} gc2={GC.CollectionCount(2) - _collections[2]} gcPause={(pause - _pause).TotalMilliseconds:n0}ms alloc={(allocated - _allocated) / 1024 / 1024:n0}MB";
+
+                for (int generation = 0; generation < 3; generation++) _collections[generation] = GC.CollectionCount(generation);
+
+                _pause     = pause;
+                _allocated = allocated;
+
+                return text;
+            }
+        }
+
         static string KeyFor(int index) => $"key_{index:000000000}";
 
         static long WalBytes(string walDir)
@@ -506,6 +544,7 @@ namespace ReplicationTest
                 //nothing arrives is measured as the lag it is instead of going unreported. The same task
                 //watches for the stress primary's sentinel, for the same reason: once the primary goes
                 //quiet there are no chunks left to hang a check off.
+                var gc           = new GcCounters();
                 var samples      = new List<double>();
                 var drained      = new CancellationTokenSource();
                 var stopSampling = new CancellationTokenSource();
@@ -526,7 +565,7 @@ namespace ReplicationTest
 
                         if (report.ElapsedMilliseconds >= 2000)
                         {
-                            Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss.fff}] chunks={chunkCount:n0} chunkSeq={chunk.SequenceNumber:n0} localSeq={destDb.GetLatestSequenceNumber():n0} ingest={ingestTicks * 1000.0 / Stopwatch.Frequency:n0}ms LAG={ReadLagMs(destDb):n1}ms{Summarize(samples)}");
+                            Console.WriteLine($"[Replica {DateTimeOffset.UtcNow:HH:mm:ss.fff}] chunks={chunkCount:n0} chunkSeq={chunk.SequenceNumber:n0} localSeq={destDb.GetLatestSequenceNumber():n0} ingest={ingestTicks * 1000.0 / Stopwatch.Frequency:n0}ms LAG={ReadLagMs(destDb):n1}ms{Summarize(samples)} {gc.Sample()}");
 
                             ingestTicks = 0;
                             report.Restart();
