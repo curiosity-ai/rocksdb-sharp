@@ -137,7 +137,15 @@ namespace ReplicationTest
                     else
                     {
                         waitCount++;
-                        await tailer.WaitForUpdatesAsync(token);
+
+                        try
+                        {
+                            await tailer.WaitForUpdatesAsync(token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break; //The replica disconnected, or the host is shutting down.
+                        }
                     }
 
                     if (report.ElapsedMilliseconds >= 2000)
