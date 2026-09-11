@@ -3,6 +3,7 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <OutputType>Exe</OutputType>
+    <RocksDbPackageVersion>11.8.1.4423</RocksDbPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,12 +12,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--NOTE: We reference the RocksDbSharp project directly but use the package to copy the required runtime files. 
-             If the version of RocksDB is updated in the package, don't forget to update the version in the
-             None section below 
-    -->
+    <!-- We need the local RocksDbSharp project for the C# API, and the published package for its
+         per-RID native binaries. -->
     <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
-    <PackageReference Include="RocksDB" Version="10.4.2.64152" ExcludeAssets="compile;runtime" PrivateAssets="all" GeneratePathProperty="true" />
-    <None Include="$(NuGetPackageRoot)RocksDB\10.4.2.64152\runtimes\**\*" CopyToOutputDirectory="PreserveNewest" Visible="false" TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <!-- The local project declares <PackageId>RocksDB</PackageId>, so a normal
+         <PackageReference Include="RocksDB" .../> is resolved against it and
+         the public NuGet package is never fetched - which left the copy below
+         matching nothing and the stub native libraries in the output.
+         PackageDownload bypasses that substitution. -->
+    <PackageDownload Include="RocksDB" Version="[$(RocksDbPackageVersion)]" />
+
+    <None Include="$(NuGetPackageRoot)rocksdb\$(RocksDbPackageVersion)\runtimes\**\*"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false"
+          TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

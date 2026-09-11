@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 
 using System.Collections.Generic;
@@ -519,6 +519,19 @@ namespace RocksDbSharp
 
             return null;
         }
+
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// The batch's serialized representation, read straight out of RocksDB's own buffer -
+        /// no copy, unlike <see cref="ToBytes()"/> / <see cref="ToBytesPooled(out int)"/>. The span
+        /// is only valid while this batch is alive and has not been modified.
+        /// </summary>
+        public unsafe ReadOnlySpan<byte> AsSpan()
+        {
+            var dataPtr = Native.Instance.rocksdb_writebatch_data(handle, out UIntPtr size);
+            return new ReadOnlySpan<byte>((void*)dataPtr, (int)size);
+        }
+#endif
 
         public byte[] ToBytesPooled(out int size)
         {

@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RocksDbPackageVersion>10.4.2.64152</RocksDbPackageVersion>
+    <RocksDbPackageVersion>11.8.1.4423</RocksDbPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
