@@ -115,8 +115,10 @@ namespace ReplicationTest
                 .SetWalDir(walDir)
                 .SetWalTtlSeconds(10)
                 .SetMaxTotalWalSize(1024UL * 1024 * 10)
-                .SetWalSizeLimitMB(1024UL * 1024 * 1)
-                .SetWalCompression(Compression.Zstd); //No if using RocksDbWalInspector
+                .SetWalSizeLimitMB(1024UL * 1024 * 1);
+                //WAL compression is deliberately not set: it costs about ten times the p90 replication lag,
+                //and RocksDbWalInspector - which this sample's WAL retention uses - cannot read a compressed
+                //log either.
                 //.SetWriteBufferSize(4 * 1024)
                 //.SetTargetFileSizeBase(4 * 1024);
 
@@ -207,10 +209,12 @@ namespace ReplicationTest
                 .SetMaxTotalWalSize(1024UL * 1024 * 10)
                 .SetWalSizeLimitMB(1024UL * 1024 * 1);
 
-            //A compressed WAL gathers records into a block before it emits any of them, so a reader
-            //tailing the log cannot see the newest writes until that block is written out. That is paid
-            //for in replication latency, so it is worth being able to measure the pair without it.
-            bool compressWal = Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") != "off";
+            //Off by default, because it costs this pair an order of magnitude at the p90 - a compressed WAL
+            //gathers records into a block before it emits any of them, so a reader tailing the log cannot
+            //see the newest writes until that block is written out. Set REPLICATION_WAL_COMPRESSION=zstd to
+            //measure with it. Turning it off needs no migration: the compression type is recorded per WAL
+            //file, so an existing compressed log still reads back and still replicates.
+            bool compressWal = Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") == "zstd";
 
             if (compressWal) options.SetWalCompression(Compression.Zstd);
 
@@ -480,7 +484,7 @@ namespace ReplicationTest
                 .SetMaxTotalWalSize(1024UL * 1024 * 10)
                 .SetWalSizeLimitMB(1024UL * 1024 * 1);
 
-            if (Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") != "off") options.SetWalCompression(Compression.Zstd);
+            if (Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") == "zstd") options.SetWalCompression(Compression.Zstd);
                 //.SetWriteBufferSize(4 * 1024)
                 //.SetTargetFileSizeBase(4 * 1024);
 
