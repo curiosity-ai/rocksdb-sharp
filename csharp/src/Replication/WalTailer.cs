@@ -91,6 +91,8 @@ namespace RocksDbSharp
         private ulong                  _nextSequenceNumber;
         private long                   _exhaustedSince;
         private long                   _reopens;
+        private long                   _reopenTicks;
+        private long                   _slowestReopenTicks;
         private int                    _emptyReads;
         private long                   _reopenGraceTicks = (long)(Stopwatch.Frequency * (DEFAULT_REOPEN_GRACE_MICROSECONDS / 1_000_000.0));
 
@@ -127,6 +129,16 @@ namespace RocksDbSharp
         /// cost is being paid for nothing.
         /// </summary>
         public long Reopens => _reopens;
+
+        /// <summary>
+        /// Total time spent reopening the log iterator. Reopening is not free: it scans the WAL file from
+        /// its first record up to the sequence number asked for, so it gets more expensive the further
+        /// into a file the tail has got.
+        /// </summary>
+        public TimeSpan ReopenTime => TimeSpan.FromSeconds((double)_reopenTicks / Stopwatch.Frequency);
+
+        /// <summary>The most expensive single reopen so far.</summary>
+        public TimeSpan SlowestReopen => TimeSpan.FromSeconds((double)_slowestReopenTicks / Stopwatch.Frequency);
 
         /// <summary>How far behind the database's newest sequence number this tailer is.</summary>
         public ulong LagInSequenceNumbers
@@ -180,7 +192,15 @@ namespace RocksDbSharp
                         _reopens++;
                         DisposeIterator();
 
-                        if (!TryOpenIterator() || !_iterator.Valid()) break;
+                        var beforeReopen = Stopwatch.GetTimestamp();
+                        bool reopened    = TryOpenIterator();
+                        var reopenTicks  = Stopwatch.GetTimestamp() - beforeReopen;
+
+                        _reopenTicks += reopenTicks;
+
+                        if (reopenTicks > _slowestReopenTicks) _slowestReopenTicks = reopenTicks;
+
+                        if (!reopened || !_iterator.Valid()) break;
                     }
                 }
 

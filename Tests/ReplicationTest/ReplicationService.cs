@@ -24,7 +24,6 @@ namespace ReplicationTest
         public ReplicationService(RocksDb db, AdaptiveCommitDelayController commitDelayController)
         {
             _db = db;
-            _db.DisableFileDeletions(); //Must be disabled for this to work
             _commitDelayController = commitDelayController;
         }
 
@@ -54,26 +53,33 @@ namespace ReplicationTest
             return new UnaryResult<bool>(true);
         }
 
+        //Retires WAL files the replica has confirmed, from the archive only. RocksDB moves an obsolete WAL
+        //there once WAL_ttl_seconds / WAL_size_limit_MB are set and it no longer needs the file, so these are
+        //files it has closed. Deleting from the live directory instead leaves RocksDB holding a write handle
+        //on a file that no longer has a name, and the space is not reclaimed until the process exits -
+        //which is a leak of roughly the whole write throughput of the primary.
         private void MaybeDeleteOldWalFiles()
         {
-            var seqNoPerWalFile = RocksDbWalInspector.GetFirstSequenceNumbers(_db.WalPath);
+            var archivePath = Path.Combine(_db.WalPath, "archive");
+
+            if (!Directory.Exists(archivePath)) return;
+
+            var seqNoPerWalFile = RocksDbWalInspector.GetFirstSequenceNumbers(archivePath);
 
             var seqNoPerWalFileId = seqNoPerWalFile.Select(kv => (id: int.Parse(kv.Key.AsSpan(0, kv.Key.Length - ".log".Length)), seqNo: (ulong)kv.Value, fileName: kv.Key))
                                                    .OrderBy(kv => kv.id)
                                                    .ToArray();
 
-            foreach (var (walID, startSeqNo, fileName) in seqNoPerWalFileId)
+            for (int i = 0; i < seqNoPerWalFileId.Length - 1; i++)
             {
-                var nextWalByID = seqNoPerWalFileId.Where(d => d.id > walID).FirstOrDefault();
+                var (walID, startSeqNo, fileName) = seqNoPerWalFileId[i];
 
-                if (nextWalByID.id != default)
+                var endSeqNumber = seqNoPerWalFileId[i + 1].seqNo - 1;
+
+                if (endSeqNumber < _lastSyncedSequenceNumber)
                 {
-                    var endSeqNumber = nextWalByID.seqNo - 1;
-                    if (endSeqNumber < _lastSyncedSequenceNumber)
-                    {
-                        Console.WriteLine($"[Primary] Deleting WAL file: {fileName} with {startSeqNo:n0}..{endSeqNumber:n0} < last sync'd {_lastSyncedSequenceNumber:n0}");
-                        File.Delete(Path.Combine(_db.WalPath, fileName));
-                    }
+                    Console.WriteLine($"[Primary] Deleting archived WAL file: {fileName} with {startSeqNo:n0}..{endSeqNumber:n0} < last sync'd {_lastSyncedSequenceNumber:n0}");
+                    File.Delete(Path.Combine(archivePath, fileName));
                 }
             }
         }
@@ -84,7 +90,11 @@ namespace ReplicationTest
             //updates from the sequence number that checkpoint ended at. Counted rather than a flag so two
             //replicas syncing at once cannot have one clear it for the other, and released in a finally so
             //a failed transfer does not leave retention switched off for good.
-            Interlocked.Increment(ref _replicatingInitialStateCount);
+            //DisableFileDeletions is a counter inside RocksDB, and while it is non-zero FindObsoleteFiles
+            //returns immediately - which is what stops obsolete SSTs being deleted *and* stops obsolete
+            //WALs being moved to the archive that WAL_ttl_seconds/WAL_size_limit_MB would then purge. So it
+            //is held only for as long as a checkpoint is actually being copied, and paired.
+            if (Interlocked.Increment(ref _replicatingInitialStateCount) == 1) _db.DisableFileDeletions();
 
             try
             {
@@ -117,7 +127,7 @@ namespace ReplicationTest
             }
             finally
             {
-                Interlocked.Decrement(ref _replicatingInitialStateCount);
+                if (Interlocked.Decrement(ref _replicatingInitialStateCount) == 0) _db.EnableFileDeletions();
             }
         }
 
@@ -128,7 +138,8 @@ namespace ReplicationTest
 
             var replicator = new ReplicationSource(_db);
 
-            long chunkCount = 0, entryCount = 0, byteCount = 0, waitCount = 0;
+            long chunkCount = 0, entryCount = 0, byteCount = 0, waitCount = 0, biggestChunk = 0;
+            var  gc         = new Program.GcCounters();
             long readTicks  = 0, writeTicks = 0;
             var  report     = Stopwatch.StartNew();
 
@@ -159,6 +170,8 @@ namespace ReplicationTest
                         chunkCount++;
                         entryCount += chunk.EntryCount;
                         byteCount  += chunk.Length;
+
+                        if (chunk.Length > biggestChunk) biggestChunk = chunk.Length;
                     }
                     else
                     {
@@ -178,9 +191,9 @@ namespace ReplicationTest
                     {
                         double ticksPerMs = Stopwatch.Frequency / 1000.0;
 
-                        Console.WriteLine($"[Src] chunks={chunkCount:n0} entries={entryCount:n0} bytes={byteCount:n0} waits={waitCount:n0} | read={readTicks / ticksPerMs:n0}ms write={writeTicks / ticksPerMs:n0}ms | entriesPerChunk={(chunkCount == 0 ? 0 : (double)entryCount / chunkCount):n0} reopens={tailer.Reopens:n0} lagSeq={tailer.LagInSequenceNumbers:n0}");
+                        Console.WriteLine($"[Src] chunks={chunkCount:n0} entries={entryCount:n0} bytes={byteCount:n0} waits={waitCount:n0} | read={readTicks / ticksPerMs:n0}ms write={writeTicks / ticksPerMs:n0}ms | entriesPerChunk={(chunkCount == 0 ? 0 : (double)entryCount / chunkCount):n0} bytesPerChunk={(chunkCount == 0 ? 0 : byteCount / chunkCount):n0} biggestChunk={biggestChunk:n0} reopens={tailer.Reopens:n0} reopenTime={tailer.ReopenTime.TotalMilliseconds:n0}ms slowestReopen={tailer.SlowestReopen.TotalMilliseconds:n0}ms lagSeq={tailer.LagInSequenceNumbers:n0} {gc.Sample()}");
 
-                        chunkCount = entryCount = byteCount = waitCount = readTicks = writeTicks = 0;
+                        chunkCount = entryCount = byteCount = waitCount = readTicks = writeTicks = biggestChunk = 0;
                         report.Restart();
                     }
                 }
