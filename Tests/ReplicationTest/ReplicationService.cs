@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -12,8 +14,12 @@ namespace ReplicationTest
     {
         private readonly RocksDb _db;
         private readonly AdaptiveCommitDelayController _commitDelayController;
-        private ulong _lastSyncedSequenceNumber = ulong.MaxValue;
-        private bool _replicatingInitialState = false;
+        //Static, because MagicOnion builds a service instance per call. As instance state these were reset
+        //on every request: the running minimum below never saw a previous value, and the initial-state flag
+        //was set on one instance and read on another, so the guard it exists for never fired.
+        private static readonly ConcurrentDictionary<int, ulong> _lastSyncedPerReplica = new();
+        private static ulong _lastSyncedSequenceNumber      = ulong.MaxValue;
+        private static int   _replicatingInitialStateCount  = 0;
 
         public ReplicationService(RocksDb db, AdaptiveCommitDelayController commitDelayController)
         {
@@ -24,9 +30,20 @@ namespace ReplicationTest
 
         public UnaryResult<bool> ReportLastSyncSequenceNumber(int replicaIndex, ulong seqNumber)
         {
-            _lastSyncedSequenceNumber = Math.Min(_lastSyncedSequenceNumber, seqNumber);
-            
-            if (_replicatingInitialState) return new UnaryResult<bool>(false);
+            //The slowest replica decides what may be retired, so this is a minimum across replicas, not
+            //across time - one replica reporting 100 after another reported 200 must not move it back.
+            _lastSyncedPerReplica[replicaIndex] = seqNumber;
+
+            ulong slowest = seqNumber;
+
+            foreach (var reported in _lastSyncedPerReplica.Values)
+            {
+                if (reported < slowest) slowest = reported;
+            }
+
+            _lastSyncedSequenceNumber = slowest;
+
+            if (Volatile.Read(ref _replicatingInitialStateCount) > 0) return new UnaryResult<bool>(false);
 
             if (_lastSyncedSequenceNumber != ulong.MaxValue && _lastSyncedSequenceNumber != 0)
             {
@@ -63,36 +80,45 @@ namespace ReplicationTest
 
         public async Task<ServerStreamingResult<ReplicationFileData>> SyncInitialStateAsync()
         {
-            _replicatingInitialState = true;
+            //While a checkpoint is being shipped, no WAL file may be retired - the replica will ask for
+            //updates from the sequence number that checkpoint ended at. Counted rather than a flag so two
+            //replicas syncing at once cannot have one clear it for the other, and released in a finally so
+            //a failed transfer does not leave retention switched off for good.
+            Interlocked.Increment(ref _replicatingInitialStateCount);
 
-            var stream = GetServerStreamingContext<ReplicationFileData>();
-
-            var replicator = new ReplicationSource(_db);
-
-            var tempPath = Path.Combine(Path.GetTempPath(), "rocksdb_replication_" + Guid.NewGuid().ToString());
-
-            using (var session = replicator.GetInitialState(tempPath))
+            try
             {
-                foreach (var file in session.Files)
-                {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        await file.FileStream.CopyToAsync(memoryStream);
-                        var data = new ReplicationFileData
-                        {
-                            FileName = file.FileName,
-                            FileSize = file.FileSize,
-                            Content = memoryStream.ToArray()
-                        };
-                        await stream.WriteAsync(data);
-                    }
-                    file.Dispose();
-                }
-            }
-            
-            _replicatingInitialState = false;
+                var stream = GetServerStreamingContext<ReplicationFileData>();
 
-            return stream.Result();
+                var replicator = new ReplicationSource(_db);
+
+                var tempPath = Path.Combine(Path.GetTempPath(), "rocksdb_replication_" + Guid.NewGuid().ToString());
+
+                using (var session = replicator.GetInitialState(tempPath))
+                {
+                    foreach (var file in session.Files)
+                    {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await file.FileStream.CopyToAsync(memoryStream);
+                            var data = new ReplicationFileData
+                            {
+                                FileName = file.FileName,
+                                FileSize = file.FileSize,
+                                Content = memoryStream.ToArray()
+                            };
+                            await stream.WriteAsync(data);
+                        }
+                        file.Dispose();
+                    }
+                }
+
+                return stream.Result();
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _replicatingInitialStateCount);
+            }
         }
 
         public async Task<ServerStreamingResult<ReplicationBatchData>> SyncUpdatesAsync(ulong startSeq)
@@ -137,7 +163,15 @@ namespace ReplicationTest
                     else
                     {
                         waitCount++;
-                        await tailer.WaitForUpdatesAsync(token);
+
+                        try
+                        {
+                            await tailer.WaitForUpdatesAsync(token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break; //The replica disconnected, or the host is shutting down.
+                        }
                     }
 
                     if (report.ElapsedMilliseconds >= 2000)
