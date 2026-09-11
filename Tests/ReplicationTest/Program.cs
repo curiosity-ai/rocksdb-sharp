@@ -205,8 +205,16 @@ namespace ReplicationTest
                 .SetWalDir(walDir)
                 .SetWalTtlSeconds(10)
                 .SetMaxTotalWalSize(1024UL * 1024 * 10)
-                .SetWalSizeLimitMB(1024UL * 1024 * 1)
-                .SetWalCompression(Compression.Zstd);
+                .SetWalSizeLimitMB(1024UL * 1024 * 1);
+
+            //A compressed WAL gathers records into a block before it emits any of them, so a reader
+            //tailing the log cannot see the newest writes until that block is written out. That is paid
+            //for in replication latency, so it is worth being able to measure the pair without it.
+            bool compressWal = Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") != "off";
+
+            if (compressWal) options.SetWalCompression(Compression.Zstd);
+
+            Console.WriteLine($"[Primary] WAL compression: {(compressWal ? "zstd" : "off")}");
 
             using (var sourceDb = RocksDb.Open(options, dbPath))
             {
@@ -323,11 +331,21 @@ namespace ReplicationTest
 
                 //One writer owns the heartbeat, so the replica has a single key whose value is the time
                 //the primary last committed anything.
+                //The heartbeat also times its own commit. The replica measures lag as the age of this key,
+                //which cannot tell a slow replication path from the primary being unable to commit - so the
+                //primary has to report what its own writes cost before that number means anything.
+                long heartbeatStallTicks = 0;
+
                 var heartbeat = new Thread(() =>
                 {
                     while (!stop.IsCancellationRequested)
                     {
+                        var before = Stopwatch.GetTimestamp();
                         sourceDb.Put(HEARTBEAT_KEY, Stopwatch.GetTimestamp().ToString());
+                        var elapsed = Stopwatch.GetTimestamp() - before;
+
+                        if (elapsed > Volatile.Read(ref heartbeatStallTicks)) Volatile.Write(ref heartbeatStallTicks, elapsed);
+
                         Thread.Sleep(1);
                     }
                 });
@@ -353,7 +371,7 @@ namespace ReplicationTest
                         long p = Interlocked.Read(ref puts), d = Interlocked.Read(ref deletes);
                         double seconds = report.Elapsed.TotalSeconds;
 
-                        Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss}] t={run.Elapsed.TotalSeconds:n0}s puts={p:n0} deletes={d:n0} batches={Interlocked.Read(ref batches):n0} | {(p - lastPuts + d - lastDeletes) / seconds:n0} ops/s{(Volatile.Read(ref bursting) == 1 ? " BURST" : "")} | seq={sourceDb.GetLatestSequenceNumber():n0} wal={WalBytes(walDir) / 1024 / 1024:n0}MB");
+                        Console.WriteLine($"[Primary {DateTimeOffset.UtcNow:HH:mm:ss}] t={run.Elapsed.TotalSeconds:n0}s puts={p:n0} deletes={d:n0} batches={Interlocked.Read(ref batches):n0} | {(p - lastPuts + d - lastDeletes) / seconds:n0} ops/s{(Volatile.Read(ref bursting) == 1 ? " BURST" : "")} | seq={sourceDb.GetLatestSequenceNumber():n0} wal={WalBytes(walDir) / 1024 / 1024:n0}MB slowestCommit={Interlocked.Exchange(ref heartbeatStallTicks, 0) * 1000.0 / Stopwatch.Frequency:n0}ms");
 
                         lastPuts    = p;
                         lastDeletes = d;
@@ -459,9 +477,10 @@ namespace ReplicationTest
             var options = new DbOptions()
                 .SetCreateIfMissing(true)
                 .SetWalTtlSeconds(10)
-                .SetWalCompression(Compression.Zstd)
                 .SetMaxTotalWalSize(1024UL * 1024 * 10)
                 .SetWalSizeLimitMB(1024UL * 1024 * 1);
+
+            if (Environment.GetEnvironmentVariable("REPLICATION_WAL_COMPRESSION") != "off") options.SetWalCompression(Compression.Zstd);
                 //.SetWriteBufferSize(4 * 1024)
                 //.SetTargetFileSizeBase(4 * 1024);
 
@@ -477,6 +496,7 @@ namespace ReplicationTest
                 long chunkCount  = 0;
                 long ingestTicks = 0;
                 var  report      = Stopwatch.StartNew();
+                Task reporting   = null;
 
                 //Lag is sampled on its own clock rather than inside the ingest loop, so a stretch where
                 //nothing arrives is measured as the lag it is instead of going unreported. The same task
@@ -507,7 +527,14 @@ namespace ReplicationTest
                             ingestTicks = 0;
                             report.Restart();
 
-                            await client.ReportLastSyncSequenceNumber(0, destDb.GetLatestSequenceNumber());
+                            //Deliberately not awaited. The primary walks its WAL directory before it
+                            //answers this, and awaiting it here stopped the replica consuming the stream
+                            //for as long as that took - which was a quarter of the wall clock, and the
+                            //whole of this pair's lag tail.
+                            if (reporting is null || reporting.IsCompleted)
+                            {
+                                reporting = ReportAsync(client, destDb.GetLatestSequenceNumber());
+                            }
                         }
                     }
                 }
@@ -540,6 +567,11 @@ namespace ReplicationTest
         /// Falls back to the last key in the database, which is what the ascending-key benchmark load
         /// leaves behind.
         /// </summary>
+        static async Task ReportAsync(IReplicationService client, ulong sequenceNumber)
+        {
+            await client.ReportLastSyncSequenceNumber(0, sequenceNumber);
+        }
+
         static double ReadLagMs(RocksDb db)
         {
             var heartbeat = db.Get(HEARTBEAT_KEY);
