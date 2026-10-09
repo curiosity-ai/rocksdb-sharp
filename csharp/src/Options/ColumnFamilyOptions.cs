@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Transitional;
@@ -11,6 +12,32 @@ namespace RocksDbSharp
     {
     }
     
+#if NET5_0_OR_GREATER
+    // Not nested in Options<T>: [UnmanagedCallersOnly] methods cannot live in a generic type
+    internal static class ComparatorCallbacks
+    {
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        internal static unsafe int Compare(IntPtr state, IntPtr a, UIntPtr alen, IntPtr b, UIntPtr blen)
+        {
+            var comparator = (Comparator)GCHandle.FromIntPtr((*(OptionsBase.ComparatorState*)state).ComparatorHandle).Target;
+            return comparator.Compare(a, alen, b, blen);
+        }
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        internal static unsafe void Destroy(IntPtr state)
+        {
+            var comparatorState = *(OptionsBase.ComparatorState*)state;
+            GCHandle.FromIntPtr(comparatorState.ComparatorHandle).Free();
+            Marshal.FreeHGlobal(comparatorState.NamePtr);
+            Marshal.FreeHGlobal(state);
+        }
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        internal static unsafe IntPtr GetNamePtr(IntPtr state)
+            => (*(OptionsBase.ComparatorState*)state).NamePtr;
+    }
+#endif
+
     internal class OptionsBase
     {
         public delegate Comparator GetComparator();
@@ -27,6 +54,8 @@ namespace RocksDbSharp
         {
             public IntPtr GetComparatorPtr { get; set; }
             public IntPtr NamePtr { get; set; }
+            // GCHandle (normal) of the Comparator; used by the [UnmanagedCallersOnly] path, which keeps no delegates alive
+            public IntPtr ComparatorHandle { get; set; }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -215,6 +244,30 @@ namespace RocksDbSharp
             var namePtr = Marshal.AllocHGlobal(nameBytes.Length);
             Marshal.Copy(nameBytes, 0, namePtr, nameBytes.Length);
 
+#if NET5_0_OR_GREATER
+            // The state owns a GCHandle to the comparator and the callbacks are static [UnmanagedCallersOnly]
+            // methods, so nothing managed has to be kept alive by this options object, and no delegate
+            // marshalling stub is involved in a comparison. Freed by Comparator_Destroy.
+            var comparatorState = new OptionsBase.ComparatorState
+            {
+                NamePtr = namePtr,
+                ComparatorHandle = GCHandle.ToIntPtr(GCHandle.Alloc(comparator)),
+            };
+            var comparatorStatePtr = Marshal.AllocHGlobal(Marshal.SizeOf(comparatorState));
+            Marshal.StructureToPtr(comparatorState, comparatorStatePtr, false);
+
+            unsafe
+            {
+                IntPtr unmanagedHandle = Native.Instance.rocksdb_comparator_create(
+                    state: comparatorStatePtr,
+                    destructor: (IntPtr)(delegate* unmanaged[Cdecl]<IntPtr, void>)&ComparatorCallbacks.Destroy,
+                    compare: (IntPtr)(delegate* unmanaged[Cdecl]<IntPtr, IntPtr, UIntPtr, IntPtr, UIntPtr, int>)&ComparatorCallbacks.Compare,
+                    name: (IntPtr)(delegate* unmanaged[Cdecl]<IntPtr, IntPtr>)&ComparatorCallbacks.GetNamePtr
+                );
+
+                return SetComparator(unmanagedHandle);
+            }
+#else
             // Hold onto a reference to everything that needs to stay alive
             ComparatorRef = new OptionsBase.ComparatorReferences
             {
@@ -242,6 +295,7 @@ namespace RocksDbSharp
             );
 
             return SetComparator(handle);
+#endif
         }
 
 
