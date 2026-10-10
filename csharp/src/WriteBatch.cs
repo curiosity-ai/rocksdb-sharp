@@ -276,38 +276,53 @@ namespace RocksDbSharp
             }
         }
 
-        static unsafe IDisposable CopyVector(ReadOnlySpan<ReadOnlyMemory<byte>> items, Span<IntPtr> itemsList, Span<UIntPtr> itemsListSizes)
+        static unsafe PinnedMemoryHandles CopyVector(ReadOnlySpan<ReadOnlyMemory<byte>> items, Span<IntPtr> itemsList, Span<UIntPtr> itemsListSizes)
         {
-            var disposable = new MemoryHandleManager(items.Length);
-            for (var i = 0; i < items.Length; i++)
+            var handles = new PinnedMemoryHandles(items.Length);
+            try
             {
-                var handle = items[i].Pin();
-                disposable.Add(handle);
-                itemsList[i] = (IntPtr)handle.Pointer;
-                itemsListSizes[i] = (UIntPtr)items[i].Length;
+                for (var i = 0; i < items.Length; i++)
+                {
+                    var handle = items[i].Pin();
+                    handles.Add(handle);
+                    itemsList[i] = (IntPtr)handle.Pointer;
+                    itemsListSizes[i] = (UIntPtr)items[i].Length;
+                }
+                return handles;
             }
-            return disposable;
+            catch
+            {
+                // the caller never receives the handles, so nothing else would unpin the ones already taken
+                handles.Dispose();
+                throw;
+            }
         }
 
-
-
-        class MemoryHandleManager : IDisposable
+        // MemoryHandle holds object references, so it cannot be stackalloc'd; the buffer is rented instead
+        struct PinnedMemoryHandles : IDisposable
         {
-            readonly IList<MemoryHandle> handles;
+            MemoryHandle[] handles;
+            int count;
 
-            public MemoryHandleManager(int capacity)
+            public PinnedMemoryHandles(int capacity)
             {
-                 handles = new List<MemoryHandle>(capacity);
+                handles = ArrayPool<MemoryHandle>.Shared.Rent(capacity);
+                count = 0;
             }
 
-            public void Add(MemoryHandle handle) => handles.Add(handle);
+            public void Add(MemoryHandle handle) => handles[count++] = handle;
 
             public void Dispose()
             {
-                for (int i = 0; i < handles.Count; i++)
+                if (handles is null) return;
+
+                for (int i = 0; i < count; i++)
                 {
                     handles[i].Dispose();
                 }
+
+                ArrayPool<MemoryHandle>.Shared.Return(handles);
+                handles = null;
             }
         }
 #endif

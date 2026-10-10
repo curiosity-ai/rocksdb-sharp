@@ -12,22 +12,16 @@ namespace RocksDbSharp
 
         public int Compare(byte[] a1, byte[] a2)
         {
+#if NETSTANDARD2_0
             int length = Math.Min(a1.Length, a2.Length);
-            unsafe
+            for (int i = 0; i < length; i++)
             {
-                fixed (byte* p1 = a1, p2 = a2)
-                {
-                    byte* c1 = p1, c2 = p2;
-                    byte* end = c1 + length;
-                    byte* end1 = c1 + a1.Length, end2 = c2 + a2.Length;
-                    for (; c1 < end && *c1 == *c2; c1++, c2++) ;
-                    if (c1 == end1)
-                        return c2 == end2 ? 0 : -1;
-                    if (c2 == end2)
-                        return 1;
-                    return (*c1 < *c2) ? -1 : 1;
-                }
+                if (a1[i] != a2[i]) return a1[i] < a2[i] ? -1 : 1;
             }
+            return a1.Length == a2.Length ? 0 : (a1.Length < a2.Length ? -1 : 1);
+#else
+            return Math.Sign(a1.AsSpan().SequenceCompareTo(a2));
+#endif
         }
 
         public bool Equals(byte[] a1, byte[] a2)
@@ -36,20 +30,7 @@ namespace RocksDbSharp
                 return true;
             if (a1 == null || a2 == null || a1.Length != a2.Length)
                 return false;
-            unsafe
-            {
-                fixed (byte* p1 = a1, p2 = a2)
-                {
-                    byte* x1 = p1, x2 = p2;
-                    int l = a1.Length;
-                    for (int i = 0; i < l / 8; i++, x1 += 8, x2 += 8)
-                        if (*((long*)x1) != *((long*)x2)) return false;
-                    if ((l & 4) != 0) { if (*((int*)x1) != *((int*)x2)) return false; x1 += 4; x2 += 4; }
-                    if ((l & 2) != 0) { if (*((short*)x1) != *((short*)x2)) return false; x1 += 2; x2 += 2; }
-                    if ((l & 1) != 0) if (*((byte*)x1) != *((byte*)x2)) return false;
-                    return true;
-                }
-            }
+            return BytesEqual(a1, a2, a1.Length);
         }
 
         public bool PrefixEquals(byte[] a1, byte[] a2, int prefix)
@@ -61,20 +42,20 @@ namespace RocksDbSharp
             var a2length = Math.Min(prefix, a2.Length);
             if (a1 == null || a2 == null || a1length != a2length)
                 return false;
-            unsafe
+            return BytesEqual(a1, a2, a1length);
+        }
+
+        static bool BytesEqual(byte[] a1, byte[] a2, int length)
+        {
+#if NETSTANDARD2_0
+            for (int i = 0; i < length; i++)
             {
-                fixed (byte* p1 = a1, p2 = a2)
-                {
-                    byte* x1 = p1, x2 = p2;
-                    int l = a1length;
-                    for (int i = 0; i < l / 8; i++, x1 += 8, x2 += 8)
-                        if (*((long*)x1) != *((long*)x2)) return false;
-                    if ((l & 4) != 0) { if (*((int*)x1) != *((int*)x2)) return false; x1 += 4; x2 += 4; }
-                    if ((l & 2) != 0) { if (*((short*)x1) != *((short*)x2)) return false; x1 += 2; x2 += 2; }
-                    if ((l & 1) != 0) if (*((byte*)x1) != *((byte*)x2)) return false;
-                    return true;
-                }
+                if (a1[i] != a2[i]) return false;
             }
+            return true;
+#else
+            return a1.AsSpan(0, length).SequenceEqual(a2.AsSpan(0, length));
+#endif
         }
 
         public int GetHashCode(byte[] obj)

@@ -29,12 +29,9 @@ namespace RocksDbSharp
             }
 
             var vlength = n - bv;
-            fixed (char* v = new char[vlength])
-            {
-                Encoding.ASCII.GetChars(bv, (int)vlength, v, (int)vlength);
-                Native.Instance.rocksdb_free(nullTermStr);
-                return new string(v, 0, (int)vlength);
-            }
+            var result  = Encoding.ASCII.GetString(bv, (int)vlength);
+            Native.Instance.rocksdb_free(nullTermStr);
+            return result;
         }
 
         public string[] rocksdb_list_column_families(
@@ -517,31 +514,37 @@ namespace RocksDbSharp
                 }
             }
 
-            // first we have to pin and take the address of each key
-            for (int i = 0; i < count; i++)
+            try
             {
-                var gch = GCHandle.Alloc(keys[i], GCHandleType.Pinned);
-                pinned[i] = gch;
-                keyPtrs[i] = gch.AddrOfPinnedObject();
-            }
-            if (cf is null)
-            {
-                rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
-            }
-            else
-            {
-                IntPtr[] cfhs = new IntPtr[cf.Length];
+                // first we have to pin and take the address of each key
                 for (int i = 0; i < count; i++)
                 {
-                    cfhs[i] = cf[i].Handle;
+                    var gch = GCHandle.Alloc(keys[i], GCHandleType.Pinned);
+                    pinned[i] = gch;
+                    keyPtrs[i] = gch.AddrOfPinnedObject();
                 }
+                if (cf is null)
+                {
+                    rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
+                }
+                else
+                {
+                    IntPtr[] cfhs = new IntPtr[cf.Length];
+                    for (int i = 0; i < count; i++)
+                    {
+                        cfhs[i] = cf[i].Handle;
+                    }
 
-                rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
+                    rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengthsConverted, valuePtrs, valueLengths, errptrs);
+                }
             }
-            // unpin the keys
-            foreach (var gch in pinned)
+            finally
             {
-                gch.Free();
+                // unpin the keys, including when pinning or the call failed part-way - a leaked pinned handle stays pinned for the life of the process
+                foreach (var gch in pinned)
+                {
+                    if (gch.IsAllocated) gch.Free();
+                }
             }
 
             // now marshal all of the values
@@ -607,38 +610,44 @@ namespace RocksDbSharp
                 errptrs = new IntPtr[count];
             }
 
-            // first we have to encode each key
-            for (int i = 0; i < count; i++)
+            try
             {
-                var key = keys[i];
-                fixed (char* k = key)
-                {
-                    var klength = key.Length;
-                    int bklength = encoding.GetByteCount(k, klength);
-                    var bk = Marshal.AllocHGlobal(bklength);
-                    encoding.GetBytes(k, klength, (byte*)bk.ToPointer(), bklength);
-                    keyPtrs[i] = bk;
-                    keyLengths[i] = new UIntPtr((uint)bklength);
-                }
-            }
-            if (cf is null)
-            {
-                rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
-            }
-            else
-            {
-                IntPtr[] cfhs = new IntPtr[cf.Length];
+                // first we have to encode each key
                 for (int i = 0; i < count; i++)
                 {
-                    cfhs[i] = cf[i].Handle;
+                    var key = keys[i];
+                    fixed (char* k = key)
+                    {
+                        var klength = key.Length;
+                        int bklength = encoding.GetByteCount(k, klength);
+                        var bk = Marshal.AllocHGlobal(bklength);
+                        keyPtrs[i] = bk;
+                        encoding.GetBytes(k, klength, (byte*)bk.ToPointer(), bklength);
+                        keyLengths[i] = new UIntPtr((uint)bklength);
+                    }
                 }
+                if (cf is null)
+                {
+                    rocksdb_multi_get(db, read_options, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
+                }
+                else
+                {
+                    IntPtr[] cfhs = new IntPtr[cf.Length];
+                    for (int i = 0; i < count; i++)
+                    {
+                        cfhs[i] = cf[i].Handle;
+                    }
 
-                rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
+                    rocksdb_multi_get_cf(db, read_options, cfhs, sCount, keyPtrs, keyLengths, valuePtrs, valueLengths, errptrs);
+                }
             }
-            // free the buffers allocated for each encoded key
-            foreach (var keyPtr in keyPtrs)
+            finally
             {
-                Marshal.FreeHGlobal(keyPtr);
+                // free the buffers allocated for each encoded key (FreeHGlobal ignores the zero entries of keys never reached)
+                foreach (var keyPtr in keyPtrs)
+                {
+                    Marshal.FreeHGlobal(keyPtr);
+                }
             }
 
             // now marshal all of the values
