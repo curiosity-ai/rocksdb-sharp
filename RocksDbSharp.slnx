@@ -11,6 +11,7 @@
     <Project Path="Tests/ConsoleTest/ConsoleTest.csproj" />
     <Project Path="Tests/MergeTest/MergeTests.csproj" />
     <Project Path="Tests/ReplicationTest/ReplicationTest.csproj" />
+    <Project Path="Tests/SwitchoverTest/SwitchoverTest.csproj" />
   </Folder>
   <Project Path="build-codegen/CSharpGen.csproj" />
   <Project Path="csharp/RocksDbSharp.csproj" />

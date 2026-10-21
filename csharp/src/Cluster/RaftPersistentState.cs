@@ -126,7 +126,7 @@ public sealed class RaftPersistentState
         AtomicWrite(_statePath, sb.ToString());
     }
 
-    private static void AtomicWrite(string path, string content)
+    internal static void AtomicWrite(string path, string content)
     {
         string tmp = path + ".tmp";
         using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
