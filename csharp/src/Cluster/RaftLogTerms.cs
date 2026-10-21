@@ -85,6 +85,12 @@ public sealed class RaftLogTerms
         }
     }
 
+    /// <summary>A copy of the recorded ranges, oldest first.</summary>
+    public IReadOnlyList<(ulong StartSeq, long Term)> GetRanges()
+    {
+        lock (_gate) return _ranges.ToList();
+    }
+
     public string Serialize()
     {
         lock (_gate)
