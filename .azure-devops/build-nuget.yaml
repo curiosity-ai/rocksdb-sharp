@@ -32,12 +32,20 @@ steps:
 
 - task: NuGetToolInstaller@1
 
+# One SDK builds every target framework the package ships: a multi-targeted
+# project is built by a single SDK, which resolves the older targeting packs
+# from NuGet, so there is no second install for net10.0 and below. Verified by
+# building all ten TFMs (netstandard2.0 through net11.0) on this SDK alone.
+#
+# includePreviewVersions is required, not cosmetic: .NET 11's latest release is
+# 11.0.0-rc.2, so with previews excluded the task finds no 11.x SDK at all and
+# the build fails with the SDK missing. Drop the flag once 11.0 goes stable.
 - task: UseDotNet@2
-  displayName: 'Use .NET 10.0 sdk'
+  displayName: 'Use .NET 11.0 SDK'
   inputs:
     packageType: sdk
-    version: 10.x
-    includePreviewVersions: false
+    version: 11.x
+    includePreviewVersions: true
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - template: templates/download-native.yaml
