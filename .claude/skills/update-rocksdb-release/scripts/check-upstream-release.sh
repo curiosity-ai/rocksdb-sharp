@@ -29,12 +29,17 @@ PINNED="$(cut -d. -f1-3 <<< "$PINNED_FULL")"
 
 TAGS="$(git ls-remote --tags --refs "$UPSTREAM" 2>/dev/null \
         | awk '{print $2}' | sed 's|refs/tags/||' \
-        | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//')"
+        | grep -E '^v[0-9]+\.[0-9]+(\.[0-9]+)?$' | sed 's/^v//' \
+        | awk -F. 'NF == 2 { print $0 ".0"; next } { print }')"
 
 test -n "$TAGS" || {
     >&2 echo "could not list tags from ${UPSTREAM}"
     exit 1
 }
+
+# Upstream sometimes tags a .0 release without the patch component (v11.12
+# rather than v11.12.0); those are normalised to X.Y.0 above, which is also how
+# rocksdbversion spells them. build-native and the code generator map back.
 
 # sort -V, never a plain sort: lexically, 11.10.0 sorts below 11.9.0 and the
 # check would report an update as already applied.

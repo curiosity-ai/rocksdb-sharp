@@ -26,6 +26,16 @@ RUNTIMES_DIR="${BUILD_NATIVE_DIR}/runtimes"
 # build revision>"; only the first three identify the upstream release tag.
 ROCKSDBVNUM="$(cut -d. -f1-3 "${BUILD_NATIVE_DIR}/../rocksdbversion")"
 ROCKSDBVERSION="v${ROCKSDBVNUM}"
+# Upstream tags some .0 releases without the patch component (v11.12, not
+# v11.12.0). rocksdbversion always spells the patch, so fall back to the short
+# tag when the long one does not exist.
+case "$ROCKSDBVNUM" in
+    *.0)
+        if ! git ls-remote --exit-code --tags "${ROCKSDBREMOTE}" "refs/tags/${ROCKSDBVERSION}" > /dev/null 2>&1; then
+            ROCKSDBVERSION="v${ROCKSDBVNUM%.0}"
+        fi
+        ;;
+esac
 
 # printf rather than `echo -e`, which would also expand any backslash escape
 # that happens to be in the message. Windows paths are full of them: a message
