@@ -144,7 +144,17 @@ namespace RocksDbPrepareCApiHeader
             Console.WriteLine($"Building version  {version}");
             // Download the original by commit id
             var urlOfCHeader = $"https://raw.githubusercontent.com/facebook/rocksdb/v{version}/include/rocksdb/c.h";
-            var original = await DownloadAsync(urlOfCHeader);
+            string original;
+            try
+            {
+                original = await DownloadAsync(urlOfCHeader);
+            }
+            catch (HttpRequestException) when (version.EndsWith(".0"))
+            {
+                // Upstream tags some .0 releases without the patch (v11.12, not v11.12.0).
+                urlOfCHeader = $"https://raw.githubusercontent.com/facebook/rocksdb/v{version.Substring(0, version.Length - 2)}/include/rocksdb/c.h";
+                original = await DownloadAsync(urlOfCHeader);
+            }
 
             Console.Error.WriteLine($"Using: {urlOfCHeader}");
 
@@ -1124,6 +1134,7 @@ namespace RocksDbPrepareCApiHeader
             using (var client = new HttpClient())
             {
                 var request  = await client.GetAsync(url);
+                request.EnsureSuccessStatusCode();
                 var response = await request.Content.ReadAsStringAsync();
                 return response;
             }
