@@ -32,6 +32,35 @@ The result is a library that depends on nothing but the operating system's own
 C runtime, so no companion libraries have to be shipped alongside it and no
 `install_name_tool` fixups are needed on macOS.
 
+On Linux the library exports the `rocksdb_*` C API and nothing else.
+`build-rocksdb-linux.sh` links it with
+[`librocksdb-exports.map`](librocksdb-exports.map)
+(`-Wl,--version-script`), which keeps RocksDB's own C++ symbols, the
+compression libraries and the static libstdc++ local. This is not tidiness. A
+library built with `-static-libstdc++` alone re-exports every `std::` symbol of
+its private copy of the runtime (about 10,000 of them in 11.12.0.7385), and
+those can be interposed: whenever a system `libstdc++.so.6` is also in the
+process, the dynamic linker binds some of the library's own references to it
+and some to the static copy. A .NET 11 apphost process is such a case, and
+there every number RocksDB writes to a C++ stream throws `std::bad_cast` --
+BackupEngine writes empty `meta/<id>` files, the info `LOG` loses its event
+lines. With the runtime hidden, the library always uses its own copy.
+
+The script checks both halves after each build: `verify_exports_only` fails if
+anything but `rocksdb_*` is exported, and since the codecs are no longer
+exported, `verify_linked_in` looks for each one in the full symbol table before
+the library is stripped. `.claude/skills/update-rocksdb-release/scripts/verify-exports.sh`
+still checks that every binding in `Native.cs` is exported. To check a library
+by hand:
+
+```
+nm -D --defined-only librocksdb.so | c++filt | grep -c 'std::'   # must be 0
+```
+
+`libgcc_s.so.1` stays a dynamic dependency on purpose (no `-static-libgcc`):
+the unwinder is best shared with the rest of the process, and the few `libgcc.a`
+helpers that are linked in are hidden by the same version script.
+
 The dependency versions and checksums are read out of RocksDB's own `Makefile`,
 so they always match what upstream links into its own release artifacts.
 

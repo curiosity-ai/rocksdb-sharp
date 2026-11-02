@@ -111,6 +111,12 @@ if [ "$GNU_ARCH" != "$HOST_ARCH" ]; then
 fi
 
 STRIP="${CROSS_PREFIX}strip"
+NM="${CROSS_PREFIX}nm"
+
+# Linker version script that exports the rocksdb_* C API and hides everything
+# else, the statically linked libstdc++ included.
+EXPORTS_MAP="${BUILD_NATIVE_DIR}/librocksdb-exports.map"
+test -f "$EXPORTS_MAP" || fail "missing ${EXPORTS_MAP}"
 
 # cmake and curl are for the compression libraries: they are downloaded with
 # curl and snappy is a cmake project.
@@ -181,11 +187,19 @@ build_shared_lib() {
         # -static-libstdc++ binds the C++ runtime into the library, so the
         # target machine's libstdc++ does not have to be as new as the build
         # machine's.
+        #
+        # The version script then keeps every symbol but the C API local; see
+        # librocksdb-exports.map for why exporting the static libstdc++ breaks
+        # the library in some host processes.
         make -j"${CONCURRENCY}" shared_lib \
             EXTRA_CXXFLAGS="-static-libstdc++ ${COMPRESSION_CPPFLAGS}" \
             EXTRA_CFLAGS="${COMPRESSION_CPPFLAGS}" \
-            EXTRA_LDFLAGS="-static-libstdc++ ${STATIC_DEPS} ${extra_ldflags}" \
+            EXTRA_LDFLAGS="-static-libstdc++ -Wl,--version-script=${EXPORTS_MAP} ${STATIC_DEPS} ${extra_ldflags}" \
             ${extra_make_vars} || fail "${label} build failed"
+
+        # The codecs are no longer exported, so the only place left to see that
+        # each archive was linked in is the full symbol table, before strip.
+        verify_linked_in librocksdb.so "$NM" $COMPRESSION_SYMBOLS
 
         "$STRIP" librocksdb.so || warn "unable to strip ${label}"
     }) || exit 1
@@ -218,7 +232,8 @@ check_library() {
 
     info "checking ${label}"
 
-    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS "$@"
+    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" "$@"
+    verify_exports_only "${ROCKSDB_SRC_DIR}/librocksdb.so" "$NM" '^rocksdb_'
     verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
         $BASE_DEPENDENCIES
 
@@ -277,8 +292,9 @@ if [ "$TARGET_LIBC" = "glibc" ] && [ "$WITH_JEMALLOC" = "yes" ]; then
     # below is the only place jemalloc enters the link.
     build_shared_lib "librocksdb-jemalloc.so" "-ljemalloc" "JEMALLOC=1"
 
-    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" $COMPRESSION_SYMBOLS \
+    verify_library "${ROCKSDB_SRC_DIR}/librocksdb.so" \
         rocksdb_jemalloc_nodump_allocator_create
+    verify_exports_only "${ROCKSDB_SRC_DIR}/librocksdb.so" "$NM" '^rocksdb_'
 
     # Unlike the plain library, this one is expected to need libjemalloc.
     verify_dependencies "${ROCKSDB_SRC_DIR}/librocksdb.so" "${CROSS_PREFIX}readelf" \
