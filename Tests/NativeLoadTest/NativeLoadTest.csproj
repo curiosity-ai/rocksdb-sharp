@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Checks that the native library behaves when it is loaded into an apphost-started process. Run the
+       apphost (bin/<cfg>/<tfm>/NativeLoadTest), not `dotnet NativeLoadTest.dll`: the muxer loads libstdc++
+       globally and hides the problem this test exists for (see Program.cs). Exit code 0 = pass. -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <RocksDbPackageVersion>11.12.0.7385</RocksDbPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- We need the local RocksDbSharp project for the C# API, and the published package for its
+         per-RID native binaries. -->
+    <ProjectReference Include="..\..\csharp\RocksDbSharp.csproj" />
+
+    <!-- The local project declares <PackageId>RocksDB</PackageId>, so a normal
+         <PackageReference Include="RocksDB" .../> is resolved against it and
+         the public NuGet package is never fetched. PackageDownload bypasses that substitution. -->
+    <PackageDownload Include="RocksDB" Version="[$(RocksDbPackageVersion)]" />
+
+    <None Include="$(NuGetPackageRoot)rocksdb\$(RocksDbPackageVersion)\runtimes\**\*"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false"
+          TargetPath="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -167,14 +167,89 @@ namespace NativeImport
                 }
             }
 
+            // <dlfcn.h> on glibc and musl. macOS shares RTLD_NOW but numbers RTLD_LOCAL/RTLD_GLOBAL
+            // differently; RTLD_GLOBAL is only used on the Linux-only path below, and LibraryFlags is
+            // the 2 this importer always passed, on every platform.
+            private const int RTLD_NOW = 0x2;
+            private const int RTLD_LOCAL = 0x0;
+            private const int RTLD_GLOBAL = 0x100;
+
+            // RTLD_NOW resolves everything up front, so a missing symbol fails here rather than at the
+            // first call. On Linux RTLD_LOCAL keeps the library's own exports out of the global scope,
+            // so nothing loaded after it can bind to them.
+            //
+            // RTLD_DEEPBIND is deliberately not used. In theory it makes the library prefer its own
+            // copy of every symbol it defines, but it does not fix the libstdc++ problem described at
+            // PreloadSystemCxxRuntime: tried on 11.12.0.7385 under the .NET 11 apphost, it still
+            // produced empty backup meta files, and it also broke librocksdb-jemalloc.so in a process
+            // started with LD_PRELOAD=libjemalloc.so.2, which works without it. It is also glibc-only
+            // and does not mix with sanitizers or with an allocator interposed process-wide.
+            private const int LibraryFlags = RTLD_NOW | RTLD_LOCAL;
+
+            private static readonly object _preloadLock = new object();
+            private static bool _cxxRuntimePreloaded;
+
+            /// <summary>
+            /// Puts the system <c>libstdc++.so.6</c> into the process's global symbol scope before the
+            /// first native library is loaded through this importer (Linux only).
+            /// </summary>
+            /// <remarks>
+            /// The Linux librocksdb builds up to 11.12.0.7385 link libstdc++ statically but still export
+            /// its <c>std::</c> symbols. Their iostream code only works when those symbols are bound
+            /// consistently: either all to the static copy, or all to a <c>libstdc++.so.6</c> that is
+            /// already global when the library is loaded. The .NET 10 apphost and the <c>dotnet</c>
+            /// muxer link libstdc++, so it always was. The .NET 11 apphost does not: the system library
+            /// only ends up loaded locally, librocksdb's bindings come out mixed, and every number
+            /// written to a C++ stream inside RocksDB throws <c>std::bad_cast</c> -- BackupEngine writes
+            /// empty <c>meta/&lt;id&gt;</c> files and the event lines in the info LOG are lost.
+            /// Loading libstdc++ globally first restores the .NET 10 arrangement. Libraries built with
+            /// the C++ runtime symbols hidden (see build-native/README.md) do not need this, and it is
+            /// harmless for them. A failure is ignored: without a system libstdc++ (e.g. a minimal
+            /// musl image) there is nothing for the library to bind inconsistently against.
+            /// </remarks>
+            private static void PreloadSystemCxxRuntime()
+            {
+                if (_cxxRuntimePreloaded || !RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    return;
+
+                lock (_preloadLock)
+                {
+                    if (_cxxRuntimePreloaded)
+                        return;
+                    _cxxRuntimePreloaded = true;
+
+                    const string cxxRuntime = "libstdc++.so.6";
+                    try
+                    {
+                        if (_use_so2)
+                            so2_dlopen(cxxRuntime, RTLD_NOW | RTLD_GLOBAL);
+                        else
+                            dlopen(cxxRuntime, RTLD_NOW | RTLD_GLOBAL);
+                    }
+                    catch (Exception e) when (e is DllNotFoundException || e is EntryPointNotFoundException)
+                    {
+                        try
+                        {
+                            so2_dlopen(cxxRuntime, RTLD_NOW | RTLD_GLOBAL);
+                        }
+                        catch (Exception e2) when (e2 is DllNotFoundException || e2 is EntryPointNotFoundException)
+                        {
+                            // No usable dlopen; LoadLibrary below will report that properly.
+                        }
+                    }
+                }
+            }
+
             public IntPtr LoadLibrary(string path)
             {
+                PreloadSystemCxxRuntime();
+
                 if (_use_so2) return so2_LoadLibrary(path);
 
                 try
                 {
                     dlerror();
-                    var lib = dlopen(path, 2);
+                    var lib = dlopen(path, LibraryFlags);
                     var errPtr = dlerror();
                     if (errPtr != IntPtr.Zero)
                     {
@@ -192,7 +267,7 @@ namespace NativeImport
             {
                 _use_so2 = true;
                 so2_dlerror();
-                var lib = so2_dlopen(path, 2);
+                var lib = so2_dlopen(path, LibraryFlags);
                 var errPtr = so2_dlerror();
                 if (errPtr != IntPtr.Zero)
                 {
