@@ -164,6 +164,18 @@ fetch_dependency() {
         rm -f "$target"
     fi
 
+    # CODEC_MIRRORS optionally names further places to look, as a space
+    # separated list of base URLs that ${name} is appended to. They are tried
+    # after the built-in locations and checked against the same checksum, so
+    # they can only ever supply the exact file upstream pinned. Meant for
+    # machines that cannot reach some of the built-in hosts (github.com archive
+    # downloads, for instance); e.g.
+    #   CODEC_MIRRORS="https://distfiles.alpinelinux.org/distfiles/v3.22"
+    local mirror
+    for mirror in ${CODEC_MIRRORS:-}; do
+        set -- "$@" "${mirror%/}/${name}"
+    done
+
     local url
     for url in "$@"; do
         info "fetching ${name} from ${url}"

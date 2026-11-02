@@ -99,11 +99,19 @@ echo "building ${TARGET_ARCH}/${TARGET_LIBC} in ${IMAGE} (${PLATFORM})"
 
 # --libc is passed explicitly because for the cross compiled arm64/glibc case
 # the container's own ldd says nothing about the target.
+#
+# DOCKER_RUN_ARGS, when set, is added to the docker run command line as is, for
+# whatever the machine running this needs (a network or proxy setting, a CPU
+# limit). CODEC_MIRRORS is passed through to the build; see fetch_dependency in
+# common.sh.
+# shellcheck disable=SC2086
 docker run --rm \
     --platform "${PLATFORM}" \
     -v "${REPODIR}:/src" \
     -w /src/build-native \
     -e CONCURRENCY="${CONCURRENCY:-}" \
+    -e CODEC_MIRRORS="${CODEC_MIRRORS:-}" \
+    ${DOCKER_RUN_ARGS:-} \
     "${IMAGE}" \
     sh -c "set -e
            ${SETUP}
