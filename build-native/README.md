@@ -73,6 +73,20 @@ everyone the day zlib publishes a new version. Each dependency therefore has a
 list of locations that are tried in turn, and every download is checked against
 the SHA-256 RocksDB declares for it.
 
+Where some of those hosts are unreachable, `CODEC_MIRRORS` adds further base
+URLs (space separated, the tarball name is appended) that are tried after the
+built-in ones and held to the same checksums. Alpine's distfiles keep the
+GitHub archive tarballs byte for byte, for example:
+
+```
+CODEC_MIRRORS="https://distfiles.alpinelinux.org/distfiles/v3.22" ./build-rocksdb-linux.sh
+```
+
+`build-rocksdb-linux-docker.sh` passes `CODEC_MIRRORS` into the container, and
+adds `DOCKER_RUN_ARGS` to its `docker run` command line as is, for machines
+that need, say, `--network host` and proxy variables for the container to get
+out.
+
 ## Linux
 
 ```
@@ -171,6 +185,30 @@ effect of bumping a container tag.
 
 musl versions no symbols and ships one library per release, so there is no
 equivalent check for the musl flavour.
+
+### Validation
+
+The version-script build (exports limited to `rocksdb_*`) was validated on
+`linux-x64`/glibc only, by running
+`build-rocksdb-linux-docker.sh --arch x64 --libc glibc` in `ubuntu:22.04`
+with every codec (zlib 1.3.1, bzip2 1.0.8, snappy 1.2.2, lz4 1.10.0,
+zstd 1.5.7; the last three through `CODEC_MIRRORS`, as GitHub archive downloads
+were blocked there). The script's own checks passed: `verify_linked_in` for
+all five codecs, `verify_exports_only` (1772 exports, all `rocksdb_*`, no
+`std::`), `verify_dependencies` (`libm`, `libgcc_s`, `libc`, `ld-linux`) and
+the glibc 2.34 floor, and `verify-exports.sh` found all 1768 bindings. Against
+that library, with the managed `libstdc++` preload in `AutoNativeImport`
+switched off and on: `Tests/NativeLoadTest` passed on net10.0 and net11.0,
+both as an apphost and as `dotnet NativeLoadTest.dll` (the published
+11.12.0.7385 library fails 6 checks under the net11.0 apphost without the
+preload); `Tests/MergeTest` and `Tests/ConsoleTest` passed; and a C smoke
+test wrote, flushed, reopened and read back a database with each of snappy,
+zlib, bzip2, lz4, lz4hc and zstd, the info `LOG` listing all six as
+supported and each SST recording its codec.
+
+`linux-arm64`, the musl flavours and `librocksdb-jemalloc.so` are built by the
+same script with the same flags and version script, but were not built in that
+validation; their first real check is the CI run.
 
 ## macOS
 
