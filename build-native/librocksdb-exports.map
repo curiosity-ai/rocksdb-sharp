@@ -1,0 +1,27 @@
+/*
+ * Linker version script for the Linux librocksdb builds
+ * (passed as -Wl,--version-script by build-rocksdb-linux.sh).
+ *
+ * Exports the rocksdb_* C API -- the only thing RocksDbSharp binds to -- and
+ * keeps every other symbol local: RocksDB's own C++ symbols, the statically
+ * linked compression libraries, and above all the statically linked libstdc++.
+ *
+ * Without it the library re-exports every std:: symbol of its private
+ * libstdc++ copy (about 10,000 of them). Those exports are then subject to
+ * interposition: when a system libstdc++.so.6 is in the process (in the global
+ * scope or loaded later), the dynamic linker binds some of librocksdb's own
+ * references to it and some to the static copy. That happens in a .NET 11
+ * apphost process, and the visible result is std::bad_cast on every number
+ * written to a C++ stream inside RocksDB: empty BackupEngine meta files, info
+ * LOG event lines missing, and so on. With the C++ runtime hidden, the library
+ * always uses its own copy, whatever else is loaded.
+ *
+ * No version tag is given, so the exported names stay unversioned and are
+ * looked up by plain dlsym exactly as before.
+ */
+{
+  global:
+    rocksdb_*;
+  local:
+    *;
+};

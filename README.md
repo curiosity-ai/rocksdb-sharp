@@ -47,3 +47,7 @@ The version of the NuGet package is set to follow the official RocksDB version, 
 This will install the managed library and the correct version of the unmanaged library depending on your operating system. The native64-bit library is automatically built for each official RocksDB release, for Windows, Linux and MacOS, and is included in the package by default.
 
 
+
+#### Linux and .NET 11
+
+The Linux `librocksdb` builds up to `11.12.0.7385` link libstdc++ statically but also export its `std::` symbols. In a process started through a .NET 11 apphost (`./MyApp`, as opposed to `dotnet MyApp.dll` or any .NET 10 host) the system `libstdc++.so.6` is not globally loaded, the library ends up bound to two copies of the C++ runtime, and RocksDB fails to write numbers to its C++ streams: BackupEngine writes empty `meta/<id>` files and the info `LOG` loses its event lines. RocksDbSharp now loads `libstdc++.so.6` globally before it loads `librocksdb` on Linux, which fixes this with the already-published native libraries, and later native builds export only the `rocksdb_*` C API (see [build-native/README.md](build-native/README.md)). `Tests/NativeLoadTest` checks it; run its apphost, not `dotnet NativeLoadTest.dll`.

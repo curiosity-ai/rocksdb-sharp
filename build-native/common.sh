@@ -164,6 +164,18 @@ fetch_dependency() {
         rm -f "$target"
     fi
 
+    # CODEC_MIRRORS optionally names further places to look, as a space
+    # separated list of base URLs that ${name} is appended to. They are tried
+    # after the built-in locations and checked against the same checksum, so
+    # they can only ever supply the exact file upstream pinned. Meant for
+    # machines that cannot reach some of the built-in hosts (github.com archive
+    # downloads, for instance); e.g.
+    #   CODEC_MIRRORS="https://distfiles.alpinelinux.org/distfiles/v3.22"
+    local mirror
+    for mirror in ${CODEC_MIRRORS:-}; do
+        set -- "$@" "${mirror%/}/${name}"
+    done
+
     local url
     for url in "$@"; do
         info "fetching ${name} from ${url}"
@@ -344,6 +356,49 @@ verify_library() {
 
     # -L because make leaves the plain name as a symlink to the versioned file.
     info "verified $(basename "$lib") ($(du -hL "$lib" | cut -f1))"
+}
+
+# Fail unless every named symbol is defined somewhere in the library, exported
+# or not. For an ELF library linked with a version script that hides everything
+# but the C API, this is the only way to see that a static archive was linked
+# in, so it has to run before the library is stripped. Patterns as for
+# verify_library.
+verify_linked_in() {
+    local lib="$1"
+    local nm="$2"
+    shift 2
+
+    local symbols
+    symbols="$("$nm" --defined-only "$lib" 2>/dev/null)" \
+        || fail "unable to list symbols of ${lib}"
+
+    local pattern
+    for pattern in "$@"; do
+        grep -qE "$pattern" <<< "$symbols" \
+            || fail "${lib} does not contain ${pattern}"
+    done
+}
+
+# Fail if an ELF library exports any symbol that does not match the given
+# regular expression. Used to check that the static C++ runtime (and everything
+# else linked in) stays hidden behind the C API.
+verify_exports_only() {
+    local lib="$1"
+    local nm="$2"
+    local allowed="$3"
+
+    local exported foreign count
+    exported="$("$nm" -D --defined-only "$lib" 2>/dev/null | awk '{print $NF}')" \
+        || fail "unable to list exported symbols of ${lib}"
+    foreign="$(grep -vE "$allowed" <<< "$exported")"
+
+    if [ -n "$foreign" ]; then
+        count="$(wc -l <<< "$foreign")"
+        fail "$(basename "$lib") exports ${count} symbol(s) outside ${allowed}, e.g.:
+$(head -n 10 <<< "$foreign")"
+    fi
+
+    info "$(basename "$lib") exports only ${allowed} ($(wc -l <<< "$exported") symbols)"
 }
 
 # Fail if the library links against anything outside the given list of expected

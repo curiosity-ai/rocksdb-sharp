@@ -169,6 +169,17 @@ emit a declaration for anything left in `c.h`, including a function upstream
 deleted from the library, so this check is the only thing standing between that
 and a shipped package.
 
+The opposite direction matters too: the Linux library must export *only* the C
+API. `build-rocksdb-linux.sh` enforces that with `verify_exports_only` (see
+`build-native/README.md` for why a re-exported static libstdc++ breaks RocksDB
+inside a .NET 11 apphost); `nm -D --defined-only <lib> | c++filt | grep -c 'std::'`
+must print 0. `Tests/NativeLoadTest` is the end-to-end check for it — copy the
+new library into its output like the MergeTest example below and run the
+**apphost** (`bin/Release/net11.0/NativeLoadTest`), not `dotnet NativeLoadTest.dll`.
+It passes on old libraries too, because the managed loader preloads
+libstdc++; to test the library on its own, disable
+`PreloadSystemCxxRuntime` in `csharp/src/AutoNativeImport.cs` locally.
+
 Then run something real against it. Exports only prove the symbols exist; they
 say nothing about whether the ABI behind them still matches.
 

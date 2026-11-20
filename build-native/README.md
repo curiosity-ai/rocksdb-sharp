@@ -32,6 +32,35 @@ The result is a library that depends on nothing but the operating system's own
 C runtime, so no companion libraries have to be shipped alongside it and no
 `install_name_tool` fixups are needed on macOS.
 
+On Linux the library exports the `rocksdb_*` C API and nothing else.
+`build-rocksdb-linux.sh` links it with
+[`librocksdb-exports.map`](librocksdb-exports.map)
+(`-Wl,--version-script`), which keeps RocksDB's own C++ symbols, the
+compression libraries and the static libstdc++ local. This is not tidiness. A
+library built with `-static-libstdc++` alone re-exports every `std::` symbol of
+its private copy of the runtime (about 10,000 of them in 11.12.0.7385), and
+those can be interposed: whenever a system `libstdc++.so.6` is also in the
+process, the dynamic linker binds some of the library's own references to it
+and some to the static copy. A .NET 11 apphost process is such a case, and
+there every number RocksDB writes to a C++ stream throws `std::bad_cast` --
+BackupEngine writes empty `meta/<id>` files, the info `LOG` loses its event
+lines. With the runtime hidden, the library always uses its own copy.
+
+The script checks both halves after each build: `verify_exports_only` fails if
+anything but `rocksdb_*` is exported, and since the codecs are no longer
+exported, `verify_linked_in` looks for each one in the full symbol table before
+the library is stripped. `.claude/skills/update-rocksdb-release/scripts/verify-exports.sh`
+still checks that every binding in `Native.cs` is exported. To check a library
+by hand:
+
+```
+nm -D --defined-only librocksdb.so | c++filt | grep -c 'std::'   # must be 0
+```
+
+`libgcc_s.so.1` stays a dynamic dependency on purpose (no `-static-libgcc`):
+the unwinder is best shared with the rest of the process, and the few `libgcc.a`
+helpers that are linked in are hidden by the same version script.
+
 The dependency versions and checksums are read out of RocksDB's own `Makefile`,
 so they always match what upstream links into its own release artifacts.
 
@@ -43,6 +72,20 @@ everything else to `/fossils`, so RocksDB's pinned URL starts returning 404 for
 everyone the day zlib publishes a new version. Each dependency therefore has a
 list of locations that are tried in turn, and every download is checked against
 the SHA-256 RocksDB declares for it.
+
+Where some of those hosts are unreachable, `CODEC_MIRRORS` adds further base
+URLs (space separated, the tarball name is appended) that are tried after the
+built-in ones and held to the same checksums. Alpine's distfiles keep the
+GitHub archive tarballs byte for byte, for example:
+
+```
+CODEC_MIRRORS="https://distfiles.alpinelinux.org/distfiles/v3.22" ./build-rocksdb-linux.sh
+```
+
+`build-rocksdb-linux-docker.sh` passes `CODEC_MIRRORS` into the container, and
+adds `DOCKER_RUN_ARGS` to its `docker run` command line as is, for machines
+that need, say, `--network host` and proxy variables for the container to get
+out.
 
 ## Linux
 
@@ -142,6 +185,30 @@ effect of bumping a container tag.
 
 musl versions no symbols and ships one library per release, so there is no
 equivalent check for the musl flavour.
+
+### Validation
+
+The version-script build (exports limited to `rocksdb_*`) was validated on
+`linux-x64`/glibc only, by running
+`build-rocksdb-linux-docker.sh --arch x64 --libc glibc` in `ubuntu:22.04`
+with every codec (zlib 1.3.1, bzip2 1.0.8, snappy 1.2.2, lz4 1.10.0,
+zstd 1.5.7; the last three through `CODEC_MIRRORS`, as GitHub archive downloads
+were blocked there). The script's own checks passed: `verify_linked_in` for
+all five codecs, `verify_exports_only` (1772 exports, all `rocksdb_*`, no
+`std::`), `verify_dependencies` (`libm`, `libgcc_s`, `libc`, `ld-linux`) and
+the glibc 2.34 floor, and `verify-exports.sh` found all 1768 bindings. Against
+that library, with the managed `libstdc++` preload in `AutoNativeImport`
+switched off and on: `Tests/NativeLoadTest` passed on net10.0 and net11.0,
+both as an apphost and as `dotnet NativeLoadTest.dll` (the published
+11.12.0.7385 library fails 6 checks under the net11.0 apphost without the
+preload); `Tests/MergeTest` and `Tests/ConsoleTest` passed; and a C smoke
+test wrote, flushed, reopened and read back a database with each of snappy,
+zlib, bzip2, lz4, lz4hc and zstd, the info `LOG` listing all six as
+supported and each SST recording its codec.
+
+`linux-arm64`, the musl flavours and `librocksdb-jemalloc.so` are built by the
+same script with the same flags and version script, but were not built in that
+validation; their first real check is the CI run.
 
 ## macOS
 
