@@ -66,5 +66,17 @@ namespace RocksDbSharp
         {
             Native.Instance.rocksdb_sstfilewriter_delete(Handle, key, (UIntPtr)key.Length);
         }
+
+        public void DeleteRange(byte[] startKey, byte[] endKey)
+        {
+            Native.Instance.rocksdb_sstfilewriter_delete_range(Handle, startKey, (ulong)startKey.Length, endKey, (ulong)endKey.Length);
+        }
+
+#if !NETSTANDARD2_0
+        public void DeleteRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey)
+        {
+            Native.Instance.rocksdb_sstfilewriter_delete_range(Handle, startKey, endKey);
+        }
+#endif
     }
 }
